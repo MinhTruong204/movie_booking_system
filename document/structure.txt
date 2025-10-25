@@ -1,0 +1,302 @@
+cinema-booking-system/
+├── src/main/java/com/cinema/
+│   ├── CinemaBookingApplication.java
+│   │
+│   ├── config/                          # Cấu hình hệ thống
+│   │   ├── SecurityConfig.java
+│   │   ├── JwtConfig.java
+│   │   ├── DatabaseConfig.java
+│   │   ├── RedisConfig.java
+│   │   ├── PaymentGatewayConfig.java
+│   │   ├── CloudinaryConfig.java
+│   │   ├── EmailConfig.java
+│   │   ├── SchedulerConfig.java
+│   │   └── CorsConfig.java
+│   │
+│   ├── entity/                          # Entity Models (Entities)
+│   │   ├── user/
+│   │   │   ├── User.java
+│   │   │   ├── MembershipTier.java
+│   │   │   ├── LoyaltyPointsHistory.java
+│   │   │   └── UserSeatPreference.java
+│   │   │
+│   │   ├── movie/
+│   │   │   ├── Movie.java
+│   │   │   ├── Genre.java
+│   │   │   ├── Director.java
+│   │   │   ├── Actor.java
+│   │   │   ├── MovieReview.java
+│   │   │   └── MovieStatistics.java
+│   │   │
+│   │   ├── cinema/
+│   │   │   ├── Cinema.java
+│   │   │   ├── Room.java
+│   │   │   ├── Seat.java
+│   │   │   ├── SeatType.java
+│   │   │   └── CinemaReview.java
+│   │   │
+│   │   ├── showtime/
+│   │   │   ├── Showtime.java
+│   │   │   └── SeatStatus.java
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── Booking.java
+│   │   │   ├── BookingSeat.java
+│   │   │   ├── BookingCombo.java
+│   │   │   ├── Payment.java
+│   │   │   └── CheckInLog.java
+│   │   │
+│   │   ├── promotion/
+│   │   │   ├── Promotion.java
+│   │   │   ├── Combo.java
+│   │   │   ├── Voucher.java
+│   │   │   └── ReferralCode.java
+│   │   │
+│   │   └── notification/
+│   │       ├── Notification.java
+│   │       ├── NotificationPreference.java
+│   │       └── UserWatchlist.java
+│   │
+│   ├── repository/                      # Data Access Layer
+│   │   ├── user/
+│   │   │   ├── UserRepository.java
+│   │   │   ├── MembershipTierRepository.java
+│   │   │   └── LoyaltyPointsHistoryRepository.java
+│   │   │
+│   │   ├── movie/
+│   │   │   ├── MovieRepository.java
+│   │   │   ├── GenreRepository.java
+│   │   │   ├── MovieReviewRepository.java
+│   │   │   └── MovieStatisticsRepository.java
+│   │   │
+│   │   ├── cinema/
+│   │   │   ├── CinemaRepository.java
+│   │   │   ├── RoomRepository.java
+│   │   │   └── SeatRepository.java
+│   │   │
+│   │   ├── showtime/
+│   │   │   ├── ShowtimeRepository.java
+│   │   │   └── SeatStatusRepository.java
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── BookingRepository.java
+│   │   │   ├── PaymentRepository.java
+│   │   │   └── CheckInLogRepository.java
+│   │   │
+│   │   └── promotion/
+│   │       ├── PromotionRepository.java
+│   │       ├── ComboRepository.java
+│   │       └── VoucherRepository.java
+│   │
+│   ├── service/                         # Business Logic Layer
+│   │   ├── user/
+│   │   │   ├── UserService.java
+│   │   │   ├── AuthService.java
+│   │   │   ├── MembershipService.java
+│   │   │   └── LoyaltyPointsService.java
+│   │   │
+│   │   ├── movie/
+│   │   │   ├── MovieService.java
+│   │   │   ├── MovieReviewService.java
+│   │   │   └── MovieStatisticsService.java
+│   │   │
+│   │   ├── cinema/
+│   │   │   ├── CinemaService.java
+│   │   │   ├── RoomService.java
+│   │   │   └── SeatService.java
+│   │   │
+│   │   ├── showtime/
+│   │   │   ├── ShowtimeService.java
+│   │   │   └── SeatAvailabilityService.java
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── BookingService.java
+│   │   │   ├── SeatHoldingService.java
+│   │   │   ├── PaymentService.java
+│   │   │   ├── QRCodeService.java
+│   │   │   └── CheckInService.java
+│   │   │
+│   │   ├── promotion/
+│   │   │   ├── PromotionService.java
+│   │   │   ├── ComboService.java
+│   │   │   ├── VoucherService.java
+│   │   │   └── ReferralService.java
+│   │   │
+│   │   ├── notification/
+│   │   │   ├── NotificationService.java
+│   │   │   ├── EmailService.java
+│   │   │   ├── SMSService.java
+│   │   │   └── PushNotificationService.java
+│   │   │
+│   │   └── integration/
+│   │       ├── VNPayService.java
+│   │       ├── MoMoService.java
+│   │       ├── ZaloPayService.java
+│   │       └── CloudinaryService.java
+│   │
+│   ├── dto/                             # Data Transfer Objects
+│   │   ├── request/
+│   │   │   ├── auth/
+│   │   │   │   ├── LoginRequest.java
+│   │   │   │   ├── RegisterRequest.java
+│   │   │   │   └── ChangePasswordRequest.java
+│   │   │   │
+│   │   │   ├── booking/
+│   │   │   │   ├── CreateBookingRequest.java
+│   │   │   │   ├── HoldSeatsRequest.java
+│   │   │   │   └── ApplyPromotionRequest.java
+│   │   │   │
+│   │   │   ├── movie/
+│   │   │   │   ├── CreateMovieRequest.java
+│   │   │   │   └── CreateReviewRequest.java
+│   │   │   │
+│   │   │   └── payment/
+│   │   │       └── PaymentRequest.java
+│   │   │
+│   │   └── response/
+│   │       ├── auth/
+│   │       │   ├── LoginResponse.java
+│   │       │   └── UserProfileResponse.java
+│   │       │
+│   │       ├── booking/
+│   │       │   ├── BookingResponse.java
+│   │       │   ├── SeatMapResponse.java
+│   │       │   └── BookingDetailResponse.java
+│   │       │
+│   │       ├── movie/
+│   │       │   ├── MovieResponse.java
+│   │       │   ├── MovieDetailResponse.java
+│   │       │   └── ShowtimeResponse.java
+│   │       │
+│   │       └── common/
+│   │           ├── ApiResponse.java
+│   │           ├── PageResponse.java
+│   │           └── ErrorResponse.java
+│   │
+│   ├── controller/                      # REST API Controllers
+│   │   ├── auth/
+│   │   │   ├── AuthController.java
+│   │   │   └── UserController.java
+│   │   │
+│   │   ├── movie/
+│   │   │   ├── MovieController.java
+│   │   │   ├── GenreController.java
+│   │   │   └── ReviewController.java
+│   │   │
+│   │   ├── cinema/
+│   │   │   └── CinemaController.java
+│   │   │
+│   │   ├── showtime/
+│   │   │   └── ShowtimeController.java
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── BookingController.java
+│   │   │   ├── PaymentController.java
+│   │   │   └── CheckInController.java
+│   │   │
+│   │   ├── promotion/
+│   │   │   ├── PromotionController.java
+│   │   │   ├── ComboController.java
+│   │   │   └── VoucherController.java
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── AdminMovieController.java
+│   │   │   ├── AdminShowtimeController.java
+│   │   │   ├── AdminReportController.java
+│   │   │   └── AdminUserController.java
+│   │   │
+│   │   └── webhook/
+│   │       ├── VNPayWebhookController.java
+│   │       └── MoMoWebhookController.java
+│   │
+│   ├── security/                        # Security & Authentication
+│   │   ├── JwtTokenProvider.java
+│   │   ├── JwtAuthenticationFilter.java
+│   │   ├── CustomUserDetailsService.java
+│   │   ├── SecurityUtils.java
+│   │   └── annotation/
+│   │       ├── CurrentUser.java
+│   │       └── AdminOnly.java
+│   │
+│   ├── exception/                       # Exception Handling
+│   │   ├── GlobalExceptionHandler.java
+│   │   ├── BusinessException.java
+│   │   ├── ResourceNotFoundException.java
+│   │   ├── InvalidRequestException.java
+│   │   ├── UnauthorizedException.java
+│   │   ├── SeatNotAvailableException.java
+│   │   ├── PaymentException.java
+│   │   └── ErrorCode.java
+│   │
+│   ├── validation/                      # Custom Validators
+│   │   ├── validator/
+│   │   │   ├── EmailValidator.java
+│   │   │   ├── PhoneValidator.java
+│   │   │   ├── ShowtimeValidator.java
+│   │   │   └── BookingValidator.java
+│   │   │
+│   │   └── annotation/
+│   │       ├── ValidEmail.java
+│   │       ├── ValidPhone.java
+│   │       └── ValidDateRange.java
+│   │
+│   ├── mapper/                          # Entity <-> DTO Mappers
+│   │   ├── UserMapper.java
+│   │   ├── MovieMapper.java
+│   │   ├── BookingMapper.java
+│   │   └── ShowtimeMapper.java
+│   │
+│   ├── scheduler/                       # Scheduled Tasks
+│   │   ├── SeatCleanupScheduler.java
+│   │   ├── BookingExpirationScheduler.java
+│   │   ├── MovieStatusScheduler.java
+│   │   ├── LoyaltyPointsExpirationScheduler.java
+│   │   ├── RevenueReportScheduler.java
+│   │   └── NotificationScheduler.java
+│   │
+│   ├── event/                          # Domain Events
+│   │   ├── BookingCreatedEvent.java
+│   │   ├── BookingPaidEvent.java
+│   │   ├── MembershipUpgradedEvent.java
+│   │   └── listener/
+│   │       ├── BookingEventListener.java
+│   │       └── MembershipEventListener.java
+│   │
+│   ├── util/                           # Utility Classes
+│   │   ├── DateTimeUtils.java
+│   │   ├── StringUtils.java
+│   │   ├── PriceCalculator.java
+│   │   ├── QRCodeGenerator.java
+│   │   ├── BookingCodeGenerator.java
+│   │   └── SlugGenerator.java
+│   │
+│   └── constant/                       # Constants
+│       ├── AppConstants.java
+│       ├── BookingStatus.java
+│       ├── PaymentMethod.java
+│       ├── NotificationType.java
+│       └── ErrorMessages.java
+│
+├── src/main/resources/
+│   ├── application.yml
+│   ├── application-dev.yml
+│   ├── application-prod.yml
+│   ├── db/
+│   │   └── migration/
+│   │       ├── V1__Create_Initial_Schema.sql
+│   │       ├── V2__Create_Triggers_Events.sql
+│   │       └── V3__Insert_Sample_Data.sql
+│   │
+│   ├── templates/
+│   │   └── email/
+│   │       ├── booking-confirmation.html
+│   │       ├── payment-success.html
+│   │       └── booking-reminder.html
+│   │
+│   └── static/
+│       └── qr-codes/
+│
+└── src/test/java/com/cinema/
+    ├── service/
+    ├── controller/
+    └── integration/
