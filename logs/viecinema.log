@@ -39,3 +39,54 @@ This generated password is for development use only. Your security configuration
 2025-10-29T13:40:18.896+07:00  INFO 24980 --- [VieCinema] [RMI TCP Connection(1)-192.168.123.36] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2025-10-29T13:40:18.896+07:00  INFO 24980 --- [VieCinema] [RMI TCP Connection(1)-192.168.123.36] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2025-10-29T13:40:18.898+07:00  INFO 24980 --- [VieCinema] [RMI TCP Connection(1)-192.168.123.36] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2025-10-29T13:54:44.094+07:00  INFO 24980 --- [VieCinema] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-29T13:54:44.098+07:00  INFO 24980 --- [VieCinema] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-10-29T13:54:44.103+07:00  INFO 24980 --- [VieCinema] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-10-29T13:54:44.105+07:00  INFO 24980 --- [VieCinema] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-10-29T13:54:44.111+07:00  INFO 24980 --- [VieCinema] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-10-29T14:03:08.572+07:00  INFO 19332 --- [VieCinema] [main] com.viecinema.VieCinemaApplication       : Starting VieCinemaApplication using Java 21.0.7 with PID 19332 (F:\Projects\VieCinema\target\classes started by MINH in F:\Projects\VieCinema)
+2025-10-29T14:03:08.574+07:00 DEBUG 19332 --- [VieCinema] [main] com.viecinema.VieCinemaApplication       : Running with Spring Boot v3.5.7, Spring v6.2.12
+2025-10-29T14:03:08.575+07:00  INFO 19332 --- [VieCinema] [main] com.viecinema.VieCinemaApplication       : The following 1 profile is active: "dev"
+2025-10-29T14:03:09.618+07:00  INFO 19332 --- [VieCinema] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-29T14:03:09.658+07:00  INFO 19332 --- [VieCinema] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 34 ms. Found 2 JPA repository interfaces.
+2025-10-29T14:03:10.008+07:00  INFO 19332 --- [VieCinema] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-10-29T14:03:10.019+07:00  INFO 19332 --- [VieCinema] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-10-29T14:03:10.019+07:00  INFO 19332 --- [VieCinema] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.48]
+2025-10-29T14:03:10.056+07:00  INFO 19332 --- [VieCinema] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-10-29T14:03:10.057+07:00  INFO 19332 --- [VieCinema] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1448 ms
+2025-10-29T14:03:10.234+07:00  INFO 19332 --- [VieCinema] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-29T14:03:10.285+07:00  INFO 19332 --- [VieCinema] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.33.Final
+2025-10-29T14:03:10.313+07:00  INFO 19332 --- [VieCinema] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-10-29T14:03:10.521+07:00  INFO 19332 --- [VieCinema] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-29T14:03:10.545+07:00  INFO 19332 --- [VieCinema] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-10-29T14:03:10.655+07:00  INFO 19332 --- [VieCinema] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@19c1f6f4
+2025-10-29T14:03:10.657+07:00  INFO 19332 --- [VieCinema] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-10-29T14:03:10.731+07:00  INFO 19332 --- [VieCinema] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.42
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-10-29T14:03:11.451+07:00  INFO 19332 --- [VieCinema] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-10-29T14:03:11.531+07:00  INFO 19332 --- [VieCinema] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-10-29T14:03:11.796+07:00  WARN 19332 --- [VieCinema] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-10-29T14:03:11.992+07:00  INFO 19332 --- [VieCinema] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2025-10-29T14:03:12.014+07:00  WARN 19332 --- [VieCinema] [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: b6449bf4-2878-48fe-9605-491324fe6119
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-10-29T14:03:12.020+07:00  INFO 19332 --- [VieCinema] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-10-29T14:03:12.306+07:00  INFO 19332 --- [VieCinema] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-10-29T14:03:12.314+07:00  INFO 19332 --- [VieCinema] [main] com.viecinema.VieCinemaApplication       : Started VieCinemaApplication in 4.094 seconds (process running for 4.517)
+2025-10-29T14:03:12.537+07:00  INFO 19332 --- [VieCinema] [RMI TCP Connection(2)-192.168.123.36] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-10-29T14:03:12.538+07:00  INFO 19332 --- [VieCinema] [RMI TCP Connection(2)-192.168.123.36] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-10-29T14:03:12.541+07:00  INFO 19332 --- [VieCinema] [RMI TCP Connection(2)-192.168.123.36] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2025-10-29T14:03:42.684+07:00  INFO 19332 --- [VieCinema] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-29T14:03:42.688+07:00  INFO 19332 --- [VieCinema] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-10-29T14:03:42.694+07:00  INFO 19332 --- [VieCinema] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-10-29T14:03:42.695+07:00  INFO 19332 --- [VieCinema] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-10-29T14:03:42.699+07:00  INFO 19332 --- [VieCinema] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
