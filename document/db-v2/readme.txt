@@ -1,0 +1,1 @@
+Add email_verification table

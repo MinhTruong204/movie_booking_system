@@ -1,0 +1,49 @@
+# language: yaml
+spring:
+  profiles:
+    active: dev
+  datasource:
+    url: "jdbc:mysql://localhost:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: root
+    password: root
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  file:
+    name: logs/viecinema.log
+  level:
+    root: INFO
+    com.viecinema: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+security:
+  jwt:
+    secret: change_me
+    expiration: 15m
+
+app:
+  name: viecinema
+  timezone: UTC
