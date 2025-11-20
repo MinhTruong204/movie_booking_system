@@ -1,18 +1,11 @@
 # language: yaml
+# Cấu hình chung cho tất cả các môi trường
 spring:
   profiles:
-    active: dev
-  datasource:
-    url: "jdbc:mysql://localhost:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    username: root
-    password: root
-    driver-class-name: "com.mysql.cj.jdbc.Driver"
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+    active: dev # Profile mặc định khi chạy local
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update # Sẽ được ghi đè trong môi trường docker
     show-sql: false
     properties:
       hibernate:
@@ -41,9 +34,33 @@ management:
 
 security:
   jwt:
-    secret: change_me
-    expiration: 15m
+    secret: ${JWT_SECRET:change_me} # Ưu tiên biến môi trường, nếu không có thì dùng giá trị mặc định
+    expiration: ${JWT_EXPIRATION:15m}
 
 app:
   name: viecinema
   timezone: UTC
+
+---
+# Cấu hình cho môi trường Development (dev)
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: "jdbc:mysql://localhost:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: root
+    password: root
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
+
+---
+# Cấu hình cho môi trường Docker
+spring:
+  config:
+    activate:
+      on-profile: docker
+  # Trong môi trường docker, các giá trị datasource sẽ được cung cấp hoàn toàn
+  # bởi biến môi trường trong docker-compose.yml, không cần định nghĩa ở đây.
+  jpa:
+    hibernate:
+      ddl-auto: validate # An toàn hơn cho môi trường "giống-production"

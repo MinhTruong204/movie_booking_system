@@ -1,7 +1,8 @@
-package com.viecinema.auth.user;
+package com.viecinema.auth.service;
 
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.UserRepository;
+import com.viecinema.auth.user.User;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.RegisterResponse;

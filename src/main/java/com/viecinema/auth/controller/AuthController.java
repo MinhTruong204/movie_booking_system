@@ -5,7 +5,7 @@ import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.auth.dto.response.RegisterResponse;
-import com.viecinema.auth.user.AuthService;
+import com.viecinema.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
