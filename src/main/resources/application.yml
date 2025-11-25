@@ -34,8 +34,8 @@ management:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:change_me} # Ưu tiên biến môi trường, nếu không có thì dùng giá trị mặc định
-    expiration: ${JWT_EXPIRATION:15m}
+    secret: ${JWT_SECRET:6yJp4vC1S3f7mQ9hF2uX8LgR0kWzB5Pd7aTnV4YqH0cJr9KxNw} # Ưu tiên biến môi trường, nếu không có thì dùng giá trị mặc định
+    expiration: ${JWT_EXPIRATION:7d}
 
 app:
   name: viecinema

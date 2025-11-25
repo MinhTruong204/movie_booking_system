@@ -1,5 +1,6 @@
-package com.viecinema.auth.user;
+package com.viecinema.auth.entity;
 
+import com.viecinema.common.entity.BaseEntity;
 import com.viecinema.common.enums.Gender;
 import com.viecinema.common.enums.Role;
 import jakarta.persistence.*;
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
@@ -89,20 +90,9 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    private void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) createdAt = now;
-        updatedAt = now;
-
+    @Override
+    protected void prePersist() {
+        super.prePersist();
         if (memberSince == null) memberSince = LocalDate.now();
         if (role == null) role = Role.CUSTOMER;
         if (membershipTier == null) membershipTier = MembershipTier.builder().id(1).build();
@@ -112,11 +102,6 @@ public class User {
         if (emailVerified == null) emailVerified = false;
         if (phoneVerified == null) phoneVerified = false;
         if (failedLoginAttempts == null) failedLoginAttempts = 0;
-    }
-
-    @PreUpdate
-    private void preUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
 }

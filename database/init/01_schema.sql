@@ -48,8 +48,8 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     phone VARCHAR(20) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('customer', 'admin') NOT NULL DEFAULT 'customer',
-    gender ENUM('male', 'female', 'other'),
+    role ENUM('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
+    gender ENUM('MALE', 'FEMALE', 'OTHER'),
     birth_date DATE,
     
     -- Membership fields
@@ -98,6 +98,23 @@ CREATE TABLE email_verifications (
     INDEX idx_expires (expires_at),
     INDEX idx_is_used (is_used)
 ) ENGINE=InnoDB COMMENT='Bảng lưu token xác minh email (BE sẽ sinh/kiểm tra/huỷ token)';
+
+-- Tạo bảng refresh_tokens để lưu refresh token JWT (rotation + revoke)
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(512) NOT NULL UNIQUE,
+    expiry_date DATETIME NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_refresh_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_token (token),
+    INDEX idx_expiry (expiry_date),
+    INDEX idx_revoked (revoked)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Login Attempts
 CREATE TABLE login_attempts (

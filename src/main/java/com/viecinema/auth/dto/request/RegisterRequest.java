@@ -28,7 +28,6 @@ public class RegisterRequest {
     @ValidEmail
     private String email;
 
-    @NotBlank
     @ValidPhone
     private String phone;
 

@@ -1,9 +1,11 @@
 package com.viecinema.auth.repository;
 
-import com.viecinema.auth.entity.MembershipTier;
+import com.viecinema.auth.entity.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
-public interface MembershipTierRepository extends JpaRepository<MembershipTier,Integer> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 }

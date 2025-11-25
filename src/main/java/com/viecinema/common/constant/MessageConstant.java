@@ -8,4 +8,8 @@ public final class MessageConstant {
     public static final String BIRTH_DATE_ERROR = "Birth date must be in the past";
     public static final String CONFIRM_PASSWORD_ERROR = "Password and confirm password must match";
     public static final String CONFIRM_PASSWORD_REQUIRED = "Confirm password is required";
+    public static final String ACCOUNT_LOCKED_ERROR = "Account is locked. Contact support";
+    public static final String EMAIL_VERIFICATION_LOGIN_ERROR = "Please verify your email before logging in";
+    public static final String ACCOUNT_DISABLE_ERROR = "Account has been disabled";
+    public static final String GENDER_PATTERN_ERROR = "Gender must be uppercase: MALE, FEMALE, or OTHER";
 }

@@ -16,4 +16,5 @@ public final class ValidationConstant {
             "^(\\+84|0)(3[2-9]|5[689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$";
     public static final String PASSWORD_REGEX =
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$";
+    public static final String GENDER_REGEX = "^(MALE|FEMALE|OTHER)$";
 }

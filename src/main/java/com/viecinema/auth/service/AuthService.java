@@ -1,18 +1,42 @@
 package com.viecinema.auth.service;
 
+import com.viecinema.auth.dto.request.LoginRequest;
+import com.viecinema.auth.dto.response.LoginResponse;
+import com.viecinema.auth.entity.RefreshToken;
+import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
+import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.auth.user.User;
+import com.viecinema.auth.entity.User;
+import com.viecinema.auth.security.UserDetailsServiceImpl;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.RegisterResponse;
+import com.viecinema.common.constant.SecurityConstant;
+import com.viecinema.common.exception.BadRequestException;
 import com.viecinema.common.exception.BusinessException;
+import com.viecinema.common.exception.DuplicateResourceException;
+import com.viecinema.common.exception.ResourceNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.viecinema.common.constant.MessageConstant.*;
 
 @Service
 @AllArgsConstructor
@@ -21,22 +45,75 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final MembershipTierRepository membershipTierRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsServiceImpl userDetailsServiceIml;
+    private final UserMapper userMapper;
 
     private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
+//    Register
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
+        String email = request.getEmail().toLowerCase().trim();
+        if(userRepository.existsByEmailAndDeletedAtIsNull(email))
+            throw new DuplicateResourceException("Email");
+        if(request.getPhone() != null &&
+                userRepository.existsByPhoneAndDeletedAtIsNull(request.getPhone()))
+            throw new DuplicateResourceException("Phone");
         try {
+
             validateUniqueConstraints(request);
-            User user = buildUserFromRegisterRequest(request);
+            User user = userMapper.registerRequestToUser(request);
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            user.setEmailVerified(true);
             userRepository.save(user);
-            RegisterResponse userResponse = buildRegisterResponseFromUser(user);
+
+            RegisterResponse userResponse = userMapper.toRegisterResponse(user);
             return userResponse;
         }
         catch (DataIntegrityViolationException e) {
             throw new BusinessException(ApiMessage.FIELD_ALREADY_EXISTS, e.getMessage());
         }
+    }
+//  Login
+    @Transactional
+    public LoginResponse login(LoginRequest loginRequest) {
+        String email = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
+
+        User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
+
+        if(!user.getIsActive()) throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
+        if(!user.getEmailVerified()) throw new BadRequestException(EMAIL_VERIFICATION_LOGIN_ERROR);
+        if(user.getLockedUntil() != null && user.getLockedUntil().isBefore(Instant.now()))
+            throw new BadRequestException(ACCOUNT_LOCKED_ERROR);
+
+        try {
+//            Get authentication by email and password
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email,password));
+
+            user.setLastLoginAt(LocalDateTime.now());
+            userRepository.save(user);
+
+            UserDetails userDetails =(UserDetails) authentication.getPrincipal();
+            String accessToken = jwtService.generateAccessToken(userDetails,null);
+
+
+            return LoginResponse.builder()
+                    .accessToken(accessToken)
+                    .expiresIn(jwtService.extractExpiration(accessToken).getTime())
+                    .build();
+        } catch (LockedException e) {
+            throw new BadRequestException(ACCOUNT_LOCKED_ERROR);
+        } catch (DisabledException e) {
+            throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
+        }
+
     }
 
     // ============ Private Helper Methods ============
@@ -62,26 +139,16 @@ public class AuthService {
         return phone;
     }
 
-    private User buildUserFromRegisterRequest(RegisterRequest request) {
-        return User.builder()
-                .fullName(request.getFullName())
-                .email(normalizeEmail(request.getEmail()))
-                .phone(normalizePhone(request.getPhone()))
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .gender(request.getGender())
-                .birthDate(request.getBirthDate())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .build();
-    }
-
-    private RegisterResponse buildRegisterResponseFromUser(User user) {
-        return RegisterResponse.builder()
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .build();
-    }
-
     private String normalizeEmail(String email) {
         return email.toLowerCase();
+    }
+
+    private String generateAccessToken(User user, UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole());
+        claims.put("membershipTier", user.getMembershipTier());
+
+        return jwtService.generateAccessToken(userDetails, claims);
     }
 }
