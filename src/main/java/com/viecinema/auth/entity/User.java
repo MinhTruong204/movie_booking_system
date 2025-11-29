@@ -1,6 +1,7 @@
 package com.viecinema.auth.entity;
 
 import com.viecinema.common.entity.BaseEntity;
+import com.viecinema.common.entity.DeletableEntity;
 import com.viecinema.common.enums.Gender;
 import com.viecinema.common.enums.Role;
 import jakarta.persistence.*;
@@ -21,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User extends BaseEntity {
+public class User extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
@@ -41,7 +42,8 @@ public class User extends BaseEntity {
 
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Role role;
+    @Builder.Default
+    private Role role = Role.CUSTOMER;
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)
@@ -52,56 +54,46 @@ public class User extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_tier_id")
-    private MembershipTier membershipTier;
+    @Builder.Default
+    private MembershipTier membershipTier = MembershipTier.builder().id(1).build();
 
     @ColumnDefault("0")
     @Column(name = "loyalty_points")
-    private Integer loyaltyPoints;
+    @Builder.Default
+    private Integer loyaltyPoints = 0;
 
     @ColumnDefault("0.00")
     @Column(name = "total_spent", precision = 15, scale = 2)
-    private BigDecimal totalSpent;
+    @Builder.Default
+    private BigDecimal totalSpent = BigDecimal.ZERO;
 
     @Column(name = "member_since")
-    private LocalDate memberSince;
+    @Builder.Default
+    private LocalDate memberSince = LocalDate.now();
 
     @ColumnDefault("1")
     @Column(name = "is_active")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
     @ColumnDefault("0")
     @Column(name = "email_verified")
-    private Boolean emailVerified;
+    @Builder.Default
+    private Boolean emailVerified = false;
 
     @ColumnDefault("0")
     @Column(name = "phone_verified")
-    private Boolean phoneVerified;
+    @Builder.Default
+    private Boolean phoneVerified = false;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
     @ColumnDefault("0")
     @Column(name = "failed_login_attempts")
-    private Integer failedLoginAttempts;
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
 
     @Column(name = "locked_until")
     private Instant lockedUntil;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Override
-    protected void prePersist() {
-        super.prePersist();
-        if (memberSince == null) memberSince = LocalDate.now();
-        if (role == null) role = Role.CUSTOMER;
-        if (membershipTier == null) membershipTier = MembershipTier.builder().id(1).build();
-        if (loyaltyPoints == null) loyaltyPoints = 0;
-        if (totalSpent == null) totalSpent = BigDecimal.ZERO;
-        if (isActive == null) isActive = true;
-        if (emailVerified == null) emailVerified = false;
-        if (phoneVerified == null) phoneVerified = false;
-        if (failedLoginAttempts == null) failedLoginAttempts = 0;
-    }
-
 }
