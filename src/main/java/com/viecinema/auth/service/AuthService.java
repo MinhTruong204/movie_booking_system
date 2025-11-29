@@ -106,6 +106,7 @@ public class AuthService {
 
             return LoginResponse.builder()
                     .accessToken(accessToken)
+                    .fullName(user.getFullName())
                     .expiresIn(jwtService.extractExpiration(accessToken).getTime())
                     .build();
         } catch (LockedException e) {

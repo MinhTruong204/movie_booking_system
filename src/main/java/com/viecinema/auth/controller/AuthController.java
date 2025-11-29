@@ -12,11 +12,9 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:3000",allowCredentials = "true")
 @RestController
 @RequestMapping(ApiConstant.AUTH_PATH)
 @AllArgsConstructor
@@ -34,7 +32,7 @@ public class AuthController {
     @PostMapping(ApiConstant.LOGIN_PATH)
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest loginrequest) {
         LoginResponse loginResponse = authService.login(loginrequest);
-        return ResponseEntity.status(HttpStatus.FOUND).body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.success(ApiMessage.USER_RETRIEVED, loginResponse));
     }
 
