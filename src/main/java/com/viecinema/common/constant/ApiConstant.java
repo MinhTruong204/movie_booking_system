@@ -8,5 +8,6 @@ public final class ApiConstant {
     public static final String LOGIN_PATH = "/login";
     public static final String REGISTER_PATH = "/register";
     public static final String MOVIE_NOW_SHOWING_PATH  = "/now-showing";
+    public static final String MOVIE_COMING_SOON_PATH = "/coming-soon";
 
 }

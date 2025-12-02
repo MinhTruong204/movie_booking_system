@@ -31,6 +31,7 @@ public class MovieSummaryDto {
     private String trailerUrl;
     private List<GenreDto> genres;
 
+//    For now showing movie
     private Double averageRating;
     private Integer totalReviews;
     // Helper method
@@ -40,4 +41,8 @@ public class MovieSummaryDto {
         int minutes = duration % 60;
         return String.format("%dh %02dm", hours, minutes);
     }
+
+//    For coming soon movie
+    private Integer daysUntilRelease;
+
 }

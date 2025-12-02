@@ -1,5 +1,6 @@
 package com.viecinema.movie.dto;
 
+import com.viecinema.common.enums.MovieStatus;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
@@ -73,8 +74,9 @@ public class MovieFilterRequest {
                 || city != null;
     }
 
-    public String toCacheKey() {
-        return String.format("movies:now-showing:%s:%d:%d:%s:%s:%s:%s:%s",
+    public String toCacheKey(MovieStatus status) {
+        return String.format("movies:%s:%s:%d:%d:%s:%s:%s:%s:%s",
+                status.name(),
                 genreIds != null ? genreIds.toString() : "all",
                 page,
                 size,

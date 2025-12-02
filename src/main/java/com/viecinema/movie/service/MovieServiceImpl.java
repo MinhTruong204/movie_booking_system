@@ -34,16 +34,16 @@ public class MovieServiceImpl implements MovieService{
 
     @Override
     @Cacheable( // Save data to cache, when the same request be sent, use this cache instead querry to database
-            value = "nowShowingMovies",
-            key = "#request.toCacheKey()",  // Cache key for distinguish different request
+            value = "moviesByStatus",
+            key = "#request.toCacheKey(#status)",  // Cache key for distinguish different request
             unless = "#result == null || #result.content.isEmpty()"// dont save to cache if result is null or empty
     )
-    public PagedResponse<MovieSummaryDto> getNowShowingMovies(MovieFilterRequest request) {
-        log.info("Fetching now showing movies with filters: {}", request);
+    public PagedResponse<MovieSummaryDto> getMoviesByStatus(MovieFilterRequest request, MovieStatus status) {
+        log.info("Fetching movies with status '{}' and filters: {}", status, request);
 
         request.validate();
 
-        Specification<Movie> spec = buildSpecification(request);
+        Specification<Movie> spec = buildSpecification(request, status);
         Pageable pageable = request.toPageable();
         Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
 
@@ -70,10 +70,10 @@ public class MovieServiceImpl implements MovieService{
                 .build();
     }
 
-    private Specification<Movie> buildSpecification(MovieFilterRequest request) {
+    private Specification<Movie> buildSpecification(MovieFilterRequest request, MovieStatus status) {
         return Specification
                 // Filter cơ bản
-                .where(MovieSpecification.hasStatus(MovieStatus.NOW_SHOWING))
+                .where(MovieSpecification.hasStatus(status))
                 .and(MovieSpecification.isNotDeleted())
 
                 // Eager fetch để tránh N+1

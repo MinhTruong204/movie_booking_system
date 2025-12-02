@@ -1,6 +1,7 @@
 package com.viecinema.movie.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.movie.dto.MovieFilterRequest;
 import com.viecinema.movie.dto.MovieSummaryDto;
@@ -14,8 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static com.viecinema.common.constant.ApiConstant.MOVIE_NOW_SHOWING_PATH;
-import static com.viecinema.common.constant.ApiConstant.MOVIE_PATH;
+import static com.viecinema.common.constant.ApiConstant.*;
 
 @RestController
 @RequestMapping(MOVIE_PATH)
@@ -31,9 +31,21 @@ public class MovieController {
         getNowShowingMovies(@Valid @ModelAttribute MovieFilterRequest request) { // Get data form Query string
 
         log. info("GET /api/v1/movies/now-showing - Request: {}", request);
-        PagedResponse<MovieSummaryDto> movies = movieService.getNowShowingMovies(request);
+        PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.NOW_SHOWING);
 
         return  ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.success(ApiMessage.USER_RETRIEVED, movies));
+
+    }
+
+    @GetMapping(MOVIE_COMING_SOON_PATH)
+    public ResponseEntity<ApiResponse<PagedResponse<MovieSummaryDto>>>
+    getComingSoonMovies(@Valid @ModelAttribute MovieFilterRequest request) {
+
+        log.info("GET /api/v1/movies/coming-soon - Request: {}", request);
+        PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.COMING_SOON);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.success(ApiMessage.USER_RETRIEVED, movies));
 
     }
