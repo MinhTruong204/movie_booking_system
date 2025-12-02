@@ -26,6 +26,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 AUTH_PATH + REGISTER_PATH,
                                 AUTH_PATH + LOGIN_PATH,
+                                MOVIE_PATH +"/*",
                                 "/actuator/health")
                         .permitAll()
 

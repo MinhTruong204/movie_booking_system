@@ -6,7 +6,8 @@ public final class ValidationConstant {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 50;
     public static final int EMAIL_MAX_LENGTH = 100;
-    public static final int PHONE_MAX_LENGTH = 20;
+    public static final int MOVIE_PAGE_MIN_SIZE = 1 ;
+    public static final int MOVIE_PAGE_MAX_SIZE = 50;
 
 
     public static final String USERNAME_REGEX = "^[a-zA-ZÀ-ỹ\\s]+$";
@@ -16,5 +17,6 @@ public final class ValidationConstant {
             "^(\\+84|0)(3[2-9]|5[689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$";
     public static final String PASSWORD_REGEX =
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$";
-    public static final String GENDER_REGEX = "^(MALE|FEMALE|OTHER)$";
+    public static final String FILTER_MOVIE_REGEX = "^(title|releaseDate|duration|createdAt),(asc|desc)$";
+
 }
