@@ -3,6 +3,7 @@ package com.viecinema.movie.controller;
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.common.constant.ApiMessage;
+import com.viecinema.movie.dto.MovieDetailDto;
 import com.viecinema.movie.dto.MovieFilterRequest;
 import com.viecinema.movie.dto.MovieSummaryDto;
 import com.viecinema.movie.dto.PagedResponse;
@@ -49,4 +50,13 @@ public class MovieController {
                 ApiResponse.success(ApiMessage.USER_RETRIEVED, movies));
 
     }
+
+    @GetMapping(MOVIE_DETAIL_PATH)
+    public ResponseEntity<ApiResponse<MovieDetailDto>> getMovieDetail(@PathVariable Integer movieId) {
+
+        MovieDetailDto detail = movieService.getMovieDetail(movieId);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.success(ApiMessage.USER_RETRIEVED, detail));
+    }
+
 }

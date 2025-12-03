@@ -3,19 +3,12 @@ package com.viecinema.movie.entity;
 import com.viecinema.common.entity.DeletableEntity;
 import com.viecinema.common.enums.MovieStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,7 +20,7 @@ import java.util.Set;
 @Table(name = "movies")
 public class Movie extends DeletableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType. IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "movie_id")
     private Integer movieId;
 
@@ -67,7 +60,7 @@ public class Movie extends DeletableEntity {
     private String trailerUrl;
 
     // Relationships
-    @ManyToMany(fetch = FetchType. LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "movie_genres",
             joinColumns = @JoinColumn(name = "movie_id"),
@@ -76,7 +69,7 @@ public class Movie extends DeletableEntity {
     @Builder.Default
     private Set<Genre> genres = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType. LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "movie_actors",
             joinColumns = @JoinColumn(name = "movie_id"),
@@ -85,7 +78,7 @@ public class Movie extends DeletableEntity {
     @Builder.Default
     private Set<Actor> actors = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType. LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "movie_directors",
             joinColumns = @JoinColumn(name = "movie_id"),

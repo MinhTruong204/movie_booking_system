@@ -1,5 +1,6 @@
 package com.viecinema.movie.entity;
 
+import com.viecinema.common.entity.DeletableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,7 +14,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "directors")
-public class Director {
+public class Director extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "director_id", nullable = false)
@@ -35,16 +36,4 @@ public class Director {
     @Size(max = 255)
     @Column(name = "photo_url")
     private String photoUrl;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private Instant createdAt;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
 }

@@ -1,14 +1,14 @@
 package com.viecinema.movie.service;
 
 import com.viecinema.common.enums.MovieStatus;
-import com.viecinema.movie.dto.GenreDto;
+import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.movie.dto.MovieDetailDto;
 import com.viecinema.movie.dto.MovieFilterRequest;
 import com.viecinema.movie.dto.MovieSummaryDto;
 import com.viecinema.movie.dto.PagedResponse;
-import com.viecinema.movie.entity.Genre;
 import com.viecinema.movie.entity.Movie;
 import com.viecinema.movie.mapper.MovieMapper;
-import com.viecinema.movie.mapper.MovieStatisticsRepository;
+import com.viecinema.movie.repository.MovieStatisticsRepository;
 import com.viecinema.movie.repository.MovieRepository;
 import com.viecinema.movie.repository.MovieSpecification;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +68,17 @@ public class MovieServiceImpl implements MovieService{
                 .first(moviePage.isFirst())
                 .empty(moviePage.isEmpty())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "movieDetails", key = "#movieId", unless = "#result == null")
+    public MovieDetailDto getMovieDetail(Integer movieId) {
+        log.info("Fetching movie detail for ID: {}", movieId);
+
+        Movie movie = movieRepository.findByIdWithDetails(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with Id " +movieId + " not found"));
+        return movieMapper.toMovieDetailDto(movie);
     }
 
     private Specification<Movie> buildSpecification(MovieFilterRequest request, MovieStatus status) {

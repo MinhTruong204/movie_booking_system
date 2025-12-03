@@ -1,6 +1,7 @@
 package com.viecinema.movie.service;
 
 import com.viecinema.common.enums.MovieStatus;
+import com.viecinema.movie.dto.MovieDetailDto;
 import com.viecinema.movie.dto.MovieFilterRequest;
 import com.viecinema.movie.dto.MovieSummaryDto;
 import com.viecinema.movie.dto.PagedResponse;
@@ -16,4 +17,5 @@ import java.util.Optional;
 
 public interface MovieService {
     PagedResponse<MovieSummaryDto> getMoviesByStatus(MovieFilterRequest request, MovieStatus status);
+    MovieDetailDto getMovieDetail(Integer movieId);
 }

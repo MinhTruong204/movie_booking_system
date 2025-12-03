@@ -48,11 +48,11 @@ public class MovieFilterRequest {
 
     // ============== HELPER METHODS ==============
 
-//    Convert from request to pageable
+    //    Convert from request to pageable
     public Pageable toPageable() {
         String[] sortParams = sort.split(",");
         String property = sortParams[0];
-        Sort. Direction direction = sortParams.length > 1
+        Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc")
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
@@ -61,7 +61,7 @@ public class MovieFilterRequest {
     }
 
     public void validate() {
-        if (genreIds != null && ! genreIds.isEmpty()) {
+        if (genreIds != null && !genreIds.isEmpty()) {
             genreIds.removeIf(id -> id == null || id <= 0);
         }
     }
