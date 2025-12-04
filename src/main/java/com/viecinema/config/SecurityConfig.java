@@ -24,9 +24,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // non-deprecated way to disable CSRF (Spring Security 6.1+)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                AUTH_PATH + REGISTER_PATH,
-                                AUTH_PATH + LOGIN_PATH,
-                                MOVIE_PATH +"/*",
+                                AUTH_PATH +"/**",
+                                MOVIE_PATH +"/**",
+                                SHOWTIMES_PATH +"/**",
                                 "/actuator/health")
                         .permitAll()
 
