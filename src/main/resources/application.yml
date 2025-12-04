@@ -40,6 +40,9 @@ security:
 app:
   name: viecinema
   timezone: UTC
+  development:
+    # Khi true, API showtime sẽ bỏ qua bộ lọc ngày và thời gian, lấy tất cả suất chiếu
+    ignore-showtime-time-filter: true
 
 ---
 # Cấu hình cho môi trường Development (dev)

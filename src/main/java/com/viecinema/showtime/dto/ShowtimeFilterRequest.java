@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,6 +35,10 @@ public class ShowtimeFilterRequest {
     private SortBy sortBy = SortBy.START_TIME;
     private Boolean includeAvailableSeats = true;
 
+    // Cờ nội bộ để bỏ qua hoàn toàn bộ lọc thời gian
+    @JsonIgnore // Không hiển thị trong JSON response/request
+    private boolean ignoreTimeFilter = false;
+
     public enum GroupBy {
         CINEMA,      // Group theo rạp
         TIMESLOT,    // Group theo khung giờ (sáng, chiều, tối)
@@ -53,11 +58,19 @@ public class ShowtimeFilterRequest {
     }
 
     public LocalDateTime getStartDateTime() {
+        if (ignoreTimeFilter) {
+            // Trả về một ngày rất xa trong quá khứ để lấy tất cả
+            return LocalDateTime.of(1970, 1, 1, 0, 0);
+        }
         LocalDate searchDate = (date != null) ? date : LocalDate.now();
         return searchDate.atStartOfDay();
     }
 
     public LocalDateTime getEndDateTime() {
+        if (ignoreTimeFilter) {
+            // Trả về một ngày rất xa trong tương lai để lấy tất cả
+            return LocalDateTime.of(9999, 12, 31, 23, 59);
+        }
         LocalDate searchDate = (date != null) ? date : LocalDate.now();
         return searchDate.atTime(23, 59, 59);
     }

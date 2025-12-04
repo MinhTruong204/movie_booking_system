@@ -9,6 +9,7 @@ import com.viecinema.showtime.dto.ShowtimeGroupByTimeSlotDto;
 import com.viecinema.showtime.repository.ShowtimeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +29,22 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
 
+    @Value("${app.development.ignore-showtime-time-filter:false}")
+    private boolean ignoreShowtimeTimeFilter;
+
     @Override
     public Object findShowtimes(ShowtimeFilterRequest request) {
         // Validate request
         if (! request.isValid()) {
             throw new BadRequestException("Must provide at least movieId or cinemaId");
+        }
+
+        // [DEV-MODE] Nếu cờ ignoreShowtimeTimeFilter là true, bỏ qua các bộ lọc thời gian
+        if (ignoreShowtimeTimeFilter) {
+            log.warn("DEV MODE: Bỏ qua bộ lọc thời gian cho suất chiếu.");
+            request.setDate(null); // Bỏ qua ngày cụ thể
+            request.setFutureOnly(false); // Lấy cả suất chiếu trong quá khứ
+            request.setIgnoreTimeFilter(true); // Đánh dấu để bỏ qua hoàn toàn bộ lọc thời gian
         }
 
         // Route theo groupBy
