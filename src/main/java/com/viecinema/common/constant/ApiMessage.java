@@ -28,6 +28,7 @@ public enum ApiMessage {
         ORDER_DETAILS_RETRIEVED("S033", "success", "Order #%s details retrieved successfully"),
         SHOWTIMES_RETRIEVED("S033", "success", "Showtimes retrieved successfully"),
         SHOWTIME_DETAIL_RETRIEVED("S033", "success", "Showtimes retrieved successfully"),
+        SEATMAP_RETRIEVED("S033", "success", "Seatmap retrieved successfully"),
         // ========== ERROR MESSAGES  ==========
 
         // Authentication & Authorization (HTTP 401, 403)

@@ -29,14 +29,20 @@ public class ShowtimeFilterRequest {
     private LocalDate date;
 
     private String city;
+    @Builder.Default
     private Boolean activeOnly = true;
+    @Builder.Default
     private Boolean futureOnly = true;
+    @Builder.Default
     private GroupBy groupBy = GroupBy.CINEMA;
+    @Builder.Default
     private SortBy sortBy = SortBy.START_TIME;
+    @Builder.Default
     private Boolean includeAvailableSeats = true;
 
     // Cờ nội bộ để bỏ qua hoàn toàn bộ lọc thời gian
     @JsonIgnore // Không hiển thị trong JSON response/request
+    @Builder.Default
     private boolean ignoreTimeFilter = false;
 
     public enum GroupBy {
