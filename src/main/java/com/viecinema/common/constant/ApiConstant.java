@@ -5,6 +5,8 @@ public final class ApiConstant {
     public static final String AUTH_PATH = "/api/auth";
     public static final String MOVIE_PATH = "/api/movies";
     public static final String SHOWTIMES_PATH = "/api/showtimes";
+    public static final String GENRE_PATH = "/api/genres";
+
 //  Detail API
     public static final String LOGIN_PATH = "/login";
     public static final String REGISTER_PATH = "/register";
@@ -15,6 +17,7 @@ public final class ApiConstant {
     public static final String SHOWTIMES_SEATMAP_PATH = "/{showtimeId}/seatmap";
     public static final String SHOWTIMES_BY_CINEMA_PATH = "/by-cinema/{cinemaId}";
     public static final String SHOWTIMES_BY_MOVIE_PATH = "/by-movie/{movieId}";
+    public static final String GENRE_DETAIL_PATH = "/{id}";
 
 
 }

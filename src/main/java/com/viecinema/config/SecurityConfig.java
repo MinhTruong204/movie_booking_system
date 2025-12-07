@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 AUTH_PATH + "/**",
                                 MOVIE_PATH + "/**",
                                 SHOWTIMES_PATH + "/**",
+                                GENRE_PATH + "/**",
                                 "/actuator/health")
                         .permitAll()
 
