@@ -1,7 +1,9 @@
 package com.viecinema.showtime.repository;
 
 import com.viecinema.showtime.entity.SeatStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -70,4 +72,62 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
      */
     @Query("SELECT COUNT(ss) > 0 FROM SeatStatus ss WHERE ss.showtime.id = :showtimeId")
     boolean existsByShowtimeId(@Param("showtimeId") Integer showtimeId);
+
+    /**
+     * Tìm seat status với Pessimistic Write Lock
+     * Dùng cho hold seats để tránh race condition
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ss FROM SeatStatus ss WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId IN :seatIds")
+    List<SeatStatus> findByShowtimeAndSeatsWithLock(
+            @Param("showtimeId") Integer showtimeId,
+            @Param("seatIds") List<Integer> seatIds);
+
+    /**
+     * Tìm tất cả ghế của user đang giữ
+     */
+    @Query("SELECT ss FROM SeatStatus ss WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
+    List<SeatStatus> findAllHeldByUser(@Param("userId") Integer userId);
+
+    /**
+     * Đếm số ghế user đang giữ
+     */
+    @Query("SELECT COUNT(ss) FROM SeatStatus ss WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
+    int countHeldSeatsByUser(@Param("userId") Integer userId);
+
+    /**
+     * Release ghế hết hạn (chạy bằng scheduler)
+     */
+    @Modifying
+    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, " +
+            "ss.heldUntil = NULL WHERE ss.status = 'held' AND ss. heldUntil < : currentTime")
+    int releaseExpiredSeats(@Param("currentTime") LocalDateTime currentTime);
+
+    /**
+     * Release tất cả ghế của user (khi user rời trang)
+     */
+    @Modifying
+    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, " +
+            "ss.heldUntil = NULL WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
+    int releaseUserSeats(@Param("userId") Integer userId);
+
+    /**
+     * Release a single seat only if it's currently held by the given user.
+     * Returns number of rows updated (0 if not released).
+     */
+    @Modifying
+    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = 'held' AND ss.heldByUser.id = :userId")
+    int releaseSeatByUser(@Param("showtimeId") Integer showtimeId,
+                          @Param("seatId") Integer seatId,
+                          @Param("userId") Integer userId);
+
+    /**
+     * Force release a single seat regardless who held it (admin/system).
+     */
+    @Modifying
+    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = 'held'")
+    int forceReleaseSeat(@Param("showtimeId") Integer showtimeId,
+                         @Param("seatId") Integer seatId);
 }

@@ -42,7 +42,6 @@ public class SecurityConfig {
                                 GENRE_PATH + "/**",
                                 "/actuator/health")
                         .permitAll()
-
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

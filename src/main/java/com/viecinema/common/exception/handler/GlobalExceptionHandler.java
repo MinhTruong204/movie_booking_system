@@ -1,11 +1,10 @@
 package com.viecinema.common.exception.handler;
 
 import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.booking.exception.SeatAlreadyHeldException;
+import com.viecinema.booking.exception.SeatNotHeldByUserException;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.common.exception.BadRequestException;
-import com.viecinema.common.exception.BusinessException;
-import com.viecinema.common.exception.DuplicateResourceException;
-import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.exception.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -28,6 +27,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.RESOURCE_NOT_FOUND, ex.getMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CustomBusinessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(CustomBusinessException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(SeatAlreadyHeldException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(SeatAlreadyHeldException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(SeatNotHeldByUserException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(SeatNotHeldByUserException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
@@ -60,6 +77,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
+        // Log the exception for debugging purposes
+        logger.error("An unexpected error occurred: ", ex);
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.SERVER_ERROR);
+        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -73,4 +97,5 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         apiResponse.setData(errors);
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
+
 }

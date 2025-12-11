@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +22,7 @@ import static com.viecinema.common.constant.SecurityConstant.TOKEN_PREFIX;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -35,17 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader(HEADER_STRING);
         final String jwt;
         final String userEmail;
-
+        log.info("Incoming request {} {} from {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
         if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(TOKEN_PREFIX.length());
-
+        log.info("JWT: {}", jwt);
         try {
             userEmail = jwtService.extractUsername(jwt);
-//
+            log.info("Email: {}", userEmail);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
                 if(jwtService.validateToken(jwt, userDetails)) {
@@ -63,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }catch (Exception e){
             throw e;
         }
-
+        filterChain.doFilter(request, response);
     }
 
 }

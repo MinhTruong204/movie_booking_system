@@ -17,6 +17,9 @@ public enum ApiMessage {
         USER_UPDATED("S011", "success", "User '%s' updated successfully"),
         USER_PASSWORD_CHANGED("S012", "success", "Password changed successfully for user '%s'"),
         USER_EMAIL_UPDATED("S013", "success", "Email updated to '%s' successfully"),
+        HOLD_SEAT("S014", "success", "Hold seats successfully"),
+        RELEASE_SEAT("S015", "success", "Release seats successfully"),
+
 
         // Delete operations
         USER_DELETED("S021", "success", "User '%s' deleted successfully"),
@@ -66,7 +69,10 @@ public enum ApiMessage {
         // Server Errors (HTTP 5xx)
         SERVER_ERROR("E500", "error", "An unexpected error occurred. Please try again later."),
         DATABASE_ERROR("E500_DB", "error", "Unable to process request. Please try again."),
-        SERVICE_UNAVAILABLE("E503", "error", "Service temporarily unavailable");
+        SERVICE_UNAVAILABLE("E503", "error", "Service temporarily unavailable"),
+
+        // Other
+        CUSTOM_ERROR("E503", "error", "Error : %s");
 
         private final String code;
         private final String type;

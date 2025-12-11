@@ -1,6 +1,7 @@
 package com.viecinema.auth.security;
 
 import com.viecinema.auth.entity.User;
+import com.viecinema.security.CustomUserDetails;
 import com.viecinema.auth.repository.UserRepository;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Email"));
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPasswordHash(),
-                // enabled or disable
-                user.getIsActive(),
-                //accountNonExpired
-                true,
-                // credentialsNonExpired
-                true,
-                // accountNonLocked
-                user.getLockedUntil() == null,
-                getAuthorities(user)
-        );
+    return CustomUserDetails.build(user);
     }
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         return Collections.singletonList(new SimpleGrantedAuthority(
