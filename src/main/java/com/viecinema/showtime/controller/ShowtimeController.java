@@ -68,9 +68,6 @@ public class ShowtimeController {
                 ApiResponse.success(ApiMessage.SHOWTIMES_RETRIEVED, showtimes));
     }
 
-    /**
-     * Lấy chi tiết một suất chiếu
-     */
     @GetMapping(SHOWTIMES_DETAIL_PATH)
     public ResponseEntity<ApiResponse<ShowtimeDetailResponse>> getShowtimeDetail(
             @PathVariable @Min(1) Integer showtimeId
@@ -83,9 +80,6 @@ public class ShowtimeController {
                 ApiResponse.success(ApiMessage.SHOWTIME_DETAIL_RETRIEVED,showtimes,showtimeId));
     }
 
-    /**
-     * Shortcut: Lấy lịch chiếu theo phim
-     */
     @GetMapping(SHOWTIMES_BY_MOVIE_PATH)
     public ResponseEntity<ApiResponse<Object>> getShowtimesByMovie(
             @PathVariable @Min(1) Integer movieId,
@@ -107,9 +101,6 @@ public class ShowtimeController {
                 ApiResponse.success(ApiMessage.SHOWTIMES_RETRIEVED,showtimes));
     }
 
-    /**
-     * Shortcut: Lấy lịch chiếu theo rạp
-     */
     @GetMapping(SHOWTIMES_BY_CINEMA_PATH)
     public ResponseEntity<ApiResponse<Object>> getShowtimesByCinema(
             @PathVariable @Min(1) Integer cinemaId,

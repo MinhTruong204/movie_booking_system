@@ -39,15 +39,21 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             throw new BadRequestException("Must provide at least movieId or cinemaId");
         }
 
-        // [DEV-MODE] Nếu cờ ignoreShowtimeTimeFilter là true, bỏ qua các bộ lọc thời gian
+        // [DEV-MODE] If ignoreShowtimeTimeFilter is true, bypass time filters
         if (ignoreShowtimeTimeFilter) {
             log.warn("DEV MODE: Bỏ qua bộ lọc thời gian cho suất chiếu.");
-            request.setDate(null); // Bỏ qua ngày cụ thể
-            request.setFutureOnly(false); // Lấy cả suất chiếu trong quá khứ
-            request.setIgnoreTimeFilter(true); // Đánh dấu để bỏ qua hoàn toàn bộ lọc thời gian
+            request.setDate(null); // Ignore specific date
+            request.setFutureOnly(false); // Include past showtimes
+            request.setIgnoreTimeFilter(true); // Mark to completely bypass time filters in the repository
+        } else if (request.getDate() == null) {
+            // If no date is provided (and not in dev-mode), we want to show upcoming showtimes.
+            // We can signal this to the repository by setting a flag.
+            request.setIgnoreTimeFilter(true); // We'll handle the "future" logic in the query
+            request.setFutureOnly(true); // Ensure we only get future showtimes
         }
 
-        // Route theo groupBy
+
+        // Route based on groupBy
         return switch (request.getGroupBy()) {
             case CINEMA -> findShowtimesGroupByCinema(request);
             case TIMESLOT -> findShowtimesGroupByTimeSlot(request);
@@ -61,7 +67,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public List<ShowtimeDetailResponse> findShowtimesList(ShowtimeFilterRequest request) {
         log.info("Finding showtimes with request: {}", request);
 
-        // Query từ repository
+        // Query from repository
         List<Object[]> rawResults = showtimeRepository.findShowtimesWithDetails(
                 request.getMovieId(),
                 request.getCinemaId(),
@@ -71,15 +77,16 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 request.getEndDateTime(),
                 request.getActiveOnly(),
                 request.getFutureOnly(),
-                request.getSortBy().name()
+                request.getSortBy().name(),
+                request.isIgnoreTimeFilter() // Pass the new flag to the repository method
         );
 
-        // Map sang DTO
+        // Map to DTO
         List<ShowtimeDetailResponse> showtimes = rawResults.stream()
                 .map(this::mapToShowtimeDetailResponse)
                 .collect(Collectors.toList());
 
-        // Load pricing info nếu cần
+        // Load pricing info if needed
         if (request.getIncludeAvailableSeats()) {
             showtimes.forEach(this::enrichWithPricingInfo);
         }
@@ -126,14 +133,14 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public List<ShowtimeGroupByTimeSlotDto> findShowtimesGroupByTimeSlot(ShowtimeFilterRequest request) {
         List<ShowtimeDetailResponse> allShowtimes = findShowtimesList(request);
 
-        // Calculate time slot cho mỗi showtime
+        // Calculate time slot for each showtime
         allShowtimes.forEach(st -> st.setTimeSlot(st.calculateTimeSlot()));
 
         // Group by time slot
         Map<String, List<ShowtimeDetailResponse>> groupedMap = allShowtimes.stream()
                 .collect(Collectors. groupingBy(ShowtimeDetailResponse::getTimeSlot));
 
-        // Convert to DTO và sort theo thứ tự thời gian
+        // Convert to DTO and sort by time order
         List<String> timeSlotOrder = Arrays.asList("MORNING", "AFTERNOON", "EVENING", "NIGHT");
 
         List<ShowtimeGroupByTimeSlotDto> result = timeSlotOrder.stream()
@@ -208,20 +215,21 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .activeOnly(true)
                 .futureOnly(false)
                 . includeAvailableSeats(true)
+                .ignoreTimeFilter(true) // Ensure we can fetch details for any showtime
                 .build();
 
         List<Object[]> results = showtimeRepository.findShowtimesWithDetails(
-                null, null, null, null,
-                LocalDateTime.now(). minusDays(1),
-                LocalDateTime.now(). plusDays(30),
-                true, false, "START_TIME"
+                null, null, showtimeId, null,
+                null, // startDateTime
+                null, // endDateTime
+                true, false, "START_TIME",
+                true // ignoreTimeFilter
         );
 
         ShowtimeDetailResponse dto = results.stream()
                 .map(this::mapToShowtimeDetailResponse)
-                .filter(st -> st.getShowtimeId().equals(showtimeId))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Can not find showtime"));
+                .orElseThrow(() -> new ResourceNotFoundException("Can not find showtime with id: " + showtimeId));
 
         enrichWithPricingInfo(dto);
         dto.setTimeSlot(dto.calculateTimeSlot());
@@ -230,7 +238,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     }
 
     /**
-     * Map Object[] từ native query sang ShowtimeDetailResponse
+     * Map Object[] from native query to ShowtimeDetailResponse
      */
     private ShowtimeDetailResponse mapToShowtimeDetailResponse(Object[] row) {
         int idx = 0;
@@ -241,9 +249,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                         .movieId((Integer) row[idx++])
                         .build())
                 .room(ShowtimeDetailResponse.RoomInfo.builder()
-                        . roomId((Integer) row[idx++])
+                        .roomId((Integer) row[idx++])
                         .build())
-                .startTime(((Timestamp) row[idx++]). toLocalDateTime())
+                .startTime(((Timestamp) row[idx++]).toLocalDateTime())
                 .endTime(((Timestamp) row[idx++]).toLocalDateTime())
                 .basePrice((BigDecimal) row[idx++])
                 .isActive((Boolean) row[idx++])
@@ -287,9 +295,6 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return dto;
     }
 
-    /**
-     * Enrich DTO with pricing info by seat type
-     */
     private void enrichWithPricingInfo(ShowtimeDetailResponse dto) {
         List<Object[]> pricingData = showtimeRepository.findPricingInfoByShowtime(dto.getShowtimeId());
 

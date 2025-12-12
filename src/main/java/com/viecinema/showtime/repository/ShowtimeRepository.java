@@ -55,8 +55,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
             AND (:cinemaId IS NULL OR c.cinema_id = :cinemaId)
             AND (:roomId IS NULL OR s.room_id = :roomId)
             AND (:city IS NULL OR c.city = :city)
-            AND s.start_time >= :startDateTime
-            AND s.start_time <= :endDateTime
+            AND (:ignoreTimeFilter = TRUE OR (s.start_time >= :startDateTime AND s.start_time <= :endDateTime))
             AND (:activeOnly = FALSE OR s.is_active = TRUE)
             AND (:futureOnly = FALSE OR s.start_time > NOW())
             AND s.deleted_at IS NULL
@@ -80,7 +79,8 @@ public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
             @Param("endDateTime") LocalDateTime endDateTime,
             @Param("activeOnly") Boolean activeOnly,
             @Param("futureOnly") Boolean futureOnly,
-            @Param("sortBy") String sortBy
+            @Param("sortBy") String sortBy,
+            @Param("ignoreTimeFilter") boolean ignoreTimeFilter
     );
 
     /**
