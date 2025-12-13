@@ -16,6 +16,8 @@ public class ShowtimeInfo {
     private String posterUrl;
     private Integer duration;
     private String ageRating;
+    private String cinemaName;
+    private String roomName;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime startTime;

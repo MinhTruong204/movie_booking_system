@@ -7,6 +7,8 @@ public final class ApiConstant {
     public static final String SHOWTIMES_PATH = "/api/showtimes";
     public static final String GENRE_PATH = "/api/genres";
     public static final String BOOKING_PATH = "/api/bookings";
+    public static final String COMBO_PATH = "/api/combos";
+    public static final String PROMOTION_PATH = "/api/promotions";
 
 
 //  Detail API
@@ -23,6 +25,7 @@ public final class ApiConstant {
     public static final String HOLD_SEATS_PATH = "/hold-seats";
     public static final String RELEASE_SEATS_PATH = "/release-seats";
     public static final String RELEASE_SEAT_PATH = "/release-seat";
+    public static final String CAlCULATE_PATH = "/calculate";
 
 
 

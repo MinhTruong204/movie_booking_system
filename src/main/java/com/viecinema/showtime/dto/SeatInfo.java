@@ -14,6 +14,7 @@ public class SeatInfo {
     private Integer seatNumber;    // 1, 2, 3...
     private Integer seatTypeId;
     private String seatTypeName;
+    private BigDecimal priceMultiplier;
     private BigDecimal price;
 
     /**

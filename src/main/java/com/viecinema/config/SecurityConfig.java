@@ -35,14 +35,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Áp dụng cấu hình CORS
                 .csrf(csrf -> csrf.disable()) // non-deprecated way to disable CSRF (Spring Security 6.1+)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                AUTH_PATH + "/**",
-                                MOVIE_PATH + "/**",
-                                SHOWTIMES_PATH + "/**",
-                                GENRE_PATH + "/**",
-                                "/actuator/health")
-                        .permitAll()
-                        .anyRequest().authenticated()
+                        // Yêu cầu đăng nhập đối với các endpoint liên quan đến đặt vé/giữ ghế
+                        .requestMatchers(BOOKING_PATH + "/**").authenticated()
+                        // Cho phép tất cả các endpoint khác truy cập công khai
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Thêm filter JWT để xác thực token

@@ -33,6 +33,10 @@ public enum ApiMessage {
         SHOWTIME_DETAIL_RETRIEVED("S033", "success", "Showtimes retrieved successfully"),
         SEATMAP_RETRIEVED("S033", "success", "Seatmap retrieved successfully"),
         GENRE_RETRIEVED("S033", "success", "Genre retrieved successfully"),
+        COMBOS_RETRIEVED("S033", "success", "Combos retrieved successfully"),
+        BOOKING_DETAILS_RETRIEVED("S033", "success", "Booking details retrieved successfully"),
+
+
         // ========== ERROR MESSAGES  ==========
 
         // Authentication & Authorization (HTTP 401, 403)
