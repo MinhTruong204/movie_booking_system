@@ -80,7 +80,7 @@ public class BookingServiceImpl implements BookingService {
         validateShowtime(showtime);
 
         // 3.Validate và lock ghế (CRITICAL SECTION)
-        validateSeatAvailability(request.getShowtimeId(), request.getSeatIds());
+        validateSeatAvailability(request.getShowtimeId(), request.getSeatIds(), userId);
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
 
         if (seats.size() != request.getSeatIds().size()) {
@@ -147,7 +147,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public void validateSeatAvailability(Integer showtimeId, List<Integer> seatIds) {
+    public void validateSeatAvailability(Integer showtimeId, List<Integer> seatIds, Integer userId) {
         // Lấy trạng thái ghế với pessimistic lock
         List<SeatStatus> seatStatuses = seatStatusRepository
                 .findByShowtimeAndSeatsWithLock(showtimeId, seatIds);
@@ -197,11 +197,14 @@ public class BookingServiceImpl implements BookingService {
             if (SeatStatusType.HELD.equals(status.getStatus())) {
                 // Kiểm tra xem ghế có hết hạn giữ chưa
                 if (status.getHeldUntil() != null && status.getHeldUntil().isAfter(now)) {
-                    throw new CustomBusinessException(
-                            String.format("Ghế %s%d đang được giữ bởi người khác",
-                                    status.getSeat().getSeatRow(),
-                                    status.getSeat().getSeatNumber())
-                    );
+                    // Nếu ghế đang được giữ bởi người khác, báo lỗi
+                    if (status.getHeldByUser() != null && !status.getHeldByUser().getId().equals(userId)) {
+                        throw new CustomBusinessException(
+                                String.format("Ghế %s%d đang được giữ bởi người khác",
+                                        status.getSeat().getSeatRow(),
+                                        status.getSeat().getSeatNumber())
+                        );
+                    }
                 }
             }
         }

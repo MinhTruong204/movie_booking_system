@@ -166,7 +166,7 @@ public class BookingCalculationService {
                         .ticketsSubtotal(seatsSubtotal)
                         .combosSubtotal(combosSubtotal)
                         .subtotal(subtotal)
-                        .promoDiscount(promotionInfo.getDiscountAmount())
+                        .promoDiscount(promotionInfo != null ? promotionInfo.getDiscountAmount() : BigDecimal.ZERO)
                         .totalDiscount(totalDiscount)
                         .finalAmount(finalAmount)
                         .pointsEarned(loyaltyPoints)

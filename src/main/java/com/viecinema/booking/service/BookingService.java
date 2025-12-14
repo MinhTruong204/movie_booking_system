@@ -15,7 +15,7 @@ public interface BookingService {
     /**
      * Kiểm tra tính khả dụng của ghế
      */
-    void validateSeatAvailability(Integer showtimeId, List<Integer> seatIds);
+    void validateSeatAvailability(Integer showtimeId, List<Integer> seatIds, Integer userId);
 
     /**
      * Tính toán giá vé
