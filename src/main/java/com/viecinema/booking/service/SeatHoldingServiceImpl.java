@@ -2,8 +2,8 @@ package com.viecinema.booking.service;
 
 import com.viecinema.auth.repository.UserRepository;
 import com.viecinema.booking.dto.HeldSeatDto;
-import com.viecinema.booking.dto.HoldSeatsRequest;
-import com.viecinema.booking.dto.HoldSeatsResponse;
+import com.viecinema.booking.dto.request.HoldSeatsRequest;
+import com.viecinema.booking.dto.response.HoldSeatsResponse;
 import com.viecinema.booking.dto.UnavailableSeatDto;
 import com.viecinema.booking.exception.SeatAlreadyHeldException;
 import com.viecinema.booking.exception.SeatNotHeldByUserException;

@@ -2,10 +2,9 @@ package com.viecinema.showtime.service;
 
 import com.viecinema.common.exception.BadRequestException;
 import com.viecinema.common.exception.ResourceNotFoundException;
-import com.viecinema.showtime.dto.ShowtimeDetailResponse;
-import com.viecinema.showtime.dto.ShowtimeFilterRequest;
-import com.viecinema.showtime.dto.ShowtimeGroupByCinemaDto;
-import com.viecinema.showtime.dto.ShowtimeGroupByTimeSlotDto;
+import com.viecinema.showtime.dto.*;
+import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
+import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.repository.ShowtimeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -192,7 +190,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 roomsMap.forEach((roomId, showtimes) -> {
                     Map<String, Object> roomGroup = new HashMap<>();
                     roomGroup.put("roomId", roomId);
-                    roomGroup. put("roomName", showtimes.get(0).getRoom().getName());
+                    roomGroup.put("roomName", showtimes.get(0).getRoom().getRoomName());
                     roomGroup.put("showtimes", showtimes);
                     rooms.add(roomGroup);
                 });
@@ -245,10 +243,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
         ShowtimeDetailResponse dto = ShowtimeDetailResponse.builder()
                 .showtimeId((Integer) row[idx++])
-                .movie(ShowtimeDetailResponse.MovieInfo.builder()
+                .movie(MovieInfo.builder()
                         .movieId((Integer) row[idx++])
                         .build())
-                .room(ShowtimeDetailResponse.RoomInfo.builder()
+                .room(RoomInfo.builder()
                         .roomId((Integer) row[idx++])
                         .build())
                 .startTime(((Timestamp) row[idx++]).toLocalDateTime())
@@ -264,7 +262,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         dto.getMovie().setAgeRating((String) row[idx++]);
 
         // Cinema info
-        dto.setCinema(ShowtimeDetailResponse.CinemaInfo.builder()
+        dto.setCinema(CinemaInfo.builder()
                 .cinemaId((Integer) row[idx++])
                 .name((String) row[idx++])
                 .address((String) row[idx++])
@@ -272,7 +270,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .build());
 
         // Room info
-        dto.getRoom().setName((String) row[idx++]);
+        dto.getRoom().setRoomName((String) row[idx++]);
         dto.getRoom().setTotalSeats((Integer) row[idx++]);
 
         // Seat availability
@@ -284,7 +282,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         double occupancyRate = totalSeats > 0 ?
                 ((double) bookedSeats / totalSeats) * 100 : 0;
 
-        dto.setSeatAvailability(ShowtimeDetailResponse.SeatAvailability.builder()
+        dto.setSeatAvailability(SeatAvailability.builder()
                 . totalSeats(totalSeats)
                 .availableSeats(availableSeats)
                 .bookedSeats(bookedSeats)
@@ -323,7 +321,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             }
         }
 
-        dto.setPricing(ShowtimeDetailResponse.PricingInfo.builder()
+        dto.setPricing(PricingInfo.builder()
                 .basePrice(dto.getBasePrice())
                 .pricesBySeatType(pricesBySeatType)
                 .minPrice(minPrice != null ? minPrice.setScale(0, RoundingMode. HALF_UP) : dto.getBasePrice())

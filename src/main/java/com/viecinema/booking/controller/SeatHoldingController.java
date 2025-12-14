@@ -1,9 +1,9 @@
 package com.viecinema.booking.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
-import com.viecinema.booking.dto.HoldSeatsRequest;
-import com.viecinema.booking.dto.HoldSeatsResponse;
-import com.viecinema.booking.dto.ReleaseSeatRequest;
+import com.viecinema.booking.dto.request.HoldSeatsRequest;
+import com.viecinema.booking.dto.response.HoldSeatsResponse;
+import com.viecinema.booking.dto.request.ReleaseSeatRequest;
 import com.viecinema.booking.service.SeatHoldingService;
 import com.viecinema.security.CustomUserDetails;
 import jakarta.validation.Valid;

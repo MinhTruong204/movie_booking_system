@@ -3,6 +3,7 @@ package com.viecinema.showtime.service;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.movie.entity.Movie;
 import com.viecinema.showtime.dto.*;
+import com.viecinema.showtime.dto.response.SeatmapResponse;
 import com.viecinema.showtime.entity.*;
 import com.viecinema.showtime.repository.SeatRepository;
 import com.viecinema.showtime.repository.SeatStatusRepository;

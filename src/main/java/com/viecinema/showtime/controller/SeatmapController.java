@@ -2,11 +2,10 @@ package com.viecinema.showtime.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.showtime.dto.SeatmapResponse;
+import com.viecinema.showtime.dto.response.SeatmapResponse;
 import com.viecinema.showtime.service.SeatmapService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

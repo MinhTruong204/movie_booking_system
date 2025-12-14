@@ -1,7 +1,7 @@
 package com.viecinema.booking.service;
 
-import com.viecinema.booking.dto.HoldSeatsRequest;
-import com.viecinema.booking.dto.HoldSeatsResponse;
+import com.viecinema.booking.dto.request.HoldSeatsRequest;
+import com.viecinema.booking.dto.response.HoldSeatsResponse;
 
 public interface SeatHoldingService {
     HoldSeatsResponse holdSeats(HoldSeatsRequest request, Integer userId);

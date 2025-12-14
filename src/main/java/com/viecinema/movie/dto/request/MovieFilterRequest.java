@@ -1,4 +1,4 @@
-package com.viecinema.movie.dto;
+package com.viecinema.movie.dto.request;
 
 import com.viecinema.common.enums.MovieStatus;
 import jakarta.validation.constraints.Max;

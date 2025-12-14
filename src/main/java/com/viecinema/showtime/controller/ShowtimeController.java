@@ -2,13 +2,12 @@ package com.viecinema.showtime.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.showtime.dto.ShowtimeDetailResponse;
-import com.viecinema.showtime.dto.ShowtimeFilterRequest;
+import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
+import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.service.ShowtimeService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Parameter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 import static com.viecinema.common.constant.ApiConstant.*;
-import static com.viecinema.common.constant.ApiMessage.SHOWTIME_DETAIL_RETRIEVED;
 
 @RestController
 @RequestMapping(SHOWTIMES_PATH)

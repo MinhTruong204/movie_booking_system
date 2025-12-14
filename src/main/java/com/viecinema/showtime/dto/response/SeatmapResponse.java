@@ -1,5 +1,6 @@
-package com.viecinema.showtime.dto;
+package com.viecinema.showtime.dto.response;
 
+import com.viecinema.showtime.dto.*;
 import lombok.Builder;
 import lombok.Data;
 

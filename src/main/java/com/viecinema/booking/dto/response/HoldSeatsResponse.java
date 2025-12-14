@@ -1,5 +1,6 @@
-package com.viecinema.booking.dto;
+package com.viecinema.booking.dto.response;
 
+import com.viecinema.booking.dto.HeldSeatDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

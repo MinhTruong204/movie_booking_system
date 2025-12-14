@@ -1,8 +1,8 @@
 package com.viecinema.booking.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
-import com.viecinema.booking.dto.CalculateBookingRequest;
-import com.viecinema.booking.dto.CalculateBookingResponse;
+import com.viecinema.booking.dto.request.CalculateBookingRequest;
+import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.service.BookingCalculationService;
 import com.viecinema.common.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.viecinema.common.constant.ApiConstant.BOOKING_PATH;
 import static com.viecinema.common.constant.ApiConstant.CAlCULATE_PATH;
 import static com.viecinema.common.constant.ApiMessage.BOOKING_DETAILS_RETRIEVED;
-import static com.viecinema.common.constant.ApiMessage.COMBOS_RETRIEVED;
 
 @RestController
 @RequestMapping(BOOKING_PATH)

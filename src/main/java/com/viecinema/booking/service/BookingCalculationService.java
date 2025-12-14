@@ -1,7 +1,7 @@
 package com.viecinema.booking.service;
 
-import com.viecinema.booking.dto.CalculateBookingRequest;
-import com.viecinema.booking.dto.CalculateBookingResponse;
+import com.viecinema.booking.dto.request.CalculateBookingRequest;
+import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.entity.Combo;
 import com.viecinema.booking.entity.Promotion;
 import com.viecinema.booking.entity.UserPromotionUsage;

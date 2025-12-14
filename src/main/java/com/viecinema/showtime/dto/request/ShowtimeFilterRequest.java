@@ -1,4 +1,4 @@
-package com.viecinema.showtime.dto;
+package com.viecinema.showtime.dto.request;
 
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;

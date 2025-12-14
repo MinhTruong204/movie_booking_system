@@ -1,11 +1,10 @@
-package com.viecinema.booking.dto;
+package com.viecinema.booking.dto.response;
 
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter

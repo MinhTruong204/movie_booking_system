@@ -1,7 +1,7 @@
 package com.viecinema.showtime.service;
 
-import com.viecinema.showtime.dto.ShowtimeDetailResponse;
-import com.viecinema.showtime.dto.ShowtimeFilterRequest;
+import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
+import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.dto.ShowtimeGroupByCinemaDto;
 import com.viecinema.showtime.dto.ShowtimeGroupByTimeSlotDto;
 

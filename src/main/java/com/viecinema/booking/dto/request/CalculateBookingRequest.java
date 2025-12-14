@@ -1,4 +1,4 @@
-package com.viecinema.booking.dto;
+package com.viecinema.booking.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
