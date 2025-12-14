@@ -1,5 +1,9 @@
 package com.viecinema.booking.service;
 
+import com.viecinema.booking.dto.ComboInfo;
+import com.viecinema.booking.dto.ComboItem;
+import com.viecinema.booking.dto.PriceBreakdown;
+import com.viecinema.booking.dto.PromotionInfo;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
 import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.entity.Combo;
@@ -85,19 +89,19 @@ public class BookingCalculationService {
         }
 
         // 3. Tính giá combo
-        List<CalculateBookingResponse.ComboInfo> comboInfos = new ArrayList<>();
+        List<ComboInfo> comboInfos = new ArrayList<>();
         BigDecimal combosSubtotal = BigDecimal.ZERO;
 
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             List<Integer> comboIds = request.getCombos().stream()
-                    .map(CalculateBookingRequest.ComboItem::getComboId)
+                    .map(ComboItem::getComboId)
                     .collect(Collectors. toList());
 
             List<Combo> combos = comboService.getCombosByIds(comboIds);
             Map<Integer, Combo> comboMap = combos.stream()
                     .collect(Collectors. toMap(Combo::getId, c -> c));
 
-            for (CalculateBookingRequest. ComboItem item : request.getCombos()) {
+            for (ComboItem item : request.getCombos()) {
                 Combo combo = comboMap.get(item.getComboId());
                 if (combo == null) {
                     throw new ResourceNotFoundException("Combo doesn't exists: " + item.getComboId());
@@ -107,9 +111,9 @@ public class BookingCalculationService {
                         .multiply(BigDecimal.valueOf(item.getQuantity()));
                 combosSubtotal = combosSubtotal.add(comboTotal);
 
-                comboInfos.add(CalculateBookingResponse.ComboInfo.builder()
+                comboInfos.add(ComboInfo.builder()
                         .comboId(combo.getId())
-                        .name(combo.getName())
+                        .comboName(combo.getName())
                         .quantity(item.getQuantity())
                         .unitPrice(combo.getPrice())
                         .totalPrice(comboTotal)
@@ -121,7 +125,7 @@ public class BookingCalculationService {
         BigDecimal subtotal = seatsSubtotal.add(combosSubtotal);
 
         // 5.  Áp dụng khuyến mãi (nếu có)
-        CalculateBookingResponse.PromotionInfo promotionInfo = null;
+        PromotionInfo promotionInfo = null;
         BigDecimal totalDiscount = BigDecimal.ZERO;
 
         if (request.getPromotionCode() != null && !request.getPromotionCode().isBlank()) {
@@ -135,7 +139,7 @@ public class BookingCalculationService {
             BigDecimal discountAmount = calculateDiscount(promotion, subtotal);
             totalDiscount = discountAmount;
 
-            promotionInfo = CalculateBookingResponse.PromotionInfo. builder()
+            promotionInfo = PromotionInfo. builder()
                     .code(promotion.getCode())
                     . description(promotion.getDescription())
                     .discountType(promotion.getDiscountType(). name())
@@ -158,14 +162,14 @@ public class BookingCalculationService {
                 .showtime(buildShowtimeInfo(showtime))
                 .seats(seatInfos)
                 .combos(comboInfos)
-                .pricingBreakdown(CalculateBookingResponse.PricingBreakdown.builder()
-                        .seatsSubtotal(seatsSubtotal)
+                .pricingBreakdown(PriceBreakdown.builder()
+                        .ticketsSubtotal(seatsSubtotal)
                         .combosSubtotal(combosSubtotal)
                         .subtotal(subtotal)
-                        .promotion(promotionInfo)
+                        .promoDiscount(promotionInfo.getDiscountAmount())
                         .totalDiscount(totalDiscount)
                         .finalAmount(finalAmount)
-                        .loyaltyPointsEarned(loyaltyPoints)
+                        .pointsEarned(loyaltyPoints)
                         .build())
                 .build();
     }

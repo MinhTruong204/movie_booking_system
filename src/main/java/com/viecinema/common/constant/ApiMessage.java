@@ -11,7 +11,7 @@ public enum ApiMessage {
         // Create operations
         USER_CREATED("S001", "success", "User '%s' created successfully"),
         USER_PROFILE_CREATED("S002", "success", "Profile for user '%s' created successfully"),
-        ORDER_CREATED("S003", "success", "Order #%s created successfully with total $%.2f"),
+        BOOKING_CREATED("S003", "success", "Booking #%s created successfully with total $%.2f"),
 
         // Update operations
         USER_UPDATED("S011", "success", "User '%s' updated successfully"),

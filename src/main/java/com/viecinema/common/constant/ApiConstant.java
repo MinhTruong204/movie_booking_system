@@ -26,6 +26,8 @@ public final class ApiConstant {
     public static final String RELEASE_SEATS_PATH = "/release-seats";
     public static final String RELEASE_SEAT_PATH = "/release-seat";
     public static final String CAlCULATE_PATH = "/calculate";
+    public static final String CREATE_BOOKING_PATH = "/create";
+
 
 
 

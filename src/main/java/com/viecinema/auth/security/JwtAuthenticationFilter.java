@@ -44,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(TOKEN_PREFIX.length());
-        log.info("JWT: {}", jwt);
         try {
             userEmail = jwtService.extractUsername(jwt);
             log.info("Email: {}", userEmail);
@@ -63,8 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         }catch (Exception e){
+            log.error("Error in JwtAuthenticationFilter");
             throw e;
         }
+        log.info("Direct to controller from : " + request.getRequestURI());
         filterChain.doFilter(request, response);
     }
 

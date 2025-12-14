@@ -1,5 +1,6 @@
 package com.viecinema.booking.dto.request;
 
+import com.viecinema.booking.dto.ComboItem;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,16 +39,4 @@ public class BookingRequest {
     // Số điểm muốn dùng (nếu useLoyaltyPoints = true)
     @Min(0)
     private Integer loyaltyPointsToUse = 0;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ComboItem {
-        @NotNull
-        private Integer comboId;
-
-        @Min(1)
-        @Max(20)
-        private Integer quantity;
-    }
 }

@@ -7,6 +7,7 @@ import com.viecinema.booking.dto.response.HoldSeatsResponse;
 import com.viecinema.booking.dto.UnavailableSeatDto;
 import com.viecinema.booking.exception.SeatAlreadyHeldException;
 import com.viecinema.booking.exception.SeatNotHeldByUserException;
+import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.CustomBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.auth.entity.User;
@@ -77,7 +78,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
             if (status == null) {
                 // Seat has no status record -> available for holding
                 availableSeats.add(seatId);
-            } else if (status.getStatus() == SeatStatus.Status.BOOKED) {
+            } else if (status.getStatus() == SeatStatusType.BOOKED) {
                 // Seat is already booked
                 Seat seat = seatRepository.findById(seatId)
                         .orElseThrow(() -> new ResourceNotFoundException("Seat"));
@@ -85,9 +86,9 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
                         .seatId(seatId)
                         .seatRow(seat.getSeatRow())
                         .seatNumber(seat.getSeatNumber())
-                        .status(SeatStatus.Status.BOOKED.getValue())
+                        .status(SeatStatusType.BOOKED.getValue())
                         .build());
-            } else if (status.getStatus() == SeatStatus.Status.HELD) {
+            } else if (status.getStatus() == SeatStatusType.HELD) {
                 // Check xem có phải user hiện tại đang giữ không
                 if (! userId.equals(status.getHeldByUser().getId())) {
                     // Người khác đang giữ
@@ -97,7 +98,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
                             . seatId(seatId)
                             .seatRow(seat.getSeatRow())
                             .seatNumber(seat. getSeatNumber())
-                            . status(SeatStatus.Status.HELD.getValue())
+                            . status(SeatStatusType.HELD.getValue())
                             . heldUntil(status.getHeldUntil())
                             . build());
                 } else {
@@ -138,13 +139,13 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
                 status = SeatStatus.builder()
                         .showtime(showtime)
                         .seat(seat)
-                        .status(SeatStatus.Status.HELD)
+                        .status(SeatStatusType.HELD)
                         .heldByUser(user)
                         .heldUntil(heldUntil)
                         .build();
             } else {
                 // Update
-                status.setStatus(SeatStatus.Status.HELD);
+                status.setStatus(SeatStatusType.HELD);
                 status.setHeldByUser(user);
                 status.setHeldUntil(heldUntil);
             }

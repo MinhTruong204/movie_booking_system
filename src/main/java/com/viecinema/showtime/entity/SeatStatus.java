@@ -2,6 +2,7 @@ package com.viecinema.showtime.entity;
 
 import com.viecinema.auth.entity.User;
 import com.viecinema.common.entity.BaseEntity;
+import com.viecinema.common.enums.SeatStatusType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -20,23 +21,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class SeatStatus extends BaseEntity {
-
-    public enum Status {
-        AVAILABLE("available"),
-        BOOKED("booked"),
-        HELD("held");
-
-        private final String value;
-
-        Status(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "seat_status_id")
@@ -53,7 +37,7 @@ public class SeatStatus extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private Status status = Status.AVAILABLE;
+    private SeatStatusType status = SeatStatusType.AVAILABLE;
 
     @ManyToOne(fetch = FetchType. LAZY)
     @JoinColumn(name = "held_by_user_id")
@@ -71,11 +55,11 @@ public class SeatStatus extends BaseEntity {
      * Kiểm tra ghế có thể đặt được không
      */
     public boolean isAvailable() {
-        if (status == Status.AVAILABLE) {
+        if (status == SeatStatusType.AVAILABLE) {
             return true;
         }
         // Nếu đang held nhưng đã hết hạn -> available
-        if (status == Status.HELD && heldUntil != null && heldUntil.isBefore(LocalDateTime.now())) {
+        if (status == SeatStatusType.HELD && heldUntil != null && heldUntil.isBefore(LocalDateTime.now())) {
             return true;
         }
         return false;
@@ -85,7 +69,7 @@ public class SeatStatus extends BaseEntity {
      * Kiểm tra ghế đang được held bởi user cụ thể
      */
     public boolean isHeldBy(Integer userId) {
-        return status == Status.HELD
+        return status == SeatStatusType.HELD
                 && heldByUser != null
                 && heldByUser.getId(). equals(userId)
                 && heldUntil != null
@@ -96,7 +80,7 @@ public class SeatStatus extends BaseEntity {
      * Tính thời gian còn lại (giây) nếu đang held
      */
     public Long getRemainingHoldSeconds() {
-        if (status != Status.HELD || heldUntil == null) {
+        if (status != SeatStatusType.HELD || heldUntil == null) {
             return null;
         }
         long seconds = java.time.Duration. between(LocalDateTime.now(), heldUntil). getSeconds();

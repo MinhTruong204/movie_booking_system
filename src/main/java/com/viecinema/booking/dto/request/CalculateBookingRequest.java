@@ -1,5 +1,6 @@
 package com.viecinema.booking.dto.request;
 
+import com.viecinema.booking.dto.ComboItem;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -22,17 +23,4 @@ public class CalculateBookingRequest {
     private List<ComboItem> combos;
 
     private String promotionCode;
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ComboItem {
-        @NotNull
-        private Integer comboId;
-
-        @Min(value = 1, message = "The quantity must be at least 1")
-        @Max(value = 20, message = "The quantity must not exceed 20")
-        private Integer quantity;
-    }
 }
