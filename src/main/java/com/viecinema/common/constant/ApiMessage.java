@@ -38,7 +38,7 @@ public enum ApiMessage {
         COMBOS_RETRIEVED("S033", "success", "Combos retrieved successfully"),
         BOOKING_DETAILS_RETRIEVED("S033", "success", "Booking details retrieved successfully"),
         BOOKINGS_USER_RETRIEVED("S033", "success", "%d bookings retrieved"),
-
+        PAYMENT_DETAIL_RETRIEVED("S033", "success", "Payment details retrieved successfully"),
         // ========== ERROR MESSAGES  ==========
 
         // Authentication & Authorization (HTTP 401, 403)

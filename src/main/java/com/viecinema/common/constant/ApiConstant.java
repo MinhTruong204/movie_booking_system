@@ -36,6 +36,7 @@ public final class ApiConstant {
     public static final String VNPAY_CALLBACK_PATH = "/vnpay/callback";
     public static final String USER_PROFILE_PATH = "/profile";
     public static final String BOOKINGS_USER_PATH = "/my-bookings";
+    public static final String PAYMENT_DETAIL_PATH = "/booking/{bookingId}";
 
 
 

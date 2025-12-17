@@ -4,8 +4,10 @@ import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.auth.security.CurrentUser;
 import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.payment.dto.request.VnpayPaymentRequest;
+import com.viecinema.payment.dto.response.PaymentInfoResponse;
 import com.viecinema.payment.dto.response.VnpayCallbackResponse;
 import com.viecinema.payment.dto.response.VnpayPaymentResponse;
+import com.viecinema.payment.service.PaymentService;
 import com.viecinema.payment.service.VnpayService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +24,7 @@ import java.util.Map;
 
 import static com.viecinema.common.constant.ApiConstant.*;
 import static com.viecinema.common.constant.ApiMessage.PAYMENT_CREATED;
+import static com.viecinema.common.constant.ApiMessage.PAYMENT_DETAIL_RETRIEVED;
 
 @Slf4j
 @RestController
@@ -30,9 +33,26 @@ import static com.viecinema.common.constant.ApiMessage.PAYMENT_CREATED;
 public class PaymentController {
 
     private final VnpayService vnpayService;
+    private final PaymentService paymentService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
+
+    /**
+     * Lấy thông tin thanh toán từ booking ID
+     */
+    @GetMapping(PAYMENT_DETAIL_PATH)
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<PaymentInfoResponse>> getPaymentByBookingId(
+            @CurrentUser UserPrincipal currentUser,
+            @PathVariable Integer bookingId) {
+
+        log.info("User {} getting payment info for booking {}", currentUser.getId(), bookingId);
+
+        PaymentInfoResponse response = paymentService.getPaymentByBookingId(bookingId);
+
+        return ResponseEntity.ok(ApiResponse.success(PAYMENT_DETAIL_RETRIEVED, response));
+    }
 
     /**
      * Tạo URL thanh toán VNPay
