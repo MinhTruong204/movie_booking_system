@@ -9,6 +9,9 @@ public final class ApiConstant {
     public static final String BOOKING_PATH = "/api/bookings";
     public static final String COMBO_PATH = "/api/combos";
     public static final String PROMOTION_PATH = "/api/promotions";
+    public static final String PAYMENT_PATH = "/api/payments";
+    public static final String VNPAY_IPN_PATH = "/vnpay/ipn";
+
 
 
 //  Detail API
@@ -27,6 +30,10 @@ public final class ApiConstant {
     public static final String RELEASE_SEAT_PATH = "/release-seat";
     public static final String CAlCULATE_PATH = "/calculate";
     public static final String CREATE_BOOKING_PATH = "/create";
+    public static final String VNPAY_CREATE_PATH = "/vnpay/create";
+    public static final String VNPAY_CALLBACK_PATH = "/vnpay/callback";
+
+
 
 
 

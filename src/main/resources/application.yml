@@ -43,6 +43,25 @@ app:
   development:
     # Khi true, API showtime sẽ bỏ qua bộ lọc ngày và thời gian, lấy tất cả suất chiếu
     ignore-showtime-time-filter: false
+  base-url: http://localhost:8080  # Dev
+  frontend-url: http://localhost:3000  # URL frontend để redirect
+
+vnpay:
+  # Thông tin từ VNPay Sandbox
+  tmn-code: HLBPLRMV # VD:  DEMOV01P
+  hash-secret: PM6GQJ9RQ8FYXHTC55O1NR1TW0MR361A  # VD:  LMREXAMPLEKEY123456789
+  api-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: ${app.base-url}/api/payments/vnpay/callback  # URL nhận kết quả
+  ipn-url: ${app.base-url}/api/payments/vnpay/ipn  # URL nhận IPN (Instant Payment Notification)
+
+  # Cấu hình timeout
+  timeout: 15  # 15 phút
+
+  # Cấu hình version
+  version: 2.1.0
+  command:  pay
+  currency-code: VND
+  locale: vn  # vn hoặc en
 
 ---
 # Cấu hình cho môi trường Development (dev)
