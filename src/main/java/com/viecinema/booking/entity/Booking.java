@@ -8,12 +8,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "bookings", indexes = {
@@ -70,7 +70,7 @@ public class Booking extends DeletableEntity {
     private String qrCodeImageUrl;
 
     @Column(name = "checked_in_at")
-    private Instant checkedInAt;
+    private LocalDateTime checkedInAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
@@ -80,4 +80,7 @@ public class Booking extends DeletableEntity {
     @Size(max = 100)
     @Column(name = "checked_in_location", length = 100)
     private String checkedInLocation;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<BookingSeat> bookingSeats;
 }

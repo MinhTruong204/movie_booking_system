@@ -37,7 +37,7 @@ public enum ApiMessage {
         GENRE_RETRIEVED("S033", "success", "Genre retrieved successfully"),
         COMBOS_RETRIEVED("S033", "success", "Combos retrieved successfully"),
         BOOKING_DETAILS_RETRIEVED("S033", "success", "Booking details retrieved successfully"),
-
+        BOOKINGS_USER_RETRIEVED("S033", "success", "%d bookings retrieved"),
 
         // ========== ERROR MESSAGES  ==========
 
