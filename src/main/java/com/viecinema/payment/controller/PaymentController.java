@@ -45,11 +45,12 @@ public class PaymentController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<PaymentInfoResponse>> getPaymentByBookingId(
             @CurrentUser UserPrincipal currentUser,
-            @PathVariable Integer bookingId) {
+            @PathVariable Integer bookingId,
+            HttpServletRequest httpRequest) {
 
         log.info("User {} getting payment info for booking {}", currentUser.getId(), bookingId);
 
-        PaymentInfoResponse response = paymentService.getPaymentByBookingId(bookingId);
+        PaymentInfoResponse response = paymentService.getPaymentByBookingId(bookingId, httpRequest);
 
         return ResponseEntity.ok(ApiResponse.success(PAYMENT_DETAIL_RETRIEVED, response));
     }

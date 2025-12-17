@@ -72,7 +72,7 @@ public class VnpayService {
                 .transactionId(txnRef)
                 .build();
 
-        payment = paymentRepository.save(payment);
+        paymentRepository.save(payment);
 
         // 3. Build VNPay parameters
         Map<String, String> vnpParams = new HashMap<>();
@@ -140,6 +140,60 @@ public class VnpayService {
     }
 
     /**
+     * Tạo payment URL từ một Payment đã tồn tại (không lưu mới)
+     * Không đánh dấu transactional để tránh ghi vào DB khi đang trong transaction read-only
+     */
+    public String buildPaymentUrlForExistingPayment(com.viecinema.payment.entity.Payment payment, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        log.info("Building VNPay payment URL for existing payment: {}", payment.getPaymentId());
+
+        java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+
+        vnpParams.put("vnp_Version", vnpayConfig.getVersion());
+        vnpParams.put("vnp_Command", vnpayConfig.getCommand());
+        vnpParams.put("vnp_TmnCode", vnpayConfig.getTmnCode());
+
+        long amount = payment.getAmount().multiply(java.math.BigDecimal.valueOf(100)).longValue();
+        vnpParams.put("vnp_Amount", String.valueOf(amount));
+
+        vnpParams.put("vnp_CurrCode", vnpayConfig.getCurrencyCode());
+
+        // Use existing txn ref
+        vnpParams.put("vnp_TxnRef", payment.getTransactionId());
+
+        // Order info
+        String orderInfo = "Thanh toan ve xem phim - " + payment.getBooking().getBookingCode();
+        vnpParams.put("vnp_OrderInfo", orderInfo);
+        vnpParams.put("vnp_OrderType", "billpayment");
+
+        // Locale
+        vnpParams.put("vnp_Locale", vnpayConfig.getLocale());
+
+        // Return URL
+        vnpParams.put("vnp_ReturnUrl", vnpayConfig.getReturnUrl());
+
+        // IP Address
+        String ipAddress = com.viecinema.common.util.VnpayUtil.getIpAddress(httpRequest);
+        vnpParams.put("vnp_IpAddr", ipAddress);
+
+        // Create date & Expire date
+        java.util.Date now = new java.util.Date();
+        vnpParams.put("vnp_CreateDate", com.viecinema.common.util.VnpayUtil.formatDateTime(now));
+
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(java.util.Calendar.MINUTE, vnpayConfig.getTimeout());
+        vnpParams.put("vnp_ExpireDate", com.viecinema.common.util.VnpayUtil.formatDateTime(calendar.getTime()));
+
+        // Secure hash
+        String hashData = com.viecinema.common.util.VnpayUtil.hashAllFields(vnpParams);
+        String secureHash = com.viecinema.common.util.VnpayUtil.hmacSHA512(vnpayConfig.getHashSecret(), hashData);
+        vnpParams.put("vnp_SecureHash", secureHash);
+
+        String queryString2 = com.viecinema.common.util.VnpayUtil.buildQueryString(vnpParams);
+        return vnpayConfig.getApiUrl() + "?" + queryString2;
+    }
+
+    /**
      * Xử lý callback từ VNPay (Return URL)
      */
     @Transactional
@@ -175,7 +229,7 @@ public class VnpayService {
         Payment payment = paymentRepository.findByTransactionId(txnRef);
 
         // Kiểm tra xem đã xử lý chưa (tránh duplicate)
-        if (!BookingStatus.PENDING.equals(payment.getStatus())) {
+        if (!PaymentStatus.PENDING.equals(payment.getStatus())) {
             log.warn("Payment {} already processed with status: {}", txnRef, payment.getStatus());
             return VnpayCallbackResponse.builder()
                     .code("02")
@@ -190,7 +244,9 @@ public class VnpayService {
         if ("00".equals(responseCode)) {
             // Thanh toán thành công
             payment.setStatus(PaymentStatus.SUCCESS);
-            payment.setGatewayResponse(params.toString());
+            // include details in gateway response
+            payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
+                    params.toString(), bankCode, bankTranNo, cardType, payDate));
 
             booking.setStatus(BookingStatus.PAID);
 
@@ -214,7 +270,8 @@ public class VnpayService {
         } else {
             // Thanh toán thất bại
             payment.setStatus(PaymentStatus.FAILED);
-            payment.setGatewayResponse(params.toString());
+            payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
+                    params.toString(), bankCode, bankTranNo, cardType, payDate));
 
             booking.setStatus(BookingStatus.CANCELLED);
 
@@ -264,7 +321,7 @@ public class VnpayService {
             Payment payment = paymentRepository.findByTransactionId(txnRef);
 
             // Kiểm tra order đã được confirm chưa
-            if (!BookingStatus.PENDING.equals(payment.getStatus())) {
+            if (!PaymentStatus.PENDING.equals(payment.getStatus())) {
                 response.put("RspCode", "02");
                 response.put("Message", "Order already confirmed");
                 return response;
@@ -310,6 +367,9 @@ public class VnpayService {
      * Query transaction status từ VNPay
      */
     public Map<String, String> queryTransaction(String txnRef, String transactionDate) {
+        // Log parameters to avoid unused-parameter warnings and help debugging
+        log.info("queryTransaction called with txnRef={} transactionDate={}", txnRef, transactionDate);
+
         // TODO: Implement query API của VNPay nếu cần
         // Cần call API:  https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
         throw new UnsupportedOperationException("Not implemented yet");

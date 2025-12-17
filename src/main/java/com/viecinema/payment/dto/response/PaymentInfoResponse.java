@@ -22,6 +22,7 @@ public class PaymentInfoResponse {
     private String method; // vnpay, momo, zalopay
     private PaymentStatus status;
     private String transactionId;
+    private String paymentUrl; // URL để thanh toán (nếu status là PENDING)
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime transactionTime;
@@ -29,4 +30,3 @@ public class PaymentInfoResponse {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 }
-
