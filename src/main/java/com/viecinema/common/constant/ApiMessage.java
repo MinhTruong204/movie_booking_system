@@ -28,6 +28,7 @@ public enum ApiMessage {
 
         // Retrieve operations
         USER_RETRIEVED("S031", "success", "User profile retrieved successfully"),
+        USER_PROFILE_RETRIEVED("S032", "success", "User profile retrieved successfully"),
         USERS_RETRIEVED("S032", "success", "%d users retrieved successfully"),
         ORDER_DETAILS_RETRIEVED("S033", "success", "Order #%s details retrieved successfully"),
         SHOWTIMES_RETRIEVED("S033", "success", "Showtimes retrieved successfully"),
