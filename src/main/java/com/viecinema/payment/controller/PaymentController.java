@@ -23,8 +23,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.viecinema.common.constant.ApiConstant.*;
-import static com.viecinema.common.constant.ApiMessage.PAYMENT_CREATED;
-import static com.viecinema.common.constant.ApiMessage.PAYMENT_DETAIL_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.*;
 
 @Slf4j
 @RestController
@@ -52,7 +51,7 @@ public class PaymentController {
 
         PaymentInfoResponse response = paymentService.getPaymentByBookingId(bookingId, httpRequest);
 
-        return ResponseEntity.ok(ApiResponse.success(PAYMENT_DETAIL_RETRIEVED, response));
+        return ResponseEntity.ok(ApiResponse.success(RESOURCE_RETRIEVED, response, "Payment"));
     }
 
     /**
@@ -76,7 +75,7 @@ public class PaymentController {
         VnpayPaymentResponse response = vnpayService.createPayment(bookingId, request, httpRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                ApiResponse.success(PAYMENT_CREATED,response));
+                ApiResponse.success(RESOURCE_CREATE,response,"Payment"));
     }
 
     /**

@@ -8,7 +8,7 @@ import com.viecinema.booking.dto.UnavailableSeatDto;
 import com.viecinema.booking.exception.SeatAlreadyHeldException;
 import com.viecinema.booking.exception.SeatNotHeldByUserException;
 import com.viecinema.common.enums.SeatStatusType;
-import com.viecinema.common.exception.CustomBusinessException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.auth.entity.User;
 import com.viecinema.showtime.entity.Seat;
@@ -193,7 +193,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
 
     private void validateRequest(HoldSeatsRequest request, Integer userId) {
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
-            throw new CustomBusinessException("No seats selected");
+            throw new SpecificBusinessException("No seats selected");
         }
 
         // Check user hold limit
@@ -205,7 +205,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Showtime"));
 
         if (showtime.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new CustomBusinessException("Showtime has already started.");
+            throw new SpecificBusinessException("Showtime has already started.");
         }
 
         if (! showtime.getIsActive() || showtime.getDeletedAt() != null) {
@@ -219,14 +219,14 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
         List<Seat> seats = seatRepository.findAllById(seatIds);
 
         if (seats.size() != seatIds.size()) {
-            throw new CustomBusinessException("Some seats don't exist.");
+            throw new SpecificBusinessException("Some seats don't exist.");
         }
 
         boolean allInRoom = seats.stream()
                 .allMatch(seat -> seat.getRoom().getId().equals(roomId));
 
         if (!allInRoom) {
-            throw new CustomBusinessException("Some seats don't belong to the room.");
+            throw new SpecificBusinessException("Some seats don't belong to the room.");
         }
     }
 

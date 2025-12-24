@@ -17,7 +17,7 @@ import com.viecinema.booking.repository.BookingSeatRepository;
 import com.viecinema.booking.repository.ComboRepository;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.SeatStatusType;
-import com.viecinema.common.exception.CustomBusinessException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
@@ -70,7 +70,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
 
         if (!user.getIsActive()) {
-            throw new CustomBusinessException("The account has been locked.");
+            throw new SpecificBusinessException("The account has been locked.");
         }
 
         // 2.Validate showtime
@@ -84,7 +84,7 @@ public class BookingServiceImpl implements BookingService {
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
 
         if (seats.size() != request.getSeatIds().size()) {
-            throw new CustomBusinessException("Some seats don't exist.");
+            throw new SpecificBusinessException("Some seats don't exist.");
         }
 
         // Lock ghế để tránh race condition
@@ -92,7 +92,7 @@ public class BookingServiceImpl implements BookingService {
 //            seatLockingService.lockSeats(request.getShowtimeId(), request.getSeatIds(), userId);
 //        } catch (Exception e) {
 //            log.error("Failed to lock seats", e);
-//            throw new CustomBusinessException("Không thể đặt ghế, vui lòng thử lại");
+//            throw new SpecificBusinessException("Không thể đặt ghế, vui lòng thử lại");
 //        }
 
         // 4.Validate combos (nếu có)
@@ -187,7 +187,7 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime now = LocalDateTime.now();
         for (SeatStatus status : seatStatuses) {
             if (SeatStatusType.BOOKED.equals(status.getStatus())) {
-                throw new CustomBusinessException(
+                throw new SpecificBusinessException(
                         String.format("Ghế %s%d đã được đặt",
                                 status.getSeat().getSeatRow(),
                                 status.getSeat().getSeatNumber())
@@ -199,7 +199,7 @@ public class BookingServiceImpl implements BookingService {
                 if (status.getHeldUntil() != null && status.getHeldUntil().isAfter(now)) {
                     // Nếu ghế đang được giữ bởi người khác, báo lỗi
                     if (status.getHeldByUser() != null && !status.getHeldByUser().getId().equals(userId)) {
-                        throw new CustomBusinessException(
+                        throw new SpecificBusinessException(
                                 String.format("Ghế %s%d đang được giữ bởi người khác",
                                         status.getSeat().getSeatRow(),
                                         status.getSeat().getSeatNumber())
@@ -286,7 +286,7 @@ public class BookingServiceImpl implements BookingService {
         if (loyaltyPointsToUse != null && loyaltyPointsToUse > 0) {
             int userPoints = user.getLoyaltyPoints();
             if (loyaltyPointsToUse > userPoints) {
-                throw new CustomBusinessException("Không đủ điểm tích lũy");
+                throw new SpecificBusinessException("Không đủ điểm tích lũy");
             }
             loyaltyDiscount = BigDecimal.valueOf(loyaltyPointsToUse * 10);
         }
@@ -334,16 +334,16 @@ public class BookingServiceImpl implements BookingService {
 
     private void validateShowtime(Showtime showtime) {
         if (! showtime.getIsActive()) {
-            throw new CustomBusinessException("Suất chiếu không khả dụng");
+            throw new SpecificBusinessException("Suất chiếu không khả dụng");
         }
 
         if (showtime.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new CustomBusinessException("Suất chiếu đã bắt đầu");
+            throw new SpecificBusinessException("Suất chiếu đã bắt đầu");
         }
 
         // Không cho đặt vé trước giờ chiếu < 15 phút
         if (showtime.getStartTime().minusMinutes(15).isBefore(LocalDateTime.now())) {
-            throw new CustomBusinessException("Không thể đặt vé cho suất chiếu sắp diễn ra");
+            throw new SpecificBusinessException("Không thể đặt vé cho suất chiếu sắp diễn ra");
         }
     }
 
@@ -359,12 +359,12 @@ public class BookingServiceImpl implements BookingService {
         List<Combo> combos = comboRepository.findAllById(comboIds);
 
         if (combos.size() != comboIds.size()) {
-            throw new CustomBusinessException("Một số combo không tồn tại");
+            throw new SpecificBusinessException("Một số combo không tồn tại");
         }
 
         for (Combo combo : combos) {
             if (! combo.getIsActive()) {
-                throw new CustomBusinessException("Combo " + combo.getName() + " không khả dụng");
+                throw new SpecificBusinessException("Combo " + combo.getName() + " không khả dụng");
             }
         }
 

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import static com.viecinema.common.constant.ApiConstant.COMBO_PATH;
-import static com.viecinema.common.constant.ApiMessage.COMBOS_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
 
 @RestController
 @RequestMapping(COMBO_PATH)
@@ -27,6 +27,6 @@ public class ComboController {
         List<ComboDto> combos = comboService.getActiveCombos();
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(COMBOS_RETRIEVED,combos));
+                ApiResponse.success(RESOURCE_RETRIEVED,combos,"Combos"));
     }
 }

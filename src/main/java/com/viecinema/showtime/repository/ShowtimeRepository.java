@@ -24,9 +24,9 @@ public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
             
             -- Movie info
             m.title AS movie_title,
-            m. poster_url AS movie_poster,
+            m.poster_url AS movie_poster,
             m.duration AS movie_duration,
-            m. age_rating AS movie_age_rating,
+            m.age_rating AS movie_age_rating,
             
             -- Cinema info
             c.cinema_id,
@@ -83,9 +83,6 @@ public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
             @Param("ignoreTimeFilter") boolean ignoreTimeFilter
     );
 
-    /**
-     * Lấy thông tin giá theo loại ghế cho một showtime
-     */
     @Query(value = """
         SELECT 
             st.name AS seat_type_name,

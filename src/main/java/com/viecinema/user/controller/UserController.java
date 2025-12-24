@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static com.viecinema.common.constant.ApiConstant.USER_PATH;
 import static com.viecinema.common.constant.ApiConstant.USER_PROFILE_PATH;
-import static com.viecinema.common.constant.ApiMessage.USER_PROFILE_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
 
 @Slf4j
 @RestController
@@ -41,7 +41,7 @@ public class UserController {
 
         UserProfileDto profile = userService.getUserProfile(userId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(USER_PROFILE_RETRIEVED, profile));
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(RESOURCE_RETRIEVED, profile,"User profile"));
 
     }
 

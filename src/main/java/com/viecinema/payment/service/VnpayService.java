@@ -4,7 +4,7 @@ import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.repository.BookingRepository;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.PaymentStatus;
-import com.viecinema.common.exception.CustomBusinessException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.common.util.VnpayUtil;
 import com.viecinema.config.VnpayConfig;
@@ -51,14 +51,14 @@ public class VnpayService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         
         if (!BookingStatus.PENDING.equals(booking.getStatus())) {
-            throw new CustomBusinessException("Booking đã được thanh toán hoặc đã hủy");
+            throw new SpecificBusinessException("Booking đã được thanh toán hoặc đã hủy");
         }
 
         // Kiểm tra booking có hết hạn chưa (10 phút)
         if (booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now())) {
             booking.setStatus(BookingStatus.CANCELLED);
             bookingRepository.save(booking);
-            throw new CustomBusinessException("Booking đã hết hạn thanh toán");
+            throw new SpecificBusinessException("Booking đã hết hạn thanh toán");
         }
 
         // 2. Tạo payment record

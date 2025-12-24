@@ -25,8 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.viecinema.common.constant.ApiConstant.*;
-import static com.viecinema.common.constant.ApiMessage.BOOKING_CREATED;
-import static com.viecinema.common.constant.ApiMessage.BOOKING_DETAILS_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.*;
 
 @RestController
 @RequestMapping(BOOKING_PATH)
@@ -47,7 +46,7 @@ public class BookingController {
         Integer userId = authUtil.extractUserId((userDetails));
         CalculateBookingResponse response = calculationService.calculateBooking(userId, request);
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(BOOKING_DETAILS_RETRIEVED,response));
+                ApiResponse.success(RESOURCE_RETRIEVED,response,"Booking calculation"));
     }
 
     @PostMapping(CREATE_BOOKING_PATH)
@@ -65,12 +64,8 @@ public class BookingController {
                     request
             );
 
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(
-                            BOOKING_CREATED,
-                            response,
-                            response.getBookingCode(),response.getPriceBreakdown().getFinalAmount()));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(RESOURCE_CREATE, response,"Booking"));
 
         } catch (Exception e) {
             log.error("Error creating booking", e);

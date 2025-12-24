@@ -1,7 +1,10 @@
 package com.viecinema.showtime.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.auth.security.CurrentUser;
+import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.common.constant.ApiMessage;
+import com.viecinema.common.util.AuthUtil;
 import com.viecinema.showtime.dto.response.SeatmapResponse;
 import com.viecinema.showtime.service.SeatmapService;
 import lombok.RequiredArgsConstructor;
@@ -25,53 +28,21 @@ import static com.viecinema.common.constant.ApiConstant.SHOWTIMES_SEATMAP_PATH;
 public class SeatmapController {
 
     private final SeatmapService seatmapService;
+    private final  AuthUtil authUtil;
 
-    /**
-     * GET /api/v1/showtimes/{showtimeId}/seatmap
-     *
-     * Lấy sơ đồ ghế của một suất chiếu
-     * - Trả về layout ghế theo hàng/cột
-     * - Bao gồm trạng thái từng ghế (available, booked, held)
-     * - Nếu user đã login, ghế đang được user hold sẽ có status "held_by_you"
-     */
     @GetMapping(SHOWTIMES_SEATMAP_PATH)
     public ResponseEntity<ApiResponse<SeatmapResponse>> getSeatmap(
             @PathVariable Integer showtimeId,
-            @AuthenticationPrincipal UserDetails userDetails
+            @CurrentUser UserPrincipal userPrincipal
     ) {
         log.info("GET /api/showtimes/{}/seatmap", showtimeId);
 
         // Lấy userId từ authentication (null nếu chưa login)
-        Integer currentUserId = extractUserId(userDetails);
-
+        Integer currentUserId = authUtil.extractUserId(userPrincipal);
         SeatmapResponse seatmap = seatmapService.getSeatmap(showtimeId, currentUserId);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.SEATMAP_RETRIEVED,seatmap)
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,seatmap,"Seatmap")
         );
-    }
-
-    /**
-     * Extract userId từ UserDetails
-     * Có thể customize tùy theo implementation của UserDetailsService
-     */
-    private Integer extractUserId(UserDetails userDetails) {
-        if (userDetails == null) {
-            return null;
-        }
-
-        // Giả sử username là email, cần lookup userId
-        // Hoặc nếu UserDetails đã chứa userId thì lấy trực tiếp
-        // Đây là placeholder - cần adjust theo implementation thực tế
-        try {
-            // Option 1: Nếu dùng custom UserDetails chứa userId
-            // return ((CustomUserDetails) userDetails).getUserId();
-
-            // Option 2: Parse từ username nếu là userId
-            return Integer.parseInt(userDetails.getUsername());
-        } catch (Exception e) {
-            log.debug("Could not extract userId from userDetails: {}", e.getMessage());
-            return null;
-        }
     }
 }

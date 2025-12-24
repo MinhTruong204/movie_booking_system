@@ -26,14 +26,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         RegisterResponse registerResponse = authService.register(registerRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                ApiResponse.success(ApiMessage.USER_CREATED, registerResponse,registerResponse.getFullName()));
+                ApiResponse.success(ApiMessage.RESOURCE_CREATE, registerResponse,
+                        "User " + registerResponse.getFullName()));
     }
 
     @PostMapping(ApiConstant.LOGIN_PATH)
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest loginrequest) {
         LoginResponse loginResponse = authService.login(loginrequest);
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.USER_RETRIEVED, loginResponse));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, loginResponse,"User"));
     }
 
 }

@@ -1,7 +1,7 @@
 package com.viecinema.auth.dto.request;
 
 
-import com.viecinema.common.constant.MessageConstant;
+import com.viecinema.common.constant.ErrorMessage;
 import com.viecinema.common.constant.ValidationConstant;
 import com.viecinema.common.enums.Gender;
 import com.viecinema.common.validation.annotation.ValidEmail;
@@ -34,21 +34,21 @@ public class RegisterRequest {
     @NotBlank
     @Size(min = ValidationConstant.PASSWORD_MIN_LENGTH,
             max = ValidationConstant.PASSWORD_MAX_LENGTH,
-            message = MessageConstant.PASSWORD_LENGTH_ERROR)
+            message = "Password must be between 8 and 50 characters long")
     @Pattern(regexp = ValidationConstant.PASSWORD_REGEX,
-            message = MessageConstant.PASSWORD_PATTERN_ERROR)
+            message =  "Password must contain uppercase, lowercase, numbers and special characters")
     private String password;
 
-    @NotBlank(message = MessageConstant.CONFIRM_PASSWORD_REQUIRED)
+    @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
 
-    @Past(message = MessageConstant.BIRTH_DATE_ERROR)
+    @Past(message = "Birth date must be in the past")
     private LocalDate birthDate;
 
 
     private Gender gender;
 
-    @AssertTrue(message = MessageConstant.CONFIRM_PASSWORD_ERROR)
+    @AssertTrue(message = "Password and confirm password must match")
     public boolean isPasswordMatching() {
         if (password == null || confirmPassword == null) {
             return false;

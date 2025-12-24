@@ -33,13 +33,13 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     @Override
     public Object findShowtimes(ShowtimeFilterRequest request) {
         // Validate request
-        if (! request.isValid()) {
+        if (!request.isValid()) {
             throw new BadRequestException("Must provide at least movieId or cinemaId");
         }
 
         // [DEV-MODE] If ignoreShowtimeTimeFilter is true, bypass time filters
         if (ignoreShowtimeTimeFilter) {
-            log.warn("DEV MODE: Bỏ qua bộ lọc thời gian cho suất chiếu.");
+            log.warn("DEV MODE: Skip the screening time filter.");
             request.setDate(null); // Ignore specific date
             request.setFutureOnly(false); // Include past showtimes
             request.setIgnoreTimeFilter(true); // Mark to completely bypass time filters in the repository
@@ -82,14 +82,14 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         // Map to DTO
         List<ShowtimeDetailResponse> showtimes = rawResults.stream()
                 .map(this::mapToShowtimeDetailResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         // Load pricing info if needed
         if (request.getIncludeAvailableSeats()) {
             showtimes.forEach(this::enrichWithPricingInfo);
         }
 
-        log.info("Found {} showtimes", showtimes. size());
+        log.info("Found {} showtimes", showtimes.size());
         return showtimes;
     }
 
@@ -99,9 +99,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
         // Group by cinema
         Map<Integer, List<ShowtimeDetailResponse>> groupedMap = allShowtimes.stream()
-                .collect(Collectors. groupingBy(
-                        st -> st.getCinema().getCinemaId()
-                ));
+                .collect(Collectors.groupingBy(st -> st.getCinema().getCinemaId()));
 
         // Convert to DTO
         List<ShowtimeGroupByCinemaDto> result = groupedMap.entrySet().stream()
@@ -111,7 +109,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
                     ShowtimeGroupByCinemaDto dto = ShowtimeGroupByCinemaDto.builder()
                             .cinemaId(first.getCinema().getCinemaId())
-                            .cinemaName(first. getCinema().getName())
+                            .cinemaName(first.getCinema().getName())
                             .address(first.getCinema().getAddress())
                             .city(first.getCinema().getCity())
                             .showtimes(showtimes)
@@ -121,7 +119,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                     return dto;
                 })
                 .sorted(Comparator.comparing(ShowtimeGroupByCinemaDto::getCinemaName))
-                .collect(Collectors.toList());
+                .toList();
 
         log.info("Grouped {} showtimes into {} cinemas", allShowtimes.size(), result.size());
         return result;
@@ -136,7 +134,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
         // Group by time slot
         Map<String, List<ShowtimeDetailResponse>> groupedMap = allShowtimes.stream()
-                .collect(Collectors. groupingBy(ShowtimeDetailResponse::getTimeSlot));
+                .collect(Collectors.groupingBy(ShowtimeDetailResponse::getTimeSlot));
 
         // Convert to DTO and sort by time order
         List<String> timeSlotOrder = Arrays.asList("MORNING", "AFTERNOON", "EVENING", "NIGHT");
@@ -148,7 +146,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
                     ShowtimeGroupByTimeSlotDto dto = ShowtimeGroupByTimeSlotDto.builder()
                             .timeSlot(timeSlot)
-                            . showtimes(showtimes)
+                            .showtimes(showtimes)
                             .build();
 
                     dto.calculateStats();
@@ -205,16 +203,16 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     public ShowtimeDetailResponse getShowtimeDetail(Integer showtimeId) {
-        if (! showtimeRepository.existsByIdAndActive(showtimeId)) {
+        if (!showtimeRepository.existsByIdAndActive(showtimeId)) {
             throw new ResourceNotFoundException("Cannot find showtime with id: " + showtimeId);
         }
 
-        ShowtimeFilterRequest request = ShowtimeFilterRequest.builder()
-                .activeOnly(true)
-                .futureOnly(false)
-                . includeAvailableSeats(true)
-                .ignoreTimeFilter(true) // Ensure we can fetch details for any showtime
-                .build();
+//        ShowtimeFilterRequest request = ShowtimeFilterRequest.builder()
+//                .activeOnly(true)
+//                .futureOnly(false)
+//                .includeAvailableSeats(true)
+//                .ignoreTimeFilter(true) // Ensure we can fetch details for any showtime
+//                .build();
 
         List<Object[]> results = showtimeRepository.findShowtimesWithDetails(
                 null, null, showtimeId, null,
@@ -283,7 +281,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 ((double) bookedSeats / totalSeats) * 100 : 0;
 
         dto.setSeatAvailability(SeatAvailability.builder()
-                . totalSeats(totalSeats)
+                .totalSeats(totalSeats)
                 .availableSeats(availableSeats)
                 .bookedSeats(bookedSeats)
                 .heldSeats(heldSeats)

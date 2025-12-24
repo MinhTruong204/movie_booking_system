@@ -32,12 +32,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Áp dụng cấu hình CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS
                 .csrf(csrf -> csrf.disable()) // non-deprecated way to disable CSRF (Spring Security 6.1+)
                 .authorizeHttpRequests(auth -> auth
-                        // Yêu cầu đăng nhập đối với các endpoint liên quan đến đặt vé/giữ ghế
                         .requestMatchers(BOOKING_PATH + "/**").authenticated()
-                        // Cho phép tất cả các endpoint khác truy cập công khai
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

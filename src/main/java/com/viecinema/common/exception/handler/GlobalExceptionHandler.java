@@ -29,21 +29,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(CustomBusinessException.class)
-    public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(CustomBusinessException ex) {
-        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+    @ExceptionHandler(SpecificBusinessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(SpecificBusinessException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.SPECIFIC_ERROR, ex.getMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(SeatAlreadyHeldException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(SeatAlreadyHeldException ex) {
-        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.SPECIFIC_ERROR, ex.getMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(SeatNotHeldByUserException.class)
     public ResponseEntity<ApiResponse<Object>> handleCustomBusinessException(SeatNotHeldByUserException ex) {
-        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.CUSTOM_ERROR, ex.getMessage());
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.SPECIFIC_ERROR, ex.getMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -98,4 +98,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(LoginRequiredException.class)
+    public ResponseEntity<ApiResponse<Object>> handleLoginRequiredException(LoginRequiredException ex) {
+        ApiResponse<Object> apiResponse = ApiResponse.error(ApiMessage.SPECIFIC_ERROR, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
 }

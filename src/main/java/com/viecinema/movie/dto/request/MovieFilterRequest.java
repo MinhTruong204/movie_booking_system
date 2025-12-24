@@ -14,8 +14,8 @@ import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
-import static com.viecinema.common.constant.MessageConstant.MOVIE_FILTER_PAGE_ERROR;
-import static com.viecinema.common.constant.MessageConstant.MOVIE_FILTER_SIZE_ERROR;
+import static com.viecinema.common.constant.ErrorMessage.MOVIE_FILTER_PAGE_ERROR;
+import static com.viecinema.common.constant.ErrorMessage.MOVIE_FILTER_SIZE_ERROR;
 import static com.viecinema.common.constant.ValidationConstant.*;
 
 @Data
@@ -36,7 +36,7 @@ public class MovieFilterRequest {
 
     @Pattern(
             regexp = FILTER_MOVIE_REGEX,
-            message = "Sort format invalid "
+            message = "Sort format invalid"
     )
     @Builder.Default
     private String sort = "releaseDate,desc";

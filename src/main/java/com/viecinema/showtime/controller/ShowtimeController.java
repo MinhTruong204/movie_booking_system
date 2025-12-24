@@ -47,7 +47,7 @@ public class ShowtimeController {
                 movieId, cinemaId, date, groupBy);
 
         // Build filter request
-        ShowtimeFilterRequest filter = ShowtimeFilterRequest. builder()
+        ShowtimeFilterRequest filter = ShowtimeFilterRequest.builder()
                 .movieId(movieId)
                 .cinemaId(cinemaId)
                 .roomId(roomId)
@@ -63,7 +63,7 @@ public class ShowtimeController {
         Object showtimes = showtimeService.findShowtimes(filter);
 
         return  ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.SHOWTIMES_RETRIEVED, showtimes));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, showtimes,"Showtimes"));
     }
 
     @GetMapping(SHOWTIMES_DETAIL_PATH)
@@ -75,7 +75,7 @@ public class ShowtimeController {
         ShowtimeDetailResponse showtimes = showtimeService.getShowtimeDetail(showtimeId);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.SHOWTIME_DETAIL_RETRIEVED,showtimes,showtimeId));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,showtimes,"Showtimes detail"));
     }
 
     @GetMapping(SHOWTIMES_BY_MOVIE_PATH)
@@ -96,7 +96,7 @@ public class ShowtimeController {
         Object showtimes = showtimeService.findShowtimes(filter);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.SHOWTIMES_RETRIEVED,showtimes));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,showtimes,"Showtimes"));
     }
 
     @GetMapping(SHOWTIMES_BY_CINEMA_PATH)
@@ -117,6 +117,6 @@ public class ShowtimeController {
         Object showtimes = showtimeService.findShowtimes(filter);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.SHOWTIMES_RETRIEVED,showtimes));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,showtimes,"Showtimes"));
     }
 }

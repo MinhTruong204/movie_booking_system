@@ -20,7 +20,7 @@ import java.util.List;
 
 import static com.viecinema.common.constant.ApiConstant.BOOKINGS_USER_PATH;
 import static com.viecinema.common.constant.ApiConstant.BOOKING_PATH;
-import static com.viecinema.common.constant.ApiMessage.BOOKINGS_USER_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
 
 @Slf4j
 @RestController
@@ -43,7 +43,7 @@ public class UserBookingController {
         List<UserBookingDto> bookings = userBookingService.getAllUserBookings(currenttUser.getId());
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(BOOKINGS_USER_RETRIEVED, bookings, bookings.size()));
+                ApiResponse.success(RESOURCE_RETRIEVED, bookings, "Bookings"));
     }
 
 }

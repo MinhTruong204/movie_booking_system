@@ -1,20 +1,24 @@
 package com.viecinema.common.util;
 
-import com.viecinema.auth.security.UserPrincipal;
-import jakarta.validation.ValidationException;
+import com.viecinema.common.exception.LoginRequiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import static com.viecinema.common.constant.ErrorMessage.LOGIN_REQUIRED_ERROR;
 
 @Slf4j
 @Component
 public class AuthUtil {
     public Integer extractUserId(UserDetails userDetails) {
-        if (userDetails instanceof UserPrincipal userPrincipal) {
-            return userPrincipal.getId();
+        if (userDetails == null) {
+            throw new LoginRequiredException(LOGIN_REQUIRED_ERROR);
         }
-        // This should not happen in a normal flow if authentication is set up correctly
-        log.error("UserDetails is not an instance of CustomUserDetails. Actual type: {}", userDetails.getClass().getName());
-        throw new ValidationException("Unable to extract user ID from principal.");
+        try {
+            return Integer.parseInt(userDetails.getUsername());
+        } catch (Exception e) {
+            log.debug("Could not extract userId from userDetails: {}", e.getMessage());
+            return null;
+        }
     }
 }

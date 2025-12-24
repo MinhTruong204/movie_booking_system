@@ -2,7 +2,6 @@ package com.viecinema.auth.service;
 
 import com.viecinema.auth.dto.request.LoginRequest;
 import com.viecinema.auth.dto.response.LoginResponse;
-import com.viecinema.auth.entity.RefreshToken;
 import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
@@ -12,11 +11,7 @@ import com.viecinema.auth.security.UserDetailsServiceImpl;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.RegisterResponse;
-import com.viecinema.common.constant.SecurityConstant;
-import com.viecinema.common.exception.BadRequestException;
-import com.viecinema.common.exception.BusinessException;
-import com.viecinema.common.exception.DuplicateResourceException;
-import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.exception.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,12 +26,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.viecinema.common.constant.MessageConstant.*;
+import static com.viecinema.common.constant.ErrorMessage.*;
 
 @Service
 @AllArgsConstructor
@@ -88,7 +82,7 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
 
         if(!user.getIsActive()) throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
-        if(!user.getEmailVerified()) throw new BadRequestException(EMAIL_VERIFICATION_LOGIN_ERROR);
+        if(!user.getEmailVerified()) throw new SpecificBusinessException("Please verify your email before logging in");
         if(user.getLockedUntil() != null && user.getLockedUntil().isBefore(Instant.now()))
             throw new BadRequestException(ACCOUNT_LOCKED_ERROR);
 

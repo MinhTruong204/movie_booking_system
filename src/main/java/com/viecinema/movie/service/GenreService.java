@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,29 +20,18 @@ public class GenreService {
 
     private final GenreRepository genreRepository;
 
-    /**
-     * Lấy tất cả thể loại (không có số lượng phim)
-     * Cache 30 phút vì dữ liệu ít thay đổi
-     *
-     * @return Danh sách GenreDto
-     */
     @Cacheable(value = "genres", key = "'all'")
     public List<GenreDto> getAllGenres() {
         log.debug("Fetching all genres from database");
 
         List<Genre> genres = genreRepository.findAll();
 
-        return genres.stream()
+        return genres
+                .stream()
                 .map(this::convertToDto)
-                . collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * Lấy tất cả thể loại KÈM số lượng phim
-     * Tối ưu performance bằng single query
-     *
-     * @return Danh sách GenreDto có movieCount
-     */
     @Cacheable(value = "genres", key = "'all-with-count'")
     public List<GenreDto> getAllGenresWithMovieCount() {
         log.debug("Fetching all genres with movie count");
@@ -51,45 +39,32 @@ public class GenreService {
         List<GenreRepository.GenreProjection> projections =
                 genreRepository.findAllWithMovieCount();
 
-        return projections.stream()
+        return projections
+                .stream()
                 .map(this::convertProjectionToDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * Lấy thể loại theo ID
-     *
-     * @param genreId ID của thể loại
-     * @return GenreDto hoặc throw exception
-     */
     public GenreDto getGenreById(Integer genreId) {
+        log.debug("Fetching genres by ID: {}", genreId);
         Genre genre = genreRepository.findById(genreId)
-                . orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy thể loại với ID: " + genreId
-                ));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Genre with ID: " + genreId));
         return convertToDto(genre);
     }
 
     // ========== MAPPER METHODS ==========
 
-    /**
-     * Convert Entity sang DTO
-     */
     private GenreDto convertToDto(Genre genre) {
         return GenreDto.builder()
                 .genreId(genre.getGenreId())
                 .name(genre.getName())
                 .description(genre.getDescription())
-                . build();
+                .build();
     }
 
-    /**
-     * Convert Projection sang DTO
-     */
     private GenreDto convertProjectionToDto(GenreRepository.GenreProjection projection) {
         return GenreDto.builder()
-                .genreId(projection. getGenreId())
+                .genreId(projection.getGenreId())
                 .name(projection.getName())
                 .description(projection.getDescription())
                 .movieCount(projection. getMovieCount())

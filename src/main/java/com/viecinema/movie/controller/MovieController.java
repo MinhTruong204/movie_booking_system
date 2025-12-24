@@ -9,6 +9,7 @@ import com.viecinema.movie.dto.MovieSummaryDto;
 import com.viecinema.movie.dto.response.PagedResponse;
 import com.viecinema.movie.service.MovieService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,6 @@ import static com.viecinema.common.constant.ApiConstant.*;
 @RequiredArgsConstructor
 @Slf4j
 @Validated
-@CrossOrigin(origins = "http://localhost:3000",allowCredentials = "true")
 public class MovieController {
     private final MovieService movieService;
 
@@ -31,11 +31,11 @@ public class MovieController {
     public ResponseEntity<ApiResponse<PagedResponse<MovieSummaryDto>>>
         getNowShowingMovies(@Valid @ModelAttribute MovieFilterRequest request) { // Get data form Query string
 
-        log. info("GET /api/v1/movies/now-showing - Request: {}", request);
+        log. info("GET /api/movies/now-showing - Request: {}", request);
         PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.NOW_SHOWING);
 
         return  ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.USER_RETRIEVED, movies));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies,"Movies now showing"));
 
     }
 
@@ -43,20 +43,18 @@ public class MovieController {
     public ResponseEntity<ApiResponse<PagedResponse<MovieSummaryDto>>>
     getComingSoonMovies(@Valid @ModelAttribute MovieFilterRequest request) {
 
-        log.info("GET /api/v1/movies/coming-soon - Request: {}", request);
+        log.info("GET /api/movies/coming-soon");
         PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.COMING_SOON);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.USER_RETRIEVED, movies));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies,"Movies coming soon"));
 
     }
 
     @GetMapping(MOVIE_DETAIL_PATH)
-    public ResponseEntity<ApiResponse<MovieDetailDto>> getMovieDetail(@PathVariable Integer movieId) {
-
+    public ResponseEntity<ApiResponse<MovieDetailDto>> getMovieDetail(@PathVariable @Min(1) Integer movieId) {
         MovieDetailDto detail = movieService.getMovieDetail(movieId);
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.USER_RETRIEVED, detail));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, detail, "Movie detail"));
     }
-
 }

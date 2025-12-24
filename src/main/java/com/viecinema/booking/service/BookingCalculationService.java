@@ -11,7 +11,7 @@ import com.viecinema.booking.entity.Promotion;
 import com.viecinema.booking.entity.UserPromotionUsage;
 import com.viecinema.booking.repository.PromotionRepository;
 import com.viecinema.booking.repository.UserPromotionUsageRepository;
-import com.viecinema.common.exception.CustomBusinessException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
@@ -184,16 +184,16 @@ public class BookingCalculationService {
             BigDecimal subtotal) {
 
         Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(code)
-                .orElseThrow(() -> new CustomBusinessException("The promotional code does not exist."));
+                .orElseThrow(() -> new SpecificBusinessException("The promotional code does not exist."));
 
         // Kiểm tra thời gian
         if (! promotion.isValid()) {
-            throw new CustomBusinessException("Promotion code has expired or is not active");
+            throw new SpecificBusinessException("Promotion code has expired or is not active");
         }
 
         // Kiểm tra giá trị đơn hàng tối thiểu
         if (subtotal.compareTo(promotion. getMinOrderValue()) < 0) {
-            throw new CustomBusinessException(
+            throw new SpecificBusinessException(
                     String.format("Orders must reach a minimum value of %,. 0f VNĐ to apply this code.",
                             promotion.getMinOrderValue())
             );
@@ -201,13 +201,13 @@ public class BookingCalculationService {
 
         // Kiểm tra phim áp dụng
         if (! promotion.isApplicableForMovie(showtime.getMovie().getMovieId())) {
-            throw new CustomBusinessException("The promotional code does not apply to this movie.");
+            throw new SpecificBusinessException("The promotional code does not apply to this movie.");
         }
 
         // Kiểm tra ngày áp dụng
         DayOfWeek currentDay = LocalDateTime.now().getDayOfWeek();
         if (!promotion. isApplicableForDay(currentDay)) {
-            throw new CustomBusinessException("The promotional code does not apply to today.");
+            throw new SpecificBusinessException("The promotional code does not apply to today.");
         }
 
         // Kiểm tra số lần sử dụng của user
@@ -216,7 +216,7 @@ public class BookingCalculationService {
                 .orElse(null);
 
         if (usage != null && usage.getUsageCount() >= promotion.getMaxUsagePerUser()) {
-            throw new CustomBusinessException("The promotional code has been used too many times.");
+            throw new SpecificBusinessException("The promotional code has been used too many times.");
         }
 
         return promotion;

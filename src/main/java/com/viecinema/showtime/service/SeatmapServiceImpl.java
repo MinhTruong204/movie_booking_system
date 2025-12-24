@@ -141,10 +141,10 @@ public class SeatmapServiceImpl implements SeatmapService {
                 .movieTitle(movie.getTitle())
                 .posterUrl(movie.getPosterUrl())
                 .duration(movie.getDuration())
-                . ageRating(movie.getAgeRating())
-                . startTime(showtime. getStartTime())
+                .ageRating(movie.getAgeRating())
+                .startTime(showtime. getStartTime())
                 .endTime(showtime.getEndTime())
-                . basePrice(showtime. getBasePrice())
+                .basePrice(showtime. getBasePrice())
                 .build();
     }
 

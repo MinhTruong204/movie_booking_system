@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.viecinema.common.constant.ApiConstant.GENRE_DETAIL_PATH;
 import static com.viecinema.common.constant.ApiConstant.GENRE_PATH;
-import static com.viecinema.common.constant.ApiMessage.GENRE_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
 
 @RestController
 @RequestMapping(GENRE_PATH)
@@ -26,8 +26,7 @@ public class GenreController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<GenreDto>>> getAllGenres(
             @RequestParam(required = false, defaultValue = "false")
-            Boolean includeCount
-    ) {
+            Boolean includeCount) {
         log.info("API GET /api/genres called with includeCount={}", includeCount);
 
         List<GenreDto> genres;
@@ -39,7 +38,7 @@ public class GenreController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(GENRE_RETRIEVED,genres)
+                ApiResponse.success(RESOURCE_RETRIEVED,genres,"Genres")
         );
     }
 
@@ -52,7 +51,7 @@ public class GenreController {
         GenreDto genre = genreService.getGenreById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(GENRE_RETRIEVED,genre)
+                ApiResponse.success(RESOURCE_RETRIEVED,genre,"Genre")
         );
     }
 }
