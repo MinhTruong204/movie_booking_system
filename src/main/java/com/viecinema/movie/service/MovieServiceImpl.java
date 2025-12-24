@@ -83,13 +83,9 @@ public class MovieServiceImpl implements MovieService{
 
     private Specification<Movie> buildSpecification(MovieFilterRequest request, MovieStatus status) {
         return Specification
-                // Filter cơ bản
                 .where(MovieSpecification.hasStatus(status))
                 .and(MovieSpecification.isNotDeleted())
-
-                // Eager fetch để tránh N+1
                 .and(MovieSpecification.fetchGenres())
-                // Filter từ request
                 .and(MovieSpecification.hasGenres(request.getGenreIds()));
     }
 
@@ -107,18 +103,4 @@ public class MovieServiceImpl implements MovieService{
 
         return dto;
     }
-
-//    private List<GenreDto> convertGenres(java.util.Set<Genre> genres) {
-//        if (genres == null || genres.isEmpty()) {
-//            return List.of();
-//        }
-//
-//        return genres.stream()
-//                . map(genre -> GenreDto.builder()
-//                        . genreId(genre.getGenreId())
-//                        .name(genre.getName())
-//                        .description(genre.getDescription())
-//                        .build())
-//                .collect(Collectors.toList());
-//    }
 }

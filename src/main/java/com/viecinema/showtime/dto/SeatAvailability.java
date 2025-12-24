@@ -18,6 +18,5 @@ public class SeatAvailability {
     private Integer heldSeats;
     private Double occupancyRate;
 
-    // Số ghế available theo loại
-    private Map<String, Integer> availableSeatsByType;
+//    private Map<String, Integer> availableSeatsByType;
 }

@@ -25,19 +25,4 @@ public interface MovieRepository extends JpaRepository<Movie,Integer>, JpaSpecif
         AND m.deletedAt IS NULL
         """)
     Optional<Movie> findByIdWithDetails(@Param("movieId") Integer movieId);
-
-    @Query("""
-        SELECT COUNT(DISTINCT m) FROM Movie m
-        JOIN m.genres g
-        WHERE m.status = 'NOW_SHOWING'
-        AND m.deletedAt IS NULL
-        AND g.genreId = :genreId
-        """)
-    Long countNowShowingByGenre(@Param("genreId") Integer genreId);
-
-    boolean existsByMovieIdAndStatusAndDeletedAtIsNull(
-            Integer movieId,
-            MovieStatus status
-    );
-
 }

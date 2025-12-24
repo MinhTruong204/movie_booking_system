@@ -3,13 +3,21 @@ package com.viecinema.showtime.service;
 import com.viecinema.common.exception.BadRequestException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.showtime.dto.*;
+import com.viecinema.showtime.dto.projection.PricingSummary;
+import com.viecinema.showtime.dto.projection.SeatStatusCount;
 import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
 import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
+import com.viecinema.showtime.entity.Showtime;
+import com.viecinema.showtime.mapper.ShowtimeMapper;
+import com.viecinema.showtime.repository.SeatRepository;
+import com.viecinema.showtime.repository.SeatStatusRepository;
 import com.viecinema.showtime.repository.ShowtimeRepository;
+import com.viecinema.showtime.repository.ShowtimeSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +34,8 @@ import java.util.stream.Collectors;
 public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
-
-    @Value("${app.development.ignore-showtime-time-filter:false}")
-    private boolean ignoreShowtimeTimeFilter;
+    private final SeatStatusRepository seatStatusRepository;
+    private final ShowtimeMapper showtimeMapper;
 
     @Override
     public Object findShowtimes(ShowtimeFilterRequest request) {
@@ -36,67 +43,58 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         if (!request.isValid()) {
             throw new BadRequestException("Must provide at least movieId or cinemaId");
         }
-
-        // [DEV-MODE] If ignoreShowtimeTimeFilter is true, bypass time filters
-        if (ignoreShowtimeTimeFilter) {
-            log.warn("DEV MODE: Skip the screening time filter.");
-            request.setDate(null); // Ignore specific date
-            request.setFutureOnly(false); // Include past showtimes
-            request.setIgnoreTimeFilter(true); // Mark to completely bypass time filters in the repository
-        } else if (request.getDate() == null) {
-            // If no date is provided (and not in dev-mode), we want to show upcoming showtimes.
-            // We can signal this to the repository by setting a flag.
-            request.setIgnoreTimeFilter(true); // We'll handle the "future" logic in the query
-            request.setFutureOnly(true); // Ensure we only get future showtimes
-        }
-
-
         // Route based on groupBy
         return switch (request.getGroupBy()) {
             case CINEMA -> findShowtimesGroupByCinema(request);
             case TIMESLOT -> findShowtimesGroupByTimeSlot(request);
-            case ROOM -> findShowtimesGroupByRoom(request);
-            case NONE -> findShowtimesList(request);
+            case ROOM -> null;
+            case NONE -> findAllShowtime(request);
         };
     }
 
     @Override
-    @Cacheable(value = "showtimes", key = "#request.toString()", unless = "#result. isEmpty()")
-    public List<ShowtimeDetailResponse> findShowtimesList(ShowtimeFilterRequest request) {
+    public List<ShowtimeDetailResponse> findAllShowtime(ShowtimeFilterRequest request) {
         log.info("Finding showtimes with request: {}", request);
 
         // Query from repository
-        List<Object[]> rawResults = showtimeRepository.findShowtimesWithDetails(
-                request.getMovieId(),
-                request.getCinemaId(),
-                request.getRoomId(),
-                request.getCity(),
-                request.getStartDateTime(),
-                request.getEndDateTime(),
-                request.getActiveOnly(),
-                request.getFutureOnly(),
-                request.getSortBy().name(),
-                request.isIgnoreTimeFilter() // Pass the new flag to the repository method
-        );
+        Specification<Showtime> spec = Specification
+                .where(ShowtimeSpecifications.hasMovieId(request.getMovieId()))
+                .and(ShowtimeSpecifications.hasCinemaId(request.getCinemaId()))
+                .and(ShowtimeSpecifications.hasRoomId(request.getRoomId()))
+                .and(ShowtimeSpecifications.hasDate(request.getDate()))
+                .and(ShowtimeSpecifications.hasCity(request.getCity()))
+                .and(ShowtimeSpecifications.hasActiveOnly(request.getActiveOnly()))
+                .and(ShowtimeSpecifications.hasFutureOnly(request.getFutureOnly()));
 
+        List<Showtime> showtimes = showtimeRepository.findAll(spec);
         // Map to DTO
-        List<ShowtimeDetailResponse> showtimes = rawResults.stream()
-                .map(this::mapToShowtimeDetailResponse)
-                .toList();
+        List<ShowtimeDetailResponse> responses = showtimeMapper.toResponseList(showtimes);
 
+        responses.forEach(st -> {
+            SeatAvailability seatAvailability = new SeatAvailability();
+            List<SeatStatusCount> seatStatus = seatStatusRepository.countByShowtimeIdGroupByStatus(st.getShowtimeId());
+            Map<String, Integer> statusMap = seatStatus.stream()
+                    .collect(Collectors.toMap(SeatStatusCount::getStatus, SeatStatusCount::getCount));
+
+            seatAvailability.setTotalSeats(st.getRoom().getTotalSeats());
+            seatAvailability.setAvailableSeats(statusMap.getOrDefault("AVAILABLE", 0));
+            seatAvailability.setBookedSeats(statusMap.getOrDefault("BOOKED", 0));
+            seatAvailability.setHeldSeats(statusMap.getOrDefault("HELD", 0));
+
+            st.setSeatAvailability(seatAvailability);
+        });
         // Load pricing info if needed
         if (request.getIncludeAvailableSeats()) {
-            showtimes.forEach(this::enrichWithPricingInfo);
+            responses.forEach(this::enrichWithPricingInfo);
         }
 
-        log.info("Found {} showtimes", showtimes.size());
-        return showtimes;
+        log.info("Found {} showtimes", responses.size());
+        return responses;
     }
 
     @Override
     public List<ShowtimeGroupByCinemaDto> findShowtimesGroupByCinema(ShowtimeFilterRequest request) {
-        List<ShowtimeDetailResponse> allShowtimes = findShowtimesList(request);
-
+        List<ShowtimeDetailResponse> allShowtimes = findAllShowtime(request);
         // Group by cinema
         Map<Integer, List<ShowtimeDetailResponse>> groupedMap = allShowtimes.stream()
                 .collect(Collectors.groupingBy(st -> st.getCinema().getCinemaId()));
@@ -127,7 +125,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     public List<ShowtimeGroupByTimeSlotDto> findShowtimesGroupByTimeSlot(ShowtimeFilterRequest request) {
-        List<ShowtimeDetailResponse> allShowtimes = findShowtimesList(request);
+        List<ShowtimeDetailResponse> allShowtimes = findAllShowtime(request);
 
         // Calculate time slot for each showtime
         allShowtimes.forEach(st -> st.setTimeSlot(st.calculateTimeSlot()));
@@ -158,141 +156,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return result;
     }
 
-    /**
-     * Group by room (bonus)
-     */
-    private List<Object> findShowtimesGroupByRoom(ShowtimeFilterRequest request) {
-        List<ShowtimeDetailResponse> allShowtimes = findShowtimesList(request);
-
-        // Group by cinema -> room
-        Map<Integer, Map<Integer, List<ShowtimeDetailResponse>>> groupedMap = allShowtimes.stream()
-                .collect(Collectors. groupingBy(
-                        st -> st.getCinema().getCinemaId(),
-                        Collectors. groupingBy(st -> st.getRoom().getRoomId())
-                ));
-
-        // Convert to nested structure
-        List<Object> result = new ArrayList<>();
-        groupedMap.forEach((cinemaId, roomsMap) -> {
-            Map<String, Object> cinemaGroup = new HashMap<>();
-            ShowtimeDetailResponse sampleShowtime = allShowtimes. stream()
-                    .filter(st -> st.getCinema().getCinemaId().equals(cinemaId))
-                    .findFirst()
-                    .orElse(null);
-
-            if (sampleShowtime != null) {
-                cinemaGroup.put("cinemaId", cinemaId);
-                cinemaGroup.put("cinemaName", sampleShowtime.getCinema().getName());
-
-                List<Object> rooms = new ArrayList<>();
-                roomsMap.forEach((roomId, showtimes) -> {
-                    Map<String, Object> roomGroup = new HashMap<>();
-                    roomGroup.put("roomId", roomId);
-                    roomGroup.put("roomName", showtimes.get(0).getRoom().getRoomName());
-                    roomGroup.put("showtimes", showtimes);
-                    rooms.add(roomGroup);
-                });
-
-                cinemaGroup.put("rooms", rooms);
-                result.add(cinemaGroup);
-            }
-        });
-
-        return result;
-    }
-
-    @Override
-    public ShowtimeDetailResponse getShowtimeDetail(Integer showtimeId) {
-        if (!showtimeRepository.existsByIdAndActive(showtimeId)) {
-            throw new ResourceNotFoundException("Cannot find showtime with id: " + showtimeId);
-        }
-
-//        ShowtimeFilterRequest request = ShowtimeFilterRequest.builder()
-//                .activeOnly(true)
-//                .futureOnly(false)
-//                .includeAvailableSeats(true)
-//                .ignoreTimeFilter(true) // Ensure we can fetch details for any showtime
-//                .build();
-
-        List<Object[]> results = showtimeRepository.findShowtimesWithDetails(
-                null, null, showtimeId, null,
-                null, // startDateTime
-                null, // endDateTime
-                true, false, "START_TIME",
-                true // ignoreTimeFilter
-        );
-
-        ShowtimeDetailResponse dto = results.stream()
-                .map(this::mapToShowtimeDetailResponse)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Can not find showtime with id: " + showtimeId));
-
-        enrichWithPricingInfo(dto);
-        dto.setTimeSlot(dto.calculateTimeSlot());
-
-        return dto;
-    }
-
-    /**
-     * Map Object[] from native query to ShowtimeDetailResponse
-     */
-    private ShowtimeDetailResponse mapToShowtimeDetailResponse(Object[] row) {
-        int idx = 0;
-
-        ShowtimeDetailResponse dto = ShowtimeDetailResponse.builder()
-                .showtimeId((Integer) row[idx++])
-                .movie(MovieInfo.builder()
-                        .movieId((Integer) row[idx++])
-                        .build())
-                .room(RoomInfo.builder()
-                        .roomId((Integer) row[idx++])
-                        .build())
-                .startTime(((Timestamp) row[idx++]).toLocalDateTime())
-                .endTime(((Timestamp) row[idx++]).toLocalDateTime())
-                .basePrice((BigDecimal) row[idx++])
-                .isActive((Boolean) row[idx++])
-                .build();
-
-        // Movie info
-        dto.getMovie().setTitle((String) row[idx++]);
-        dto.getMovie().setPosterUrl((String) row[idx++]);
-        dto.getMovie().setDuration((Integer) row[idx++]);
-        dto.getMovie().setAgeRating((String) row[idx++]);
-
-        // Cinema info
-        dto.setCinema(CinemaInfo.builder()
-                .cinemaId((Integer) row[idx++])
-                .name((String) row[idx++])
-                .address((String) row[idx++])
-                .city((String) row[idx++])
-                .build());
-
-        // Room info
-        dto.getRoom().setRoomName((String) row[idx++]);
-        dto.getRoom().setTotalSeats((Integer) row[idx++]);
-
-        // Seat availability
-        Integer totalSeats = ((Number) row[idx++]).intValue();
-        Integer availableSeats = ((Number) row[idx++]).intValue();
-        Integer bookedSeats = ((Number) row[idx++]).intValue();
-        Integer heldSeats = ((Number) row[idx++]).intValue();
-
-        double occupancyRate = totalSeats > 0 ?
-                ((double) bookedSeats / totalSeats) * 100 : 0;
-
-        dto.setSeatAvailability(SeatAvailability.builder()
-                .totalSeats(totalSeats)
-                .availableSeats(availableSeats)
-                .bookedSeats(bookedSeats)
-                .heldSeats(heldSeats)
-                .occupancyRate(Math.round(occupancyRate * 100.0) / 100.0)
-                .build());
-
-        return dto;
-    }
-
     private void enrichWithPricingInfo(ShowtimeDetailResponse dto) {
-        List<Object[]> pricingData = showtimeRepository.findPricingInfoByShowtime(dto.getShowtimeId());
+        List<PricingSummary> pricingData = showtimeRepository.findPricingInfoByShowtime(dto.getShowtimeId());
 
         if (pricingData.isEmpty()) {
             return;
@@ -303,10 +168,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         BigDecimal minPrice = null;
         BigDecimal maxPrice = null;
 
-        for (Object[] row : pricingData) {
-            String seatTypeName = (String) row[0];
-            BigDecimal price = (BigDecimal) row[1];
-            Integer availableCount = ((Number) row[2]).intValue();
+        for (PricingSummary data : pricingData) {
+            String seatTypeName = data.getSeatTypeName();
+            BigDecimal price = data.getFinalPrice();
+            Integer availableCount = data.getAvailableCount();
 
             pricesBySeatType.put(seatTypeName, price. setScale(0, RoundingMode.HALF_UP));
             availableSeatsByType.put(seatTypeName, availableCount);
@@ -322,12 +187,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         dto.setPricing(PricingInfo.builder()
                 .basePrice(dto.getBasePrice())
                 .pricesBySeatType(pricesBySeatType)
-                .minPrice(minPrice != null ? minPrice.setScale(0, RoundingMode. HALF_UP) : dto.getBasePrice())
-                .maxPrice(maxPrice != null ?  maxPrice.setScale(0, RoundingMode.HALF_UP) : dto.getBasePrice())
+                .minPrice(minPrice.setScale(0, RoundingMode. HALF_UP))
+                .maxPrice(maxPrice.setScale(0, RoundingMode.HALF_UP))
                 .build());
-
-        if (dto.getSeatAvailability() != null) {
-            dto.getSeatAvailability().setAvailableSeatsByType(availableSeatsByType);
-        }
     }
 }

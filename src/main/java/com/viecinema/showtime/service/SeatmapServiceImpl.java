@@ -307,8 +307,8 @@ public class SeatmapServiceImpl implements SeatmapService {
 
         return SeatInfo.builder()
                 .seatId(seat.getSeatId())
-                . seatLabel(seat.getSeatLabel())
-                . rowLabel(seat.getSeatRow())
+                .seatLabel(seat.getSeatLabel())
+                .rowLabel(seat.getSeatRow())
                 .seatNumber(seat.getSeatNumber())
                 .seatTypeId(seatType.getSeatTypeId())
                 .seatTypeName(seatType.getName())

@@ -26,7 +26,7 @@ public class ShowtimeFilterRequest {
     private Integer roomId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate date;
+    private LocalDateTime date;
 
     private String city;
     @Builder.Default
@@ -40,44 +40,21 @@ public class ShowtimeFilterRequest {
     @Builder.Default
     private Boolean includeAvailableSeats = true;
 
-    // Cờ nội bộ để bỏ qua hoàn toàn bộ lọc thời gian
-    @JsonIgnore // Không hiển thị trong JSON response/request
-    @Builder.Default
-    private boolean ignoreTimeFilter = false;
-
     public enum GroupBy {
-        CINEMA,      // Group theo rạp
-        TIMESLOT,    // Group theo khung giờ (sáng, chiều, tối)
-        ROOM,        // Group theo phòng chiếu
-        NONE         // Không group, trả về flat list
+        CINEMA,
+        TIMESLOT,
+        ROOM,
+        NONE
     }
 
     public enum SortBy {
-        START_TIME,     // Sắp xếp theo giờ chiếu
-        PRICE,          // Sắp xếp theo giá
-        CINEMA_NAME,    // Sắp xếp theo tên rạp
-        AVAILABLE_SEATS // Sắp xếp theo số ghế trống
+        START_TIME,
+        PRICE,
+        CINEMA_NAME,
+        AVAILABLE_SEATS
     }
 
     public boolean isValid() {
         return movieId != null || cinemaId != null;
-    }
-
-    public LocalDateTime getStartDateTime() {
-        if (ignoreTimeFilter) {
-            // Trả về một ngày rất xa trong quá khứ để lấy tất cả
-            return LocalDateTime.of(1970, 1, 1, 0, 0);
-        }
-        LocalDate searchDate = (date != null) ? date : LocalDate.now();
-        return searchDate.atStartOfDay();
-    }
-
-    public LocalDateTime getEndDateTime() {
-        if (ignoreTimeFilter) {
-            // Trả về một ngày rất xa trong tương lai để lấy tất cả
-            return LocalDateTime.of(9999, 12, 31, 23, 59);
-        }
-        LocalDate searchDate = (date != null) ? date : LocalDate.now();
-        return searchDate.atTime(23, 59, 59);
     }
 }

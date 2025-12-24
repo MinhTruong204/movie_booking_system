@@ -10,6 +10,6 @@ import org.mapstruct.Mapper;
         uses = {ActorMapper.class,DirectorMapper.class,GenreMapper.class},
         injectionStrategy = InjectionStrategy.CONSTRUCTOR) // Define this interface as a Spring bean
 public interface MovieMapper {
-    MovieSummaryDto toMovieSummaryDto (Movie movie);
+    MovieSummaryDto toMovieSummaryDto(Movie movie);
     MovieDetailDto toMovieDetailDto(Movie movie);
 }

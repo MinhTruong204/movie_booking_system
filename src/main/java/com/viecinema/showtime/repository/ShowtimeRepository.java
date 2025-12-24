@@ -1,7 +1,9 @@
 package com.viecinema.showtime.repository;
 
+import com.viecinema.showtime.dto.projection.PricingSummary;
 import com.viecinema.showtime.entity.Showtime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +13,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
+public interface ShowtimeRepository extends JpaRepository<Showtime,Integer>,
+                                            JpaSpecificationExecutor<Showtime> {
     @Query(value = """
         SELECT 
             s.showtime_id,
@@ -96,7 +99,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime,Integer> {
         GROUP BY st.seat_type_id, st.name, st.price_multiplier, sh.base_price
         ORDER BY final_price ASC
         """, nativeQuery = true)
-    List<Object[]> findPricingInfoByShowtime(@Param("showtimeId") Integer showtimeId);
+    List<PricingSummary> findPricingInfoByShowtime(@Param("showtimeId") Integer showtimeId);
 
     /**
      * Kiểm tra showtime có tồn tại và active không
