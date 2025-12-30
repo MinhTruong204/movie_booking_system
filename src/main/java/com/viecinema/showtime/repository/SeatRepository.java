@@ -16,34 +16,7 @@ public interface SeatRepository extends JpaRepository<Seat,Integer> {
         WHERE s.room.id = :roomId
         AND s.isActive = true
         AND s.deletedAt IS NULL
-        ORDER BY s. seatRow ASC, s.seatNumber ASC
+        ORDER BY s.seatRow ASC, s.seatNumber ASC
     """)
     List<Seat> findByRoomIdOrderBySeatRowAndNumber(@Param("roomId") Integer roomId);
-
-    /**
-     * Đếm số ghế theo loại trong một phòng
-     */
-    @Query("""
-        SELECT s.seatType.seatTypeId, COUNT(s)
-        FROM Seat s
-        WHERE s.room.id = :roomId
-        AND s.isActive = true
-        AND s.deletedAt IS NULL
-        GROUP BY s. seatType.seatTypeId
-    """)
-    List<Object[]> countSeatsByTypeInRoom(@Param("roomId") Integer roomId);
-
-    /**
-     * Lấy thông tin layout phòng (số hàng, max ghế/hàng)
-     */
-    @Query("""
-        SELECT 
-            COUNT(DISTINCT s.seatRow) as totalRows,
-            MAX(s.seatNumber) as maxSeatsPerRow
-        FROM Seat s
-        WHERE s.room.id = :roomId
-        AND s.isActive = true
-        AND s.deletedAt IS NULL
-    """)
-    Object[] getRoomLayoutInfo(@Param("roomId") Integer roomId);
 }

@@ -33,74 +33,53 @@ public class SeatmapServiceImpl implements SeatmapService {
     public SeatmapResponse getSeatmap(Integer showtimeId, Integer currentUserId) {
         log.info("Fetching seatmap for showtime: {}, user: {}", showtimeId, currentUserId);
 
-        // 1. Lấy thông tin showtime
         Showtime showtime = showtimeRepository.findById(showtimeId)
-                . orElseThrow(() -> new ResourceNotFoundException("Showtime " + showtimeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime " + showtimeId));
 
-        // Kiểm tra showtime còn active và chưa bắt đầu
         validateShowtime(showtime);
 
-        Room room = showtime. getRoom();
+        Room room = showtime.getRoom();
         Movie movie = showtime.getMovie();
         BigDecimal basePrice = showtime.getBasePrice();
 
-        // 2.  Lấy tất cả ghế của phòng
-        List<Seat> seats = seatRepository. findByRoomIdOrderBySeatRowAndNumber(room. getId());
+        List<Seat> seats = seatRepository.findByRoomIdOrderBySeatRowAndNumber(room.getId());
+        Map<Integer,SeatStatus> seatStatusMap = getSeatStatusMap(showtimeId);
 
         if (seats.isEmpty()) {
             throw new ResourceNotFoundException("Seats in roomId " + room.getId());
         }
 
-        // 3.  Lấy trạng thái ghế (hoặc khởi tạo nếu chưa có)
-        Map<Integer, SeatStatus> seatStatusMap = getSeatStatusMap(showtimeId, seats);
-
-        // 4. Build response
         return buildSeatmapResponse(showtime, room, movie, seats, seatStatusMap, basePrice, currentUserId);
     }
 
     // ==================== PRIVATE METHODS ====================
 
-    /**
-     * Validate showtime còn hợp lệ để đặt vé
-     */
     private void validateShowtime(Showtime showtime) {
-        if (! showtime.getIsActive()) {
-            throw new IllegalStateException("Suất chiếu không còn hoạt động");
+        if (!showtime.getIsActive()) {
+            throw new IllegalStateException("This showtime is not active");
         }
 
         LocalDateTime now = LocalDateTime.now();
         if (showtime.getStartTime().isBefore(now)) {
-            throw new IllegalStateException("Suất chiếu đã bắt đầu, không thể đặt vé");
+            throw new IllegalStateException("This showtime has already started, tickets cannot be booked.");
         }
 
-        // Có thể thêm rule: không cho đặt vé trước 15 phút
-        // if (showtime. getStartTime().minusMinutes(15).isBefore(now)) {
-        //     throw new IllegalStateException("Đã quá thời gian đặt vé (15 phút trước suất chiếu)");
-        // }
+         if (showtime.getStartTime().minusMinutes(15).isBefore(now)) {
+             throw new IllegalStateException("The booking deadline has passed.");
+         }
     }
 
-    /**
-     * Lấy map trạng thái ghế, khởi tạo nếu chưa có
-     */
-    private Map<Integer, SeatStatus> getSeatStatusMap(Integer showtimeId, List<Seat> seats) {
+    private Map<Integer, SeatStatus> getSeatStatusMap(Integer showtimeId) {
         List<SeatStatus> seatStatuses = seatStatusRepository.findByShowtimeId(showtimeId);
 
-        // Nếu chưa có seat_status (showtime mới), trả về map rỗng
-        // -> Tất cả ghế đều available
         if (seatStatuses.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        return seatStatuses. stream()
-                . collect(Collectors. toMap(
-                        ss -> ss.getSeat().getSeatId(),
-                        Function.identity()
-                ));
+        return seatStatuses.stream()
+                .collect(Collectors.toMap(ss -> ss.getSeat().getSeatId(), Function.identity()));
     }
 
-    /**
-     * Build toàn bộ SeatmapResponse
-     */
     private SeatmapResponse buildSeatmapResponse(
             Showtime showtime,
             Room room,
@@ -130,7 +109,7 @@ public class SeatmapServiceImpl implements SeatmapService {
                 .roomInfo(roomInfo)
                 .seatTypes(new ArrayList<>(seatTypeInfoMap.values()))
                 .seatLayout(seatLayout)
-                . summary(summary)
+                .summary(summary)
                 .build();
     }
 
@@ -142,22 +121,21 @@ public class SeatmapServiceImpl implements SeatmapService {
                 .posterUrl(movie.getPosterUrl())
                 .duration(movie.getDuration())
                 .ageRating(movie.getAgeRating())
-                .startTime(showtime. getStartTime())
+                .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
-                .basePrice(showtime. getBasePrice())
+                .basePrice(showtime.getBasePrice())
                 .build();
     }
 
     private RoomInfo buildRoomInfo(Room room, List<Seat> seats) {
-        // Tính số hàng và max ghế/hàng
         Set<String> rows = seats.stream()
                 .map(Seat::getSeatRow)
                 .collect(Collectors.toSet());
 
         int maxSeatsPerRow = seats.stream()
                 .collect(Collectors.groupingBy(Seat::getSeatRow, Collectors.counting()))
-                .values(). stream()
-                . mapToInt(Long::intValue)
+                .values().stream()
+                .mapToInt(Long::intValue)
                 .max()
                 .orElse(0);
 
@@ -167,7 +145,7 @@ public class SeatmapServiceImpl implements SeatmapService {
                 .cinemaId(room.getCinema().getId())
                 .cinemaName(room.getCinema().getName())
                 .cinemaAddress(room.getCinema().getAddress())
-                .totalSeats(room. getTotalSeats())
+                .totalSeats(room.getTotalSeats())
                 .totalRows(rows.size())
                 .maxSeatsPerRow(maxSeatsPerRow)
                 .build();
@@ -180,25 +158,25 @@ public class SeatmapServiceImpl implements SeatmapService {
 
         Map<Integer, SeatTypeInfo> result = new LinkedHashMap<>();
 
-        // Group seats by type và đếm available
+        // Group seats by type và count available
         Map<Integer, List<Seat>> seatsByType = seats.stream()
                 .collect(Collectors.groupingBy(s -> s.getSeatType().getSeatTypeId()));
 
-        for (Map. Entry<Integer, List<Seat>> entry : seatsByType.entrySet()) {
-            SeatType seatType = entry.getValue().get(0). getSeatType();
+        for (Map.Entry<Integer, List<Seat>> entry : seatsByType.entrySet()) {
+            SeatType seatType = entry.getValue().get(0).getSeatType();
 
-            // Đếm số ghế available của type này
-            long availableCount = entry.getValue(). stream()
-                    . filter(seat -> {
+            // Count seat available
+            long availableCount = entry.getValue().stream()
+                    .filter(seat -> {
                         SeatStatus status = seatStatusMap.get(seat.getSeatId());
                         return status == null || status.isAvailable();
                     })
                     .count();
 
-            result.put(seatType. getSeatTypeId(), SeatTypeInfo. builder()
-                    . seatTypeId(seatType.getSeatTypeId())
-                    .name(seatType. getName())
-                    . description(seatType. getDescription())
+            result.put(seatType.getSeatTypeId(), SeatTypeInfo.builder()
+                    .seatTypeId(seatType.getSeatTypeId())
+                    .name(seatType.getName())
+                    .description(seatType.getDescription())
                     .priceMultiplier(seatType.getPriceMultiplier())
                     .finalPrice(seatType.calculatePrice(basePrice))
                     .colorCode(seatType.getColorCode())
@@ -219,7 +197,7 @@ public class SeatmapServiceImpl implements SeatmapService {
         Map<String, List<Seat>> seatsByRow = seats.stream()
                 .collect(Collectors.groupingBy(
                         Seat::getSeatRow,
-                        LinkedHashMap::new, // Giữ thứ tự
+                        LinkedHashMap::new, // Keep order
                         Collectors.toList()
                 ));
 
@@ -228,7 +206,7 @@ public class SeatmapServiceImpl implements SeatmapService {
 
         for (Map.Entry<String, List<Seat>> entry : seatsByRow.entrySet()) {
             String rowLabel = entry.getKey();
-            List<Seat> rowSeats = entry. getValue();
+            List<Seat> rowSeats = entry.getValue();
 
             // Sort by seat number
             rowSeats.sort(Comparator.comparingInt(Seat::getSeatNumber));
@@ -239,8 +217,8 @@ public class SeatmapServiceImpl implements SeatmapService {
                 seatInfoList.add(buildSeatInfo(seat, status, basePrice, currentUserId));
             }
 
-            rows.add(SeatRow. builder()
-                    . rowLabel(rowLabel)
+            rows.add(SeatRow.builder()
+                    .rowLabel(rowLabel)
                     .rowIndex(rowIndex++)
                     .seats(seatInfoList)
                     .build());
@@ -248,7 +226,7 @@ public class SeatmapServiceImpl implements SeatmapService {
 
         return SeatLayout.builder()
                 .rows(rows)
-                . screenPosition("top") // Màn hình ở phía trên
+                .screenPosition("top")
                 .build();
     }
 
@@ -259,14 +237,14 @@ public class SeatmapServiceImpl implements SeatmapService {
             Integer currentUserId) {
 
         SeatType seatType = seat.getSeatType();
-        BigDecimal price = seatType. calculatePrice(basePrice);
+        BigDecimal price = seatType.calculatePrice(basePrice);
 
         // Xác định status
         String status;
         Long holdExpiresIn = null;
         boolean isSelectable;
 
-        if (! seat.getIsActive()) {
+        if (!seat.getIsActive()) {
             status = "disabled";
             isSelectable = false;
         } else if (seatStatus == null) {
@@ -274,7 +252,7 @@ public class SeatmapServiceImpl implements SeatmapService {
             status = "available";
             isSelectable = true;
         } else {
-            switch (seatStatus. getStatus()) {
+            switch (seatStatus.getStatus()) {
                 case AVAILABLE -> {
                     status = "available";
                     isSelectable = true;
@@ -284,13 +262,12 @@ public class SeatmapServiceImpl implements SeatmapService {
                     isSelectable = false;
                 }
                 case HELD -> {
-                    // Kiểm tra xem có phải user hiện tại hold không
+                    // Check if this seat be hold by current user or not
                     if (seatStatus.isHeldBy(currentUserId)) {
                         status = "held_by_you";
                         holdExpiresIn = seatStatus.getRemainingHoldSeconds();
-                        isSelectable = true; // User có thể bỏ chọn
-                    } else if (seatStatus. isAvailable()) {
-                        // Hold đã hết hạn
+                        isSelectable = true;
+                    } else if (seatStatus.isAvailable()) {
                         status = "available";
                         isSelectable = true;
                     } else {
@@ -358,9 +335,9 @@ public class SeatmapServiceImpl implements SeatmapService {
                 .totalSeats(total)
                 .availableSeats(available)
                 .bookedSeats(booked)
-                . heldSeats(held)
+                .heldSeats(held)
                 .disabledSeats(disabled)
-                . occupancyRate(Math.round(occupancyRate * 100.0) / 100.0)
+                .occupancyRate(Math.round(occupancyRate * 100.0) / 100.0)
                 .build();
     }
 }

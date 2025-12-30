@@ -44,33 +44,30 @@ public class BookingCalculationService {
     private final ComboService comboService;
     private final PromotionRepository promotionRepository;
     private final UserPromotionUsageRepository userPromotionUsageRepository;
-
-    /**
-     * Tính toán chi tiết giá đặt vé
-     */
+    
     public CalculateBookingResponse calculateBooking(
             Integer userId,
             CalculateBookingRequest request) {
 
-        log.info("Calculating booking for user: {}, showtime: {}", userId, request. getShowtimeId());
+        log.info("Calculating booking for user: {}, showtime: {}", userId, request.getShowtimeId());
 
-        // 1. Validate và lấy thông tin showtime
+        // Get showtime info
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new ResourceNotFoundException("showtime"));
 
         if (!showtime.getIsActive()) {
             throw new ResourceNotFoundException("showtime");
         }
-
-        // 2. Tính giá ghế
+        
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
-        if (seats.size() != request.getSeatIds(). size()) {
+        if (seats.size() != request.getSeatIds().size()) {
             throw new ResourceNotFoundException("Seats");
         }
 
         List<SeatInfo> seatInfos = new ArrayList<>();
         BigDecimal seatsSubtotal = BigDecimal.ZERO;
 
+        // Calculate seat price
         for (Seat seat : seats) {
             BigDecimal seatPrice = showtime.getBasePrice()
                     .multiply(seat.getSeatType().getPriceMultiplier())
@@ -78,7 +75,8 @@ public class BookingCalculationService {
 
             seatsSubtotal = seatsSubtotal.add(seatPrice);
 
-            seatInfos.add(SeatInfo.builder()
+            seatInfos.add(
+                    SeatInfo.builder()
                     .seatId(seat.getSeatId())
                     .rowLabel(seat.getSeatRow())
                     .seatNumber(seat.getSeatNumber())
@@ -88,18 +86,18 @@ public class BookingCalculationService {
                     .build());
         }
 
-        // 3. Tính giá combo
+        // Calculate combo price
         List<ComboInfo> comboInfos = new ArrayList<>();
         BigDecimal combosSubtotal = BigDecimal.ZERO;
 
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             List<Integer> comboIds = request.getCombos().stream()
                     .map(ComboItem::getComboId)
-                    .collect(Collectors. toList());
+                    .collect(Collectors.toList());
 
             List<Combo> combos = comboService.getCombosByIds(comboIds);
             Map<Integer, Combo> comboMap = combos.stream()
-                    .collect(Collectors. toMap(Combo::getId, c -> c));
+                    .collect(Collectors.toMap(Combo::getId, c -> c));
 
             for (ComboItem item : request.getCombos()) {
                 Combo combo = comboMap.get(item.getComboId());
@@ -121,10 +119,10 @@ public class BookingCalculationService {
             }
         }
 
-        // 4. Tính subtotal
+        // Calculate subtotal
         BigDecimal subtotal = seatsSubtotal.add(combosSubtotal);
 
-        // 5.  Áp dụng khuyến mãi (nếu có)
+        // Apply discount
         PromotionInfo promotionInfo = null;
         BigDecimal totalDiscount = BigDecimal.ZERO;
 
@@ -139,25 +137,25 @@ public class BookingCalculationService {
             BigDecimal discountAmount = calculateDiscount(promotion, subtotal);
             totalDiscount = discountAmount;
 
-            promotionInfo = PromotionInfo. builder()
+            promotionInfo = PromotionInfo.builder()
                     .code(promotion.getCode())
-                    . description(promotion.getDescription())
-                    .discountType(promotion.getDiscountType(). name())
+                    .description(promotion.getDescription())
+                    .discountType(promotion.getDiscountType().name())
                     .discountValue(promotion.getDiscountValue())
                     .discountAmount(discountAmount)
                     .build();
         }
 
-        // 6. Tính final amount
+        // Calculate the final amount
         BigDecimal finalAmount = subtotal.subtract(totalDiscount);
         if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
             finalAmount = BigDecimal.ZERO;
         }
 
-        // 7. Tính điểm tích lũy (1 điểm = 10,000 VNĐ)
+        // Calculate loyaltyPoints
         Integer loyaltyPoints = finalAmount.divide(BigDecimal.valueOf(10000), 0, RoundingMode.DOWN).intValue();
 
-        // 8. Build response
+        // 8.Build response
         return CalculateBookingResponse.builder()
                 .showtime(buildShowtimeInfo(showtime))
                 .seats(seatInfos)
@@ -174,9 +172,6 @@ public class BookingCalculationService {
                 .build();
     }
 
-    /**
-     * Validate promotion và kiểm tra điều kiện
-     */
     private Promotion validateAndGetPromotion(
             String code,
             Integer userId,
@@ -186,31 +181,31 @@ public class BookingCalculationService {
         Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(code)
                 .orElseThrow(() -> new SpecificBusinessException("The promotional code does not exist."));
 
-        // Kiểm tra thời gian
+        // Check the expiration date.
         if (! promotion.isValid()) {
             throw new SpecificBusinessException("Promotion code has expired or is not active");
         }
 
-        // Kiểm tra giá trị đơn hàng tối thiểu
-        if (subtotal.compareTo(promotion. getMinOrderValue()) < 0) {
+        // Check the minimum order price
+        if (subtotal.compareTo(promotion.getMinOrderValue()) < 0) {
             throw new SpecificBusinessException(
-                    String.format("Orders must reach a minimum value of %,. 0f VNĐ to apply this code.",
+                    String.format("Orders must reach a minimum value of %,.0f VNĐ to apply this code.",
                             promotion.getMinOrderValue())
             );
         }
 
-        // Kiểm tra phim áp dụng
+        // Check the applicable movie
         if (! promotion.isApplicableForMovie(showtime.getMovie().getMovieId())) {
             throw new SpecificBusinessException("The promotional code does not apply to this movie.");
         }
 
-        // Kiểm tra ngày áp dụng
+        // Check the applicable day
         DayOfWeek currentDay = LocalDateTime.now().getDayOfWeek();
-        if (!promotion. isApplicableForDay(currentDay)) {
+        if (!promotion.isApplicableForDay(currentDay)) {
             throw new SpecificBusinessException("The promotional code does not apply to today.");
         }
 
-        // Kiểm tra số lần sử dụng của user
+        // Check the usage limit
         UserPromotionUsage usage = userPromotionUsageRepository
                 .findByUserIdAndPromoId(userId, promotion.getId())
                 .orElse(null);
@@ -222,17 +217,14 @@ public class BookingCalculationService {
         return promotion;
     }
 
-    /**
-     * Tính số tiền giảm giá
-     */
     private BigDecimal calculateDiscount(Promotion promotion, BigDecimal subtotal) {
         BigDecimal discount;
 
-        if (promotion.getDiscountType() == Promotion.DiscountType. PERCENT) {
+        if (promotion.getDiscountType() == Promotion.DiscountType.PERCENT) {
             discount = subtotal.multiply(promotion.getDiscountValue())
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
 
-            // Giới hạn bởi max_discount
+            // Limit discount
             if (promotion.getMaxDiscount() != null
                     && discount.compareTo(promotion.getMaxDiscount()) > 0) {
                 discount = promotion.getMaxDiscount();
@@ -241,7 +233,7 @@ public class BookingCalculationService {
             discount = promotion.getDiscountValue();
         }
 
-        // Discount không được lớn hơn subtotal
+        // Discount cannot more than subtatal
         if (discount.compareTo(subtotal) > 0) {
             discount = subtotal;
         }
@@ -254,9 +246,9 @@ public class BookingCalculationService {
                 .showtimeId(showtime.getId())
                 .movieTitle(showtime.getMovie().getTitle())
                 .cinemaName(showtime.getRoom().getCinema().getName())
-                .roomName(showtime.getRoom(). getName())
+                .roomName(showtime.getRoom().getName())
                 .startTime(showtime.getStartTime())
-                .basePrice(showtime. getBasePrice())
+                .basePrice(showtime.getBasePrice())
                 .build();
     }
 }

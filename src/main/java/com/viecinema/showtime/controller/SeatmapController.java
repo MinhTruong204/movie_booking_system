@@ -37,7 +37,6 @@ public class SeatmapController {
     ) {
         log.info("GET /api/showtimes/{}/seatmap", showtimeId);
 
-        // Lấy userId từ authentication (null nếu chưa login)
         Integer currentUserId = authUtil.extractUserId(userPrincipal);
         SeatmapResponse seatmap = seatmapService.getSeatmap(showtimeId, currentUserId);
 

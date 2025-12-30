@@ -52,7 +52,7 @@ public class UserBookingService {
         log.info("Fetching all bookings for user ID: {}", userId);
 
         // 1. Lấy tất cả booking với eager loading
-        List<Booking> bookings = bookingRepository. findAllByUserIdWithDetails(userId);
+        List<Booking> bookings = bookingRepository.findAllByUserIdWithDetails(userId);
 
         if (bookings.isEmpty()) {
             log.info("No bookings found for user ID: {}", userId);

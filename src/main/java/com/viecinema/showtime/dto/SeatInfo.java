@@ -16,26 +16,8 @@ public class SeatInfo {
     private String seatTypeName;
     private BigDecimal priceMultiplier;
     private BigDecimal price;
-
-    /**
-     * Trạng thái ghế:
-     * - available: Có thể đặt
-     * - booked: Đã được đặt
-     * - held: Đang được giữ bởi user khác
-     * - held_by_you: Đang được giữ bởi current user
-     * - disabled: Ghế không hoạt động
-     */
     private String status;
-
-    /**
-     * Thời gian còn lại nếu ghế đang held (giây)
-     * Null nếu không phải held
-     */
     private Long holdExpiresIn;
-
-    /**
-     * Ghế có thể chọn được không
-     */
     private Boolean isSelectable;
 }
 

@@ -94,7 +94,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
                     // Người khác đang giữ
                     Seat seat = seatRepository.findById(seatId)
                             .orElseThrow(() -> new ResourceNotFoundException("Seat"));
-                    unavailableSeats. add(UnavailableSeatDto.builder()
+                    unavailableSeats.add(UnavailableSeatDto.builder()
                             . seatId(seatId)
                             .seatRow(seat.getSeatRow())
                             .seatNumber(seat. getSeatNumber())
@@ -121,7 +121,7 @@ public class SeatHoldingServiceImpl implements SeatHoldingService {
         }
 
         // 7. Hold seats
-        LocalDateTime heldUntil = LocalDateTime. now()
+        LocalDateTime heldUntil = LocalDateTime.now()
                 .plusSeconds(request.getHoldDurationSeconds());
 
         List<HeldSeatDto> heldSeats = new ArrayList<>();

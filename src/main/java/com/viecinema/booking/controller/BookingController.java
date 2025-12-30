@@ -59,11 +59,7 @@ public class BookingController {
                 currentUser.getId(), request.getShowtimeId());
 
         try {
-            BookingResponse response = bookingService.createBooking(
-                    currentUser.getId(),
-                    request
-            );
-
+            BookingResponse response = bookingService.createBooking(currentUser.getId(),request);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(RESOURCE_CREATE, response,"Booking"));
 

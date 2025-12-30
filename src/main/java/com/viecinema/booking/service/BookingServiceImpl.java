@@ -6,6 +6,7 @@ import com.viecinema.booking.dto.ComboInfo;
 import com.viecinema.booking.dto.ComboItem;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.request.BookingRequest;
+import com.viecinema.booking.dto.request.CalculateBookingRequest;
 import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.entity.BookingCombo;
@@ -65,7 +66,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createBooking(Integer userId, BookingRequest request) {
         log.info("Creating booking for user {} - showtime {}", userId, request.getShowtimeId());
 
-        // 1.Validate user
+        // Validate user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
 
@@ -73,13 +74,13 @@ public class BookingServiceImpl implements BookingService {
             throw new SpecificBusinessException("The account has been locked.");
         }
 
-        // 2.Validate showtime
+        // Validate showtime
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Showtime"));
 
         validateShowtime(showtime);
 
-        // 3.Validate và lock ghế (CRITICAL SECTION)
+        // Validate và lock seat (CRITICAL SECTION)
         validateSeatAvailability(request.getShowtimeId(), request.getSeatIds(), userId);
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
 
@@ -95,10 +96,10 @@ public class BookingServiceImpl implements BookingService {
 //            throw new SpecificBusinessException("Không thể đặt ghế, vui lòng thử lại");
 //        }
 
-        // 4.Validate combos (nếu có)
+        // Validate combos
         List<Combo> combos = validateAndGetCombos(request.getCombos());
 
-        // 5.Tính giá
+        // Calculate price
         PriceBreakdown priceBreakdown = calculatePrice(
                 userId,
                 request.getShowtimeId(),
@@ -109,7 +110,7 @@ public class BookingServiceImpl implements BookingService {
                 request.getLoyaltyPointsToUse()
         );
 
-        // 6.Tạo booking
+        // Create booking
         Booking booking = Booking.builder()
                 .user(user)
                 .showtime(showtime)
@@ -121,19 +122,19 @@ public class BookingServiceImpl implements BookingService {
 
         booking = bookingRepository.save(booking);
 
-        // 7.Lưu thông tin ghế đã đặt
+        // Create booking info
         List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
 
-        // 8.Lưu thông tin combo (nếu có)
+        // Create combo infos
         List<BookingCombo> bookingCombos = saveBookingCombos(booking, combos, request.getCombos());
 
-        // 9.Cập nhật trạng thái ghế -> "booked"
+        // Update seat status
         updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), SeatStatusType.BOOKED, booking);
 
-        // 10.Áp dụng promotion/voucher (lưu lại để tracking)
+        // Apply promotions and vouchers
         applyPromotionsAndVouchers(booking, request.getPromoCode(), request.getVoucherCode(), priceBreakdown);
 
-        // 11.Build response
+        // Build response
         BookingResponse response = buildBookingResponse(
                 booking,
                 showtime,
@@ -148,26 +149,25 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public void validateSeatAvailability(Integer showtimeId, List<Integer> seatIds, Integer userId) {
-        // Lấy trạng thái ghế với pessimistic lock
+        // Get seat statuses
         List<SeatStatus> seatStatuses = seatStatusRepository
                 .findByShowtimeAndSeatsWithLock(showtimeId, seatIds);
 
-        // Kiểm tra tất cả ghế đều có trạng thái
+        // Check seat statuses
         if (seatStatuses.size() != seatIds.size()) {
-            // Một số ghế chưa có trạng thái -> tạo mới
             Set<Integer> existingSeatIds = seatStatuses.stream()
                     .map(ss -> ss.getSeat().getSeatId())
                     .collect(Collectors.toSet());
-
+            // Get missing seat ids, which one is not in existingSeatIds
             List<Integer> missingSeatIds = seatIds.stream()
                     .filter(id -> !existingSeatIds.contains(id))
                     .collect(Collectors.toList());
 
-            // Tạo trạng thái mới cho ghế chưa có
             List<Seat> missingSeats = seatRepository.findAllById(missingSeatIds);
             Showtime showtime = showtimeRepository.findById(showtimeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
 
+            // Save a new status for missing seats
             for (Seat seat : missingSeats) {
                 SeatStatus newStatus = SeatStatus.builder()
                         .showtime(showtime)
@@ -178,12 +178,12 @@ public class BookingServiceImpl implements BookingService {
                 seatStatusRepository.save(newStatus);
             }
 
-            // Lấy lại toàn bộ
+            // Get all seat statuses again
             seatStatuses = seatStatusRepository
                     .findByShowtimeAndSeatsWithLock(showtimeId, seatIds);
         }
 
-        // Kiểm tra trạng thái
+        // Check status
         LocalDateTime now = LocalDateTime.now();
         for (SeatStatus status : seatStatuses) {
             if (SeatStatusType.BOOKED.equals(status.getStatus())) {
