@@ -1,7 +1,10 @@
 package com.viecinema.booking.dto.request;
 
-import com.viecinema.booking.dto.ComboItem;
-import jakarta.validation.constraints.*;
+import com.viecinema.booking.dto.ComboItemSelected;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +26,7 @@ public class BookingRequest {
     private List<Integer> seatIds;
 
     // Combo IDs với số lượng
-    private List<ComboItem> combos;
+    private List<ComboItemSelected> combos;
 
     // Mã khuyến mãi (có thể null)
     @Size(max = 50)

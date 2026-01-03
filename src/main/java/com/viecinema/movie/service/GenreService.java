@@ -67,7 +67,7 @@ public class GenreService {
                 .genreId(projection.getGenreId())
                 .name(projection.getName())
                 .description(projection.getDescription())
-                .movieCount(projection. getMovieCount())
+                .movieCount(projection.getMovieCount())
                 .build();
     }
 }

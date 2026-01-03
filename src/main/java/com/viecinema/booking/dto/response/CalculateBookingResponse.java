@@ -6,7 +6,6 @@ import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -15,7 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CalculateBookingResponse {
-
     private ShowtimeInfo showtime;
     private List<SeatInfo> seats;
     private List<ComboInfo> combos;

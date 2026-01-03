@@ -1,7 +1,6 @@
 package com.viecinema.auth.dto.request;
 
 
-import com.viecinema.common.constant.ErrorMessage;
 import com.viecinema.common.constant.ValidationConstant;
 import com.viecinema.common.enums.Gender;
 import com.viecinema.common.validation.annotation.ValidEmail;
@@ -36,7 +35,7 @@ public class RegisterRequest {
             max = ValidationConstant.PASSWORD_MAX_LENGTH,
             message = "Password must be between 8 and 50 characters long")
     @Pattern(regexp = ValidationConstant.PASSWORD_REGEX,
-            message =  "Password must contain uppercase, lowercase, numbers and special characters")
+            message = "Password must contain uppercase, lowercase, numbers and special characters")
     private String password;
 
     @NotBlank(message = "Confirm password is required")

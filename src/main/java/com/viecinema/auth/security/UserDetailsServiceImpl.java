@@ -27,6 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         // Đảm bảo phương thức này trả về UserPrincipal khớp với tham số trong Controller
         return UserPrincipal.create(user);
     }
+
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         return Collections.singletonList(new SimpleGrantedAuthority(
                 "ROLE_" + user.getRole().name().toUpperCase()));

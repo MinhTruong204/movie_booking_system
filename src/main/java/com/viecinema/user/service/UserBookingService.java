@@ -7,7 +7,6 @@ import com.viecinema.booking.entity.BookingSeat;
 import com.viecinema.booking.repository.BookingComboRepository;
 import com.viecinema.booking.repository.BookingRepository;
 import com.viecinema.booking.repository.BookingSeatRepository;
-import com.viecinema.movie.entity.Genre;
 import com.viecinema.movie.entity.Movie;
 import com.viecinema.movie.entity.MovieGenre;
 import com.viecinema.movie.repository.MovieGenresRepository;
@@ -41,12 +40,6 @@ public class UserBookingService {
     private final PaymentRepository paymentRepository;
     private final MovieGenresRepository movieGenresRepository;
 
-    /**
-     * Lấy tất cả booking của user
-     *
-     * @param userId ID của user
-     * @return List<UserBookingDto>
-     */
     @Transactional(readOnly = true)
     public List<UserBookingDto> getAllUserBookings(Integer userId) {
         log.info("Fetching all bookings for user ID: {}", userId);
@@ -88,84 +81,6 @@ public class UserBookingService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Lấy booking theo trạng thái
-     */
-    @Transactional(readOnly = true)
-    public List<UserBookingDto> getUserBookingsByStatus(Integer userId, String status) {
-        log.info("Fetching bookings for user ID: {} with status: {}", userId, status);
-
-        List<Booking> bookings = bookingRepository.findByUserIdAndStatus(userId, status);
-
-        if (bookings.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return convertBookingsToDto(bookings);
-    }
-
-    /**
-     * Lấy booking sắp tới
-     */
-    @Transactional(readOnly = true)
-    public List<UserBookingDto> getUpcomingBookings(Integer userId) {
-        log.info("Fetching upcoming bookings for user ID: {}", userId);
-
-        LocalDateTime now = LocalDateTime.now();
-        List<Booking> bookings = bookingRepository.findUpcomingBookings(userId, now);
-
-        return convertBookingsToDto(bookings);
-    }
-
-    /**
-     * Lấy booking đã qua
-     */
-    @Transactional(readOnly = true)
-    public List<UserBookingDto> getPastBookings(Integer userId) {
-        log.info("Fetching past bookings for user ID:  {}", userId);
-
-        LocalDateTime now = LocalDateTime.now();
-        List<Booking> bookings = bookingRepository.findPastBookings(userId, now);
-
-        return convertBookingsToDto(bookings);
-    }
-
-    /**
-     * Helper:  Convert list bookings sang DTO
-     */
-    private List<UserBookingDto> convertBookingsToDto(List<Booking> bookings) {
-        if (bookings.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Integer> bookingIds = bookings. stream()
-                .map(Booking::getId)
-                .collect(Collectors.toList());
-
-        Map<Integer, List<BookingCombo>> combosMap = loadBookingCombos(bookingIds);
-        Map<Integer, Payment> paymentsMap = loadPayments(bookingIds);
-
-        Set<Integer> movieIds = bookings.stream()
-                .map(b -> b.getShowtime().getMovie().getMovieId())
-                .collect(Collectors. toSet());
-        Map<Integer, List<String>> movieGenresMap = loadMovieGenre(new ArrayList<>(movieIds));
-
-        LocalDateTime now = LocalDateTime.now();
-
-        return bookings.stream()
-                .map(booking -> convertToDto(
-                        booking,
-                        combosMap.get(booking.getId()),
-                        paymentsMap. get(booking.getId()),
-                        movieGenresMap.get(booking.getShowtime().getMovie().getMovieId()),
-                        now
-                ))
-                .collect(Collectors. toList());
-    }
-
-    /**
-     * Helper:  Load booking combos (batch)
-     */
     private Map<Integer, List<BookingCombo>> loadBookingCombos(List<Integer> bookingIds) {
         List<BookingCombo> allCombos = bookingComboRepository.findByBookingIdsWithCombo(bookingIds);
 
@@ -175,22 +90,16 @@ public class UserBookingService {
                 ));
     }
 
-    /**
-     * Helper: Load payments (batch)
-     */
     private Map<Integer, Payment> loadPayments(List<Integer> bookingIds) {
         List<Payment> payments = paymentRepository.findByBookingIds(bookingIds);
 
-        return payments. stream()
+        return payments.stream()
                 .collect(Collectors.toMap(
                         p -> p.getBooking().getId(),
                         p -> p
                 ));
     }
 
-    /**
-     * Helper: Load movie genres (batch)
-     */
     private Map<Integer, List<String>> loadMovieGenre(List<Integer> movieIds) {
         List<MovieGenre> movieGenresList = movieGenresRepository.findByMovieIds(movieIds);
 
@@ -198,7 +107,7 @@ public class UserBookingService {
                 .collect(Collectors.groupingBy(
                         mg -> mg.getMovie().getMovieId(),
                         Collectors.mapping(
-                                mg -> mg. getGenre().getName(),
+                                mg -> mg.getGenre().getName(),
                                 Collectors.toList()
                         )
                 ));
@@ -217,7 +126,7 @@ public class UserBookingService {
         Movie movie = showtime.getMovie();
 
         // Build ShowtimeInfo
-           ShowtimeInfo showtimeInfo =   ShowtimeInfo.builder()
+        ShowtimeInfo showtimeInfo = ShowtimeInfo.builder()
                 .showtimeId(showtime.getId())
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
@@ -225,7 +134,7 @@ public class UserBookingService {
                 .build();
 
         // Build MovieInfo
-           MovieInfo movieInfo =   MovieInfo.builder()
+        MovieInfo movieInfo = MovieInfo.builder()
                 .movieId(movie.getMovieId())
                 .title(movie.getTitle())
                 .posterUrl(movie.getPosterUrl())
@@ -235,9 +144,9 @@ public class UserBookingService {
                 .build();
 
         // Build CinemaInfo
-          CinemaInfo cinemaInfo =   CinemaInfo.builder()
+        CinemaInfo cinemaInfo = CinemaInfo.builder()
                 .cinemaId(showtime.getRoom().getCinema().getId())
-                .name(showtime. getRoom().getCinema().getName())
+                .name(showtime.getRoom().getCinema().getName())
                 .address(showtime.getRoom().getCinema().getAddress())
                 .city(showtime.getRoom().getCinema().getCity())
                 .build();
@@ -253,13 +162,13 @@ public class UserBookingService {
         if (combos != null && !combos.isEmpty()) {
             comboInfos = combos.stream()
                     .map(this::convertComboToDto)
-                    .collect(Collectors. toList());
+                    .collect(Collectors.toList());
         }
 
         // Build PaymentInfo
-          PaymentInfo paymentInfo = null;
+        PaymentInfo paymentInfo = null;
         if (payment != null) {
-            paymentInfo =   PaymentInfo.builder()
+            paymentInfo = PaymentInfo.builder()
                     .paymentId(payment.getPaymentId())
                     .method(payment.getMethod())
                     .status(payment.getStatus().name())
@@ -275,7 +184,7 @@ public class UserBookingService {
         boolean canCheckIn = canCheckInBooking(booking, showtime, now);
 
         // Build final DTO
-        return   UserBookingDto.builder()
+        return UserBookingDto.builder()
                 .bookingId(booking.getId())
                 .bookingCode(booking.getBookingCode())
                 .status(booking.getStatus().name())
@@ -301,12 +210,12 @@ public class UserBookingService {
     /**
      * Convert BookingSeat sang SeatInfo DTO
      */
-    private   SeatInfo convertSeatToDto(BookingSeat bookingSeat) {
-        return   SeatInfo. builder()
+    private SeatInfo convertSeatToDto(BookingSeat bookingSeat) {
+        return SeatInfo.builder()
                 .seatId(bookingSeat.getSeat().getSeatId())
-                .rowLabel(bookingSeat. getSeat().getSeatRow())
+                .rowLabel(bookingSeat.getSeat().getSeatRow())
                 .seatNumber(bookingSeat.getSeat().getSeatNumber())
-                .seatTypeName(bookingSeat. getSeat().getSeatType().getName())
+                .seatTypeName(bookingSeat.getSeat().getSeatType().getName())
                 .price(bookingSeat.getPrice())
                 .seatLabel(bookingSeat.getSeat().getSeatRow() + bookingSeat.getSeat().getSeatNumber())
                 .build();
@@ -315,54 +224,16 @@ public class UserBookingService {
     /**
      * Convert BookingCombo sang ComboInfo DTO
      */
-    private    ComboInfo convertComboToDto(BookingCombo bookingCombo) {
-        return   ComboInfo.builder()
+    private ComboInfo convertComboToDto(BookingCombo bookingCombo) {
+        return ComboInfo.builder()
                 .comboId(bookingCombo.getCombo().getId())
-                .comboName(bookingCombo. getCombo().getName())
-                .quantity(bookingCombo. getQuantity())
+                .comboName(bookingCombo.getCombo().getName())
+                .quantity(bookingCombo.getQuantity())
                 .unitPrice(bookingCombo.getPrice())
                 .totalPrice(bookingCombo.getPrice().multiply(new java.math.BigDecimal(bookingCombo.getQuantity())))
                 .build();
     }
 
-    /**
-     * Lấy thứ trong tuần bằng tiếng Việt
-     */
-    private String getDayOfWeekVietnamese(LocalDateTime dateTime) {
-        DayOfWeek dayOfWeek = dateTime.getDayOfWeek();
-        switch (dayOfWeek) {
-            case MONDAY:  return "Thứ 2";
-            case TUESDAY: return "Thứ 3";
-            case WEDNESDAY: return "Thứ 4";
-            case THURSDAY: return "Thứ 5";
-            case FRIDAY: return "Thứ 6";
-            case SATURDAY: return "Thứ 7";
-            case SUNDAY: return "Chủ Nhật";
-            default: return "";
-        }
-    }
-
-    /**
-     * Xác định khung giờ chiếu
-     */
-    private String getTimeSlot(LocalDateTime startTime) {
-        int hour = startTime.getHour();
-        if (hour >= 6 && hour < 12) {
-            return "Suất chiếu sáng";
-        } else if (hour >= 12 && hour < 18) {
-            return "Suất chiếu chiều";
-        } else {
-            return "Suất chiếu tối";
-        }
-    }
-
-    /**
-     * Kiểm tra có thể hủy booking không
-     * Logic: Chỉ hủy được nếu:
-     * - Status = paid
-     * - Chưa check-in
-     * - Còn ít nhất 2 giờ trước suất chiếu
-     */
     private boolean canCancelBooking(Booking booking, Showtime showtime, LocalDateTime now) {
         if (!"paid".equals(booking.getStatus())) {
             return false;
@@ -385,7 +256,7 @@ public class UserBookingService {
      * - Trong khoảng 30 phút trước đến khi suất chiếu bắt đầu
      */
     private boolean canCheckInBooking(Booking booking, Showtime showtime, LocalDateTime now) {
-        if (!"paid". equals(booking.getStatus())) {
+        if (!"paid".equals(booking.getStatus())) {
             return false;
         }
 

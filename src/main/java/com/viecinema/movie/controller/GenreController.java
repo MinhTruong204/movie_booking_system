@@ -38,7 +38,7 @@ public class GenreController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(RESOURCE_RETRIEVED,genres,"Genres")
+                ApiResponse.success(RESOURCE_RETRIEVED, genres, "Genres")
         );
     }
 
@@ -51,7 +51,7 @@ public class GenreController {
         GenreDto genre = genreService.getGenreById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(RESOURCE_RETRIEVED,genre,"Genre")
+                ApiResponse.success(RESOURCE_RETRIEVED, genre, "Genre")
         );
     }
 }

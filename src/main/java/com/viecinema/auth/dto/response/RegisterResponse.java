@@ -22,7 +22,7 @@ public class RegisterResponse {
 
     @JsonProperty("message")
     @Builder.Default
-    private String message ="";
+    private String message = "";
 
     @JsonProperty("verification_required")
     @Builder.Default

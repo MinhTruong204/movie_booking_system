@@ -2,14 +2,9 @@ package com.viecinema.showtime.entity;
 
 import com.viecinema.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "seat_types")
@@ -21,7 +16,7 @@ import java.time.LocalDateTime;
 public class SeatType extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType. IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "seat_type_id")
     private Integer seatTypeId;
 
@@ -51,7 +46,7 @@ public class SeatType extends BaseEntity {
      * Lấy màu hiển thị theo loại ghế
      */
     public String getColorCode() {
-        return switch (name. toLowerCase()) {
+        return switch (name.toLowerCase()) {
             case "regular" -> "#4CAF50";  // Xanh lá
             case "vip" -> "#FF9800";      // Cam
             case "couple" -> "#E91E63";   // Hồng

@@ -4,8 +4,8 @@ import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.repository.BookingRepository;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.PaymentStatus;
-import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.util.VnpayUtil;
 import com.viecinema.config.VnpayConfig;
 import com.viecinema.payment.dto.request.VnpayPaymentRequest;
@@ -49,7 +49,7 @@ public class VnpayService {
         // 1. Validate booking
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        
+
         if (!BookingStatus.PENDING.equals(booking.getStatus())) {
             throw new SpecificBusinessException("Booking đã được thanh toán hoặc đã hủy");
         }
@@ -246,7 +246,7 @@ public class VnpayService {
             payment.setStatus(PaymentStatus.SUCCESS);
             // include details in gateway response
             payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
-                    params.toString(), bankCode, bankTranNo, cardType, payDate));
+                    params, bankCode, bankTranNo, cardType, payDate));
 
             booking.setStatus(BookingStatus.PAID);
 
@@ -271,7 +271,7 @@ public class VnpayService {
             // Thanh toán thất bại
             payment.setStatus(PaymentStatus.FAILED);
             payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
-                    params.toString(), bankCode, bankTranNo, cardType, payDate));
+                    params, bankCode, bankTranNo, cardType, payDate));
 
             booking.setStatus(BookingStatus.CANCELLED);
 

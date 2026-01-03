@@ -17,20 +17,20 @@ public class EmailValidator implements ConstraintValidator<ValidEmail, String> {
     public boolean isValid(String email, ConstraintValidatorContext context) {
 
 //        Null , Blank
-        if(email == null || email.isBlank()) return false;
+        if (email == null || email.isBlank()) return false;
 
 //        Format
-        if(!pattern.matcher(email).matches()) return false;
+        if (!pattern.matcher(email).matches()) return false;
 
 //        Length
-        if(email.length() > ValidationConstant.EMAIL_MAX_LENGTH) {
+        if (email.length() > ValidationConstant.EMAIL_MAX_LENGTH) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
-                        ApiMessage.FIELD_TOO_LONG.format("Email", ValidationConstant.EMAIL_MAX_LENGTH))
+                            ApiMessage.FIELD_TOO_LONG.format("Email", ValidationConstant.EMAIL_MAX_LENGTH))
                     .addConstraintViolation();
             return false;
         }
-    return true;
+        return true;
 
     }
 

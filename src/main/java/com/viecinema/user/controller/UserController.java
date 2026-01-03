@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +40,7 @@ public class UserController {
 
         UserProfileDto profile = userService.getUserProfile(userId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(RESOURCE_RETRIEVED, profile,"User profile"));
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(RESOURCE_RETRIEVED, profile, "User profile"));
 
     }
 

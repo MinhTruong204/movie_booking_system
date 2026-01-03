@@ -27,16 +27,15 @@ public class MovieSpecification {
             }
 
             Class<?> resultType = query.getResultType();
-            boolean isCountQuery = resultType != null &&
-                    (Long.class.equals(resultType) || long.class.equals(resultType));
+            boolean isCountQuery = (Long.class.equals(resultType) || long.class.equals(resultType));
 
             Join<Movie, Genre> genreJoin;
 
             if (isCountQuery) {
                 genreJoin = root.join("genres", JoinType.INNER);
             } else {
-                genreJoin = (Join<Movie, Genre>) root. getJoins().stream()
-                        .filter(join -> "genres".equals(join.getAttribute(). getName()))
+                genreJoin = (Join<Movie, Genre>) root.getJoins().stream()
+                        .filter(join -> "genres".equals(join.getAttribute().getName()))
                         .findFirst()
                         .orElseGet(() -> root.join("genres", JoinType.LEFT));
             }

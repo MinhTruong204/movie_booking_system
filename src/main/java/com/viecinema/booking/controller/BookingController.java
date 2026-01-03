@@ -3,7 +3,6 @@ package com.viecinema.booking.controller;
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.auth.security.CurrentUser;
 import com.viecinema.auth.security.UserPrincipal;
-import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.request.BookingRequest;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
 import com.viecinema.booking.dto.response.BookingResponse;
@@ -17,15 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.viecinema.common.constant.ApiConstant.*;
-import static com.viecinema.common.constant.ApiMessage.*;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_CREATE;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
 
 @RestController
 @RequestMapping(BOOKING_PATH)
@@ -40,13 +38,12 @@ public class BookingController {
     @PostMapping(CAlCULATE_PATH)
     public ResponseEntity<ApiResponse<CalculateBookingResponse>> calculateBooking(
             @Valid @RequestBody CalculateBookingRequest request,
-            Authentication authentication) {
+            @CurrentUser UserPrincipal currentUser) {
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Integer userId = authUtil.extractUserId((userDetails));
+        Integer userId = currentUser.getId();
         CalculateBookingResponse response = calculationService.calculateBooking(userId, request);
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(RESOURCE_RETRIEVED,response,"Booking calculation"));
+                ApiResponse.success(RESOURCE_RETRIEVED, response, "Booking calculation"));
     }
 
     @PostMapping(CREATE_BOOKING_PATH)
@@ -59,9 +56,9 @@ public class BookingController {
                 currentUser.getId(), request.getShowtimeId());
 
         try {
-            BookingResponse response = bookingService.createBooking(currentUser.getId(),request);
+            BookingResponse response = bookingService.createBooking(currentUser.getId(), request);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(RESOURCE_CREATE, response,"Booking"));
+                    .body(ApiResponse.success(RESOURCE_CREATE, response, "Booking"));
 
         } catch (Exception e) {
             log.error("Error creating booking", e);

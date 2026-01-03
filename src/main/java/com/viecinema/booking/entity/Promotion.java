@@ -2,20 +2,18 @@ package com.viecinema.booking.entity;
 
 import com.viecinema.common.entity.DeletableEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -67,7 +65,7 @@ public class Promotion extends DeletableEntity {
     private Integer currentUsage = 0;
 
     // JSON array: [1, 5, 10] - movie IDs
-    @JdbcTypeCode(SqlTypes. JSON)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "applicable_movies", columnDefinition = "JSON")
     private List<Integer> applicableMovies;
 
@@ -76,7 +74,7 @@ public class Promotion extends DeletableEntity {
     @CollectionTable(name = "promotion_applicable_days",
             joinColumns = @JoinColumn(name = "promo_id"))
     @Column(name = "day")
-    @Enumerated(EnumType. STRING)
+    @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> applicableDays;
 
     @Column(name = "is_active", nullable = false)
@@ -84,15 +82,13 @@ public class Promotion extends DeletableEntity {
 
     // Business methods
     public boolean isValid() {
-        if (! isActive) return false;
+        if (!isActive) return false;
 
         LocalDateTime now = LocalDateTime.now();
         if (startDate != null && now.isBefore(startDate)) return false;
         if (endDate != null && now.isAfter(endDate)) return false;
 
-        if (maxUsage != null && currentUsage >= maxUsage) return false;
-
-        return true;
+        return maxUsage == null || currentUsage < maxUsage;
     }
 
     public boolean isApplicableForMovie(Integer movieId) {
@@ -104,7 +100,7 @@ public class Promotion extends DeletableEntity {
         if (applicableDays == null || applicableDays.isEmpty()) return true;
 
         DayOfWeek day = DayOfWeek.fromJavaDayOfWeek(dayOfWeek);
-        return applicableDays. contains(day);
+        return applicableDays.contains(day);
     }
 
     public enum DiscountType {
@@ -114,7 +110,7 @@ public class Promotion extends DeletableEntity {
     public enum DayOfWeek {
         Mon, Tue, Wed, Thu, Fri, Sat, Sun;
 
-        public static DayOfWeek fromJavaDayOfWeek(java.time. DayOfWeek javaDay) {
+        public static DayOfWeek fromJavaDayOfWeek(java.time.DayOfWeek javaDay) {
             return switch (javaDay) {
                 case MONDAY -> Mon;
                 case TUESDAY -> Tue;

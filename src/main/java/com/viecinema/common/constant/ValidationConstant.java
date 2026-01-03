@@ -6,7 +6,7 @@ public final class ValidationConstant {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 50;
     public static final int EMAIL_MAX_LENGTH = 100;
-    public static final int MOVIE_PAGE_MIN_SIZE = 1 ;
+    public static final int MOVIE_PAGE_MIN_SIZE = 1;
     public static final int MOVIE_PAGE_MAX_SIZE = 50;
 
 

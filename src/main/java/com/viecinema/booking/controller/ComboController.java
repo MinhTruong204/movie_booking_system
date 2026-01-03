@@ -27,6 +27,6 @@ public class ComboController {
         List<ComboDto> combos = comboService.getActiveCombos();
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(RESOURCE_RETRIEVED,combos,"Combos"));
+                ApiResponse.success(RESOURCE_RETRIEVED, combos, "Combos"));
     }
 }

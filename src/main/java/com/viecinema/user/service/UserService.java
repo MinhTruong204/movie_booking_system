@@ -39,17 +39,17 @@ public class UserService {
 
         // Lấy user với membership tier (eager loading)
         User user = userRepository.findActiveUserWithMembership(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User" +  userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User" + userId));
 
         // Build DTO
         return UserProfileDto.builder()
                 .userId(user.getId())
-                .fullName(user. getFullName())
+                .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .gender(user.getGender() != null ? user.getGender().name() : null)
                 .birthDate(user.getBirthDate())
-                .role(user.getRole(). name())
+                .role(user.getRole().name())
                 .isActive(user.getIsActive())
                 .emailVerified(user.getEmailVerified())
                 .phoneVerified(user.getPhoneVerified())
@@ -75,9 +75,9 @@ public class UserService {
         Integer nextTierPoints = null;
         Double progressPercent = 0.0;
 
-        if (nextTierOpt. isPresent()) {
+        if (nextTierOpt.isPresent()) {
             MembershipTier nextTier = nextTierOpt.get();
-            nextTierPoints = nextTier. getPointsRequired();
+            nextTierPoints = nextTier.getPointsRequired();
             pointsToNextTier = nextTierPoints - currentPoints;
 
             // Tính % progress
@@ -100,12 +100,12 @@ public class UserService {
                 .tierId(currentTier.getId())
                 .tierName(currentTier.getName())
                 .tierDescription(currentTier.getDescription())
-                .colorCode(currentTier. getColorCode())
+                .colorCode(currentTier.getColorCode())
                 .iconUrl(currentTier.getIconUrl())
                 .currentPoints(currentPoints)
                 .pointsRequired(nextTierPoints)
                 .pointsToNextTier(pointsToNextTier)
-                . discountPercent(currentTier.getDiscountPercent())
+                .discountPercent(currentTier.getDiscountPercent())
                 .birthdayDiscount(currentTier.getBirthdayDiscount())
                 .freeTicketsPerYear(currentTier.getFreeTicketsPerYear())
                 .freeTicketsRemaining(freeTicketsRemaining)
@@ -118,7 +118,7 @@ public class UserService {
     /**
      * Tính số vé miễn phí còn lại trong năm
      * Logic: Đếm số booking đã dùng free ticket trong năm hiện tại
-     *
+     * <p>
      * TODO: Cần có flag trong bảng bookings để đánh dấu booking dùng free ticket
      * Tạm thời return giá trị mặc định
      */

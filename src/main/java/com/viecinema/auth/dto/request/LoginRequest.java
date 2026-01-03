@@ -10,10 +10,10 @@ import static com.viecinema.common.constant.ValidationConstant.PASSWORD_MIN_LENG
 
 @Data
 public class LoginRequest {
-    @NotBlank (message = "Email must not be empty")
+    @NotBlank(message = "Email must not be empty")
     @ValidEmail
     String email;
-    @NotBlank (message = "Password must not be empty")
+    @NotBlank(message = "Password must not be empty")
     @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH,
             message = "Password must be between 8 and 50 characters")
     String password;

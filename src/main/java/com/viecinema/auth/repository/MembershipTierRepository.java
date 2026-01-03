@@ -7,10 +7,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface MembershipTierRepository extends JpaRepository<MembershipTier,Integer> {
+public interface MembershipTierRepository extends JpaRepository<MembershipTier, Integer> {
     /**
      * Tìm hạng tiếp theo dựa vào points required
      */

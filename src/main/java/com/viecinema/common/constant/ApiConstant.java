@@ -1,7 +1,7 @@
 package com.viecinema.common.constant;
 
 public final class ApiConstant {
-//  Root API
+    //  Root API
     public static final String AUTH_PATH = "/api/auth";
     public static final String MOVIE_PATH = "/api/movies";
     public static final String SHOWTIMES_PATH = "/api/showtimes";
@@ -14,12 +14,10 @@ public final class ApiConstant {
     public static final String USER_PATH = "/api/users";
 
 
-
-
-//  Detail API
+    //  Detail API
     public static final String LOGIN_PATH = "/login";
     public static final String REGISTER_PATH = "/register";
-    public static final String MOVIE_NOW_SHOWING_PATH  = "/now-showing";
+    public static final String MOVIE_NOW_SHOWING_PATH = "/now-showing";
     public static final String MOVIE_COMING_SOON_PATH = "/coming-soon";
     public static final String MOVIE_DETAIL_PATH = "/{movieId}";
     public static final String SHOWTIMES_DETAIL_PATH = "/{showtimeId}";
@@ -37,11 +35,6 @@ public final class ApiConstant {
     public static final String USER_PROFILE_PATH = "/profile";
     public static final String BOOKINGS_USER_PATH = "/my-bookings";
     public static final String PAYMENT_DETAIL_PATH = "/booking/{bookingId}";
-
-
-
-
-
 
 
 }

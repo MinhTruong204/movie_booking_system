@@ -1,6 +1,5 @@
 package com.viecinema.auth.entity;
 
-import com.viecinema.common.entity.BaseEntity;
 import com.viecinema.common.entity.DeletableEntity;
 import com.viecinema.common.enums.Gender;
 import com.viecinema.common.enums.Role;

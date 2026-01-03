@@ -1,11 +1,11 @@
 package com.viecinema.movie.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
-import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.common.constant.ApiMessage;
+import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.movie.dto.MovieDetailDto;
-import com.viecinema.movie.dto.request.MovieFilterRequest;
 import com.viecinema.movie.dto.MovieSummaryDto;
+import com.viecinema.movie.dto.request.MovieFilterRequest;
 import com.viecinema.movie.dto.response.PagedResponse;
 import com.viecinema.movie.service.MovieService;
 import jakarta.validation.Valid;
@@ -29,13 +29,13 @@ public class MovieController {
 
     @GetMapping(MOVIE_NOW_SHOWING_PATH)
     public ResponseEntity<ApiResponse<PagedResponse<MovieSummaryDto>>>
-        getNowShowingMovies(@Valid @ModelAttribute MovieFilterRequest request) { // Get data form Query string
+    getNowShowingMovies(@Valid @ModelAttribute MovieFilterRequest request) { // Get data form Query string
 
-        log. info("GET /api/movies/now-showing - Request: {}", request);
+        log.info("GET /api/movies/now-showing - Request: {}", request);
         PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.NOW_SHOWING);
 
-        return  ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies,"Movies now showing"));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies, "Movies now showing"));
 
     }
 
@@ -47,7 +47,7 @@ public class MovieController {
         PagedResponse<MovieSummaryDto> movies = movieService.getMoviesByStatus(request, MovieStatus.COMING_SOON);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies,"Movies coming soon"));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, movies, "Movies coming soon"));
 
     }
 

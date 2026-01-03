@@ -22,7 +22,7 @@ public class VnpayUtil {
     public static String hmacSHA512(String key, String data) {
         try {
             Mac hmac512 = Mac.getInstance("HmacSHA512");
-            SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets. UTF_8), "HmacSHA512");
+            SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
             hmac512.init(secretKey);
             byte[] result = hmac512.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Hex.encodeHexString(result);
@@ -43,53 +43,45 @@ public class VnpayUtil {
         StringBuilder hashData = new StringBuilder();
         Iterator<String> itr = fieldNames.iterator();
 
-        while (itr. hasNext()) {
+        while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
 
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                try {
-                    hashData.append(fieldName);
-                    hashData.append('=');
-                    hashData. append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
 
-                    if (itr.hasNext()) {
-                        hashData.append('&');
-                    }
-                } catch (UnsupportedEncodingException e) {
-                    log.error("Error encoding field:  {}", fieldName, e);
+                if (itr.hasNext()) {
+                    hashData.append('&');
                 }
             }
         }
 
-        return hashData. toString();
+        return hashData.toString();
     }
 
     /**
      * Tạo query string từ Map
      */
     public static String buildQueryString(Map<String, String> params) {
-        List<String> fieldNames = new ArrayList<>(params. keySet());
+        List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
 
         StringBuilder query = new StringBuilder();
-        Iterator<String> itr = fieldNames. iterator();
+        Iterator<String> itr = fieldNames.iterator();
 
         while (itr.hasNext()) {
-            String fieldName = itr. next();
+            String fieldName = itr.next();
             String fieldValue = params.get(fieldName);
 
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                try {
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()));
-                    query.append('=');
-                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
+                query.append('=');
+                query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
 
-                    if (itr.hasNext()) {
-                        query.append('&');
-                    }
-                } catch (UnsupportedEncodingException e) {
-                    log.error("Error building query string", e);
+                if (itr.hasNext()) {
+                    query.append('&');
                 }
             }
         }
@@ -111,13 +103,9 @@ public class VnpayUtil {
         for (String pair : pairs) {
             int idx = pair.indexOf("=");
             if (idx > 0) {
-                try {
-                    String key = URLEncoder.encode(pair.substring(0, idx), StandardCharsets.UTF_8.toString());
-                    String value = URLEncoder.encode(pair. substring(idx + 1), StandardCharsets.UTF_8.toString());
-                    params.put(key, value);
-                } catch (UnsupportedEncodingException e) {
-                    log.error("Error parsing query string", e);
-                }
+                String key = URLEncoder.encode(pair.substring(0, idx), StandardCharsets.UTF_8);
+                String value = URLEncoder.encode(pair.substring(idx + 1), StandardCharsets.UTF_8);
+                params.put(key, value);
             }
         }
 

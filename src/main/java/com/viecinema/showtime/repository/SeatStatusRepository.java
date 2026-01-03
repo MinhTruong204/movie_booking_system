@@ -12,26 +12,25 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer> {
 
     @Query("""
-        SELECT ss FROM SeatStatus ss
-        JOIN FETCH ss.seat s
-        JOIN FETCH s.seatType st
-        LEFT JOIN FETCH ss.heldByUser u
-        WHERE ss.showtime.id = :showtimeId
-    """)
+                SELECT ss FROM SeatStatus ss
+                JOIN FETCH ss.seat s
+                JOIN FETCH s.seatType st
+                LEFT JOIN FETCH ss.heldByUser u
+                WHERE ss.showtime.id = :showtimeId
+            """)
     List<SeatStatus> findByShowtimeId(@Param("showtimeId") Integer showtimeId);
 
     @Query("""
-        SELECT ss.status AS status, COUNT(ss) AS count
-        FROM SeatStatus ss
-        WHERE ss.showtime.id = :showtimeId
-        GROUP BY ss.status
-    """)
+                SELECT ss.status AS status, COUNT(ss) AS count
+                FROM SeatStatus ss
+                WHERE ss.showtime.id = :showtimeId
+                GROUP BY ss.status
+            """)
     List<SeatStatusCount> countByShowtimeIdGroupByStatus(@Param("showtimeId") Integer showtimeId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -39,14 +38,6 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
     List<SeatStatus> findByShowtimeAndSeatsWithLock(
             @Param("showtimeId") Integer showtimeId,
             @Param("seatIds") List<Integer> seatIds);
-
-    @Query("SELECT COUNT(ss) FROM SeatStatus ss WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
-    int countHeldSeatsByUser(@Param("userId") Integer userId);
-
-    @Modifying
-    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, " +
-            "ss.heldUntil = NULL WHERE ss.status = 'held' AND ss. heldUntil < : currentTime")
-    int releaseExpiredSeats(@Param("currentTime") LocalDateTime currentTime);
 
     @Modifying
     @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, " +

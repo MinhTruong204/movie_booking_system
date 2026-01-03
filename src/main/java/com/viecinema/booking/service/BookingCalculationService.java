@@ -1,18 +1,18 @@
 package com.viecinema.booking.service;
 
+import com.viecinema.auth.entity.User;
+import com.viecinema.auth.repository.UserRepository;
 import com.viecinema.booking.dto.ComboInfo;
-import com.viecinema.booking.dto.ComboItem;
+import com.viecinema.booking.dto.ComboItemSelected;
 import com.viecinema.booking.dto.PriceBreakdown;
-import com.viecinema.booking.dto.PromotionInfo;
+import com.viecinema.booking.dto.PricingContext;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
 import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.entity.Combo;
-import com.viecinema.booking.entity.Promotion;
-import com.viecinema.booking.entity.UserPromotionUsage;
-import com.viecinema.booking.repository.PromotionRepository;
-import com.viecinema.booking.repository.UserPromotionUsageRepository;
-import com.viecinema.common.exception.SpecificBusinessException;
+import com.viecinema.booking.repository.ComboRepository;
+import com.viecinema.booking.validator.BookingValidator;
 import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import com.viecinema.showtime.entity.Seat;
@@ -26,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,38 +34,52 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class BookingCalculationService {
 
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
+    private final UserRepository userRepository;
+    private final ComboRepository comboRepository;
+
     private final ComboService comboService;
-    private final PromotionRepository promotionRepository;
-    private final UserPromotionUsageRepository userPromotionUsageRepository;
-    
+    private final BookingValidator bookingValidator;
+
+    @Transactional
     public CalculateBookingResponse calculateBooking(
             Integer userId,
             CalculateBookingRequest request) {
 
         log.info("Calculating booking for user: {}, showtime: {}", userId, request.getShowtimeId());
 
-        // Get showtime info
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new ResourceNotFoundException("showtime"));
-
-        if (!showtime.getIsActive()) {
-            throw new ResourceNotFoundException("showtime");
-        }
-        
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
-        if (seats.size() != request.getSeatIds().size()) {
-            throw new ResourceNotFoundException("Seats");
-        }
+
+        bookingValidator.validateUser(user);
+        bookingValidator.validateShowtime(showtime);
+        bookingValidator.validateSeatAvailability(request.getShowtimeId(), request.getSeatIds(), userId);
+
+
+        Map<Combo, Integer> selectedCombos = resolveCombos(request);
+
+        PricingContext context =
+                PricingContext.builder()
+                        .user(user)
+                        .showtime(showtime)
+                        .seats(seats)
+                        .selectedCombos(selectedCombos)
+                        .promoCode(request.getPromotionCode())
+                        .voucherCode("")
+                        .useLoyaltyPoints(0)
+                        .build();
+
+        PriceBreakdown priceBreakdown = calculatePrice(context);
 
         List<SeatInfo> seatInfos = new ArrayList<>();
         BigDecimal seatsSubtotal = BigDecimal.ZERO;
 
-        // Calculate seat price
         for (Seat seat : seats) {
             BigDecimal seatPrice = showtime.getBasePrice()
                     .multiply(seat.getSeatType().getPriceMultiplier())
@@ -77,168 +89,127 @@ public class BookingCalculationService {
 
             seatInfos.add(
                     SeatInfo.builder()
-                    .seatId(seat.getSeatId())
-                    .rowLabel(seat.getSeatRow())
-                    .seatNumber(seat.getSeatNumber())
-                    .seatTypeName(seat.getSeatType().getName())
-                    .priceMultiplier(seat.getSeatType().getPriceMultiplier())
-                    .price(seatPrice)
-                    .build());
+                            .seatId(seat.getSeatId())
+                            .rowLabel(seat.getSeatRow())
+                            .seatNumber(seat.getSeatNumber())
+                            .seatTypeName(seat.getSeatType().getName())
+                            .priceMultiplier(seat.getSeatType().getPriceMultiplier())
+                            .price(seatPrice)
+                            .build());
         }
 
         // Calculate combo price
         List<ComboInfo> comboInfos = new ArrayList<>();
-        BigDecimal combosSubtotal = BigDecimal.ZERO;
 
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             List<Integer> comboIds = request.getCombos().stream()
-                    .map(ComboItem::getComboId)
+                    .map(ComboItemSelected::getComboId)
                     .collect(Collectors.toList());
 
             List<Combo> combos = comboService.getCombosByIds(comboIds);
             Map<Integer, Combo> comboMap = combos.stream()
                     .collect(Collectors.toMap(Combo::getId, c -> c));
 
-            for (ComboItem item : request.getCombos()) {
+            for (ComboItemSelected item : request.getCombos()) {
                 Combo combo = comboMap.get(item.getComboId());
                 if (combo == null) {
                     throw new ResourceNotFoundException("Combo doesn't exists: " + item.getComboId());
                 }
-
-                BigDecimal comboTotal = combo.getPrice()
-                        .multiply(BigDecimal.valueOf(item.getQuantity()));
-                combosSubtotal = combosSubtotal.add(comboTotal);
-
                 comboInfos.add(ComboInfo.builder()
                         .comboId(combo.getId())
                         .comboName(combo.getName())
                         .quantity(item.getQuantity())
                         .unitPrice(combo.getPrice())
-                        .totalPrice(comboTotal)
+                        .totalPrice(combo.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                         .build());
             }
         }
-
-        // Calculate subtotal
-        BigDecimal subtotal = seatsSubtotal.add(combosSubtotal);
-
-        // Apply discount
-        PromotionInfo promotionInfo = null;
-        BigDecimal totalDiscount = BigDecimal.ZERO;
-
-        if (request.getPromotionCode() != null && !request.getPromotionCode().isBlank()) {
-            Promotion promotion = validateAndGetPromotion(
-                    request.getPromotionCode(),
-                    userId,
-                    showtime,
-                    subtotal
-            );
-
-            BigDecimal discountAmount = calculateDiscount(promotion, subtotal);
-            totalDiscount = discountAmount;
-
-            promotionInfo = PromotionInfo.builder()
-                    .code(promotion.getCode())
-                    .description(promotion.getDescription())
-                    .discountType(promotion.getDiscountType().name())
-                    .discountValue(promotion.getDiscountValue())
-                    .discountAmount(discountAmount)
-                    .build();
-        }
-
-        // Calculate the final amount
-        BigDecimal finalAmount = subtotal.subtract(totalDiscount);
-        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            finalAmount = BigDecimal.ZERO;
-        }
-
-        // Calculate loyaltyPoints
-        Integer loyaltyPoints = finalAmount.divide(BigDecimal.valueOf(10000), 0, RoundingMode.DOWN).intValue();
-
         // 8.Build response
         return CalculateBookingResponse.builder()
                 .showtime(buildShowtimeInfo(showtime))
                 .seats(seatInfos)
                 .combos(comboInfos)
-                .pricingBreakdown(PriceBreakdown.builder()
-                        .ticketsSubtotal(seatsSubtotal)
-                        .combosSubtotal(combosSubtotal)
-                        .subtotal(subtotal)
-                        .promoDiscount(promotionInfo != null ? promotionInfo.getDiscountAmount() : BigDecimal.ZERO)
-                        .totalDiscount(totalDiscount)
-                        .finalAmount(finalAmount)
-                        .pointsEarned(loyaltyPoints)
-                        .build())
+                .pricingBreakdown(priceBreakdown)
                 .build();
     }
 
-    private Promotion validateAndGetPromotion(
-            String code,
-            Integer userId,
-            Showtime showtime,
-            BigDecimal subtotal) {
+    public PriceBreakdown calculatePrice(PricingContext context) {
 
-        Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(code)
-                .orElseThrow(() -> new SpecificBusinessException("The promotional code does not exist."));
+        // Calculate ticket price
+        Showtime showtime = context.getShowtime();
 
-        // Check the expiration date.
-        if (! promotion.isValid()) {
-            throw new SpecificBusinessException("Promotion code has expired or is not active");
+        List<Seat> seats = context.getSeats();
+
+        BigDecimal ticketsSubtotal = seats.stream()
+                .map(seat -> {
+                    BigDecimal basePrice = showtime.getBasePrice();
+                    BigDecimal multiplier = seat.getSeatType().getPriceMultiplier();
+                    return basePrice.multiply(multiplier);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Calculate combo price
+        Map<Combo, Integer> selectedCombos = context.getSelectedCombos();
+        BigDecimal combosSubtotal = selectedCombos.entrySet().stream()
+                .map(entry -> {
+                    BigDecimal price = entry.getKey().getPrice();
+                    BigDecimal quantity = BigDecimal.valueOf(entry.getValue());
+                    return price.multiply(quantity);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+        BigDecimal subtotal = ticketsSubtotal.add(combosSubtotal);
+
+        // Apply discount
+
+        BigDecimal promoDiscount = BigDecimal.ZERO;
+        BigDecimal voucherDiscount = BigDecimal.ZERO;
+        BigDecimal loyaltyDiscount = BigDecimal.ZERO;
+        BigDecimal membershipDiscount = BigDecimal.ZERO;
+        int pointsEarned = 0;
+
+        BigDecimal totalDiscount = promoDiscount
+                .add(voucherDiscount)
+                .add(loyaltyDiscount)
+                .add(membershipDiscount);
+
+        BigDecimal finalAmount = subtotal.subtract(totalDiscount);
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
         }
 
-        // Check the minimum order price
-        if (subtotal.compareTo(promotion.getMinOrderValue()) < 0) {
-            throw new SpecificBusinessException(
-                    String.format("Orders must reach a minimum value of %,.0f VNĐ to apply this code.",
-                            promotion.getMinOrderValue())
-            );
-        }
-
-        // Check the applicable movie
-        if (! promotion.isApplicableForMovie(showtime.getMovie().getMovieId())) {
-            throw new SpecificBusinessException("The promotional code does not apply to this movie.");
-        }
-
-        // Check the applicable day
-        DayOfWeek currentDay = LocalDateTime.now().getDayOfWeek();
-        if (!promotion.isApplicableForDay(currentDay)) {
-            throw new SpecificBusinessException("The promotional code does not apply to today.");
-        }
-
-        // Check the usage limit
-        UserPromotionUsage usage = userPromotionUsageRepository
-                .findByUserIdAndPromoId(userId, promotion.getId())
-                .orElse(null);
-
-        if (usage != null && usage.getUsageCount() >= promotion.getMaxUsagePerUser()) {
-            throw new SpecificBusinessException("The promotional code has been used too many times.");
-        }
-
-        return promotion;
+        return PriceBreakdown.builder()
+                .ticketsSubtotal(ticketsSubtotal)
+                .combosSubtotal(combosSubtotal)
+                .subtotal(subtotal)
+                .promoDiscount(promoDiscount)
+                .voucherDiscount(voucherDiscount)
+                .loyaltyDiscount(loyaltyDiscount)
+                .membershipDiscount(membershipDiscount)
+                .totalDiscount(totalDiscount)
+                .finalAmount(finalAmount)
+                .pointsEarned(pointsEarned)
+                .build();
     }
 
-    private BigDecimal calculateDiscount(Promotion promotion, BigDecimal subtotal) {
-        BigDecimal discount;
 
-        if (promotion.getDiscountType() == Promotion.DiscountType.PERCENT) {
-            discount = subtotal.multiply(promotion.getDiscountValue())
-                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
-
-            // Limit discount
-            if (promotion.getMaxDiscount() != null
-                    && discount.compareTo(promotion.getMaxDiscount()) > 0) {
-                discount = promotion.getMaxDiscount();
-            }
-        } else {
-            discount = promotion.getDiscountValue();
+    private Map<Combo, Integer> resolveCombos(CalculateBookingRequest request) {
+        List<ComboItemSelected> comboItemSelectedList = request.getCombos();
+        if (comboItemSelectedList == null) {
+            return new java.util.HashMap<>();
         }
+        Map<Integer, Integer> combosIdMap = comboItemSelectedList.stream().collect(Collectors.toMap(
+                ComboItemSelected::getComboId,
+                ComboItemSelected::getQuantity));
 
-        // Discount cannot more than subtatal
-        if (discount.compareTo(subtotal) > 0) {
-            discount = subtotal;
-        }
+        List<Combo> comboList = comboRepository.findAllById(combosIdMap.keySet());
 
-        return discount;
+        Map<Combo, Integer> comboMap = comboList.stream().collect(Collectors.toMap(
+                combo -> combo,
+                combo -> combosIdMap.get(combo.getId())
+        ));
+        return comboMap;
     }
 
     private ShowtimeInfo buildShowtimeInfo(Showtime showtime) {

@@ -1,6 +1,5 @@
 package com.viecinema.payment.repository;
 
-import com.viecinema.booking.entity.BookingCombo;
 import com.viecinema.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     Payment findByTransactionId(String transactionId);
+
     /**
      * Tìm payment theo booking ID
      */

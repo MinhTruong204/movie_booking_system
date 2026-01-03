@@ -5,7 +5,6 @@ import com.viecinema.movie.entity.Movie;
 import com.viecinema.showtime.dto.CinemaInfo;
 import com.viecinema.showtime.dto.MovieInfo;
 import com.viecinema.showtime.dto.RoomInfo;
-import com.viecinema.showtime.dto.SeatAvailability;
 import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
 import com.viecinema.showtime.entity.Cinema;
 import com.viecinema.showtime.entity.Room;
@@ -32,8 +31,10 @@ public interface ShowtimeMapper {
     List<ShowtimeDetailResponse> toResponseList(List<Showtime> showtimes);
 
     MovieInfo toMovieInfo(Movie movie);
+
     @Mapping(source = "id", target = "cinemaId")
     CinemaInfo toCinemaInfo(Cinema cinema);
+
     @Mapping(source = "id", target = "roomId")
     RoomInfo toRoomInfo(Room room);
 

@@ -1,7 +1,9 @@
 package com.viecinema.booking.dto.request;
 
-import com.viecinema.booking.dto.ComboItem;
-import jakarta.validation.constraints.*;
+import com.viecinema.booking.dto.ComboItemSelected;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.List;
@@ -20,7 +22,7 @@ public class CalculateBookingRequest {
     @Size(max = 10, message = "List of seat IDs must not exceed 10 items")
     private List<Integer> seatIds;
 
-    private List<ComboItem> combos;
+    private List<ComboItemSelected> combos;
 
     private String promotionCode;
 }

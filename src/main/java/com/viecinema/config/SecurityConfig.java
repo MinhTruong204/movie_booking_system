@@ -4,7 +4,8 @@ package com.viecinema.config;
 import com.viecinema.auth.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,7 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.viecinema.common.constant.ApiConstant.*;
+import static com.viecinema.common.constant.ApiConstant.BOOKING_PATH;
 
 @Configuration
 @EnableWebSecurity
@@ -61,7 +62,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-//    Get authentication manager from Spring Security for using in Application
+    //    Get authentication manager from Spring Security for using in Application
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

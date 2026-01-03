@@ -19,22 +19,16 @@ public class ComboService {
 
     private final ComboRepository comboRepository;
 
-    /**
-     * Lấy danh sách combo đang active
-     */
     public List<ComboDto> getActiveCombos() {
         log.info("Fetching active combos");
 
         List<Combo> combos = comboRepository.findByIsActiveTrue();
 
         return combos.stream()
-                . map(this::convertToDto)
-                . collect(Collectors.toList());
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Lấy combo theo IDs (dùng cho tính toán)
-     */
     public List<Combo> getCombosByIds(List<Integer> ids) {
         return comboRepository.findByIdInAndIsActiveTrue(ids);
     }
@@ -42,7 +36,7 @@ public class ComboService {
     private ComboDto convertToDto(Combo combo) {
         return ComboDto.builder()
                 .comboId(combo.getId())
-                .name(combo. getName())
+                .name(combo.getName())
                 .description(combo.getDescription())
                 .price(combo.getPrice())
                 .imageUrl(combo.getImageUrl())

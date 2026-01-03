@@ -2,7 +2,6 @@ package com.viecinema.movie.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.viecinema.common.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

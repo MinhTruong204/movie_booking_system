@@ -1,7 +1,6 @@
 package com.viecinema.auth.entity;
 
 import com.viecinema.common.entity.BaseEntity;
-import com.viecinema.common.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;

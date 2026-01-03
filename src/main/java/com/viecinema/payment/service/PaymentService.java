@@ -26,7 +26,7 @@ public class PaymentService {
     /**
      * Lấy thông tin thanh toán từ booking ID
      *
-     * @param bookingId ID của booking
+     * @param bookingId   ID của booking
      * @param httpRequest HttpServletRequest để tạo payment URL nếu cần
      * @return PaymentInfoResponse thông tin thanh toán
      */

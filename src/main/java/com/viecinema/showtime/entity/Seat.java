@@ -13,15 +13,15 @@ import lombok.*;
 @Table(name = "seats")
 public class Seat extends DeletableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType. IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "seat_id")
     private Integer seatId;
 
-    @ManyToOne(fetch = FetchType. LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @ManyToOne(fetch = FetchType. LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_type_id", nullable = false)
     private SeatType seatType;
 

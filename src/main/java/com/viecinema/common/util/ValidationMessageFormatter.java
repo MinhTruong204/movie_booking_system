@@ -7,7 +7,7 @@ import org.springframework.validation.FieldError;
 public class ValidationMessageFormatter {
     public static String formatValidationMessage(FieldError fieldError) {
         String key = switch (fieldError.getCode()) {
-            case "NotNull","NotBlank" -> "FIELD_REQUIRED";
+            case "NotNull", "NotBlank" -> "FIELD_REQUIRED";
             case "Size" -> "FIELD_SIZE";
             case "Min", "Max", "Range" -> "FIELD_OUT_OF_RANGE";
             case "Pattern" -> "FIELD_PATTERN_MISMATCH";

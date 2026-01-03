@@ -9,14 +9,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface SeatRepository extends JpaRepository<Seat,Integer> {
+public interface SeatRepository extends JpaRepository<Seat, Integer> {
     @Query("""
-        SELECT s FROM Seat s
-        JOIN FETCH s.seatType st
-        WHERE s.room.id = :roomId
-        AND s.isActive = true
-        AND s.deletedAt IS NULL
-        ORDER BY s.seatRow ASC, s.seatNumber ASC
-    """)
+                SELECT s FROM Seat s
+                JOIN FETCH s.seatType st
+                WHERE s.room.id = :roomId
+                AND s.isActive = true
+                AND s.deletedAt IS NULL
+                ORDER BY s.seatRow ASC, s.seatNumber ASC
+            """)
     List<Seat> findByRoomIdOrderBySeatRowAndNumber(@Param("roomId") Integer roomId);
 }

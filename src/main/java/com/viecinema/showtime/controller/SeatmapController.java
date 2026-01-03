@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +26,7 @@ import static com.viecinema.common.constant.ApiConstant.SHOWTIMES_SEATMAP_PATH;
 public class SeatmapController {
 
     private final SeatmapService seatmapService;
-    private final  AuthUtil authUtil;
+    private final AuthUtil authUtil;
 
     @GetMapping(SHOWTIMES_SEATMAP_PATH)
     public ResponseEntity<ApiResponse<SeatmapResponse>> getSeatmap(
@@ -41,7 +39,7 @@ public class SeatmapController {
         SeatmapResponse seatmap = seatmapService.getSeatmap(showtimeId, currentUserId);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,seatmap,"Seatmap")
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, seatmap, "Seatmap")
         );
     }
 }

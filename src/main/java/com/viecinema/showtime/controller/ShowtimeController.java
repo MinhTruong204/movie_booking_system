@@ -2,22 +2,21 @@ package com.viecinema.showtime.controller;
 
 import com.viecinema.auth.dto.response.ApiResponse;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.showtime.dto.response.ShowtimeDetailResponse;
 import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.service.ShowtimeService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-
-import static com.viecinema.common.constant.ApiConstant.*;
+import static com.viecinema.common.constant.ApiConstant.SHOWTIMES_BY_MOVIE_PATH;
+import static com.viecinema.common.constant.ApiConstant.SHOWTIMES_PATH;
 
 @RestController
 @RequestMapping(SHOWTIMES_PATH)
@@ -33,8 +32,8 @@ public class ShowtimeController {
         log.info("GET /api/showtimes");
 
         Object showtimes = showtimeService.findShowtimes(request);
-        return  ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, showtimes,"Showtimes"));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, showtimes, "Showtimes"));
     }
 
 //    @GetMapping(SHOWTIMES_DETAIL_PATH)
@@ -59,6 +58,6 @@ public class ShowtimeController {
         Object showtimes = showtimeService.findShowtimes(request);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,showtimes,"Showtimes"));
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, showtimes, "Showtimes"));
     }
 }

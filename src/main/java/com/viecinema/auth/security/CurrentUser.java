@@ -1,6 +1,7 @@
 package com.viecinema.auth.security;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import java.lang.annotation.*;
 
 @Target(ElementType.PARAMETER)

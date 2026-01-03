@@ -4,13 +4,8 @@ import com.viecinema.auth.entity.User;
 import com.viecinema.common.entity.BaseEntity;
 import com.viecinema.common.enums.SeatStatusType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +21,7 @@ public class SeatStatus extends BaseEntity {
     @Column(name = "seat_status_id")
     private Integer seatStatusId;
 
-    @ManyToOne(fetch = FetchType. LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "showtime_id", nullable = false)
     private Showtime showtime;
 
@@ -39,7 +34,7 @@ public class SeatStatus extends BaseEntity {
     @Builder.Default
     private SeatStatusType status = SeatStatusType.AVAILABLE;
 
-    @ManyToOne(fetch = FetchType. LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "held_by_user_id")
     private User heldByUser;
 
@@ -59,10 +54,7 @@ public class SeatStatus extends BaseEntity {
             return true;
         }
         // Nếu đang held nhưng đã hết hạn -> available
-        if (status == SeatStatusType.HELD && heldUntil != null && heldUntil.isBefore(LocalDateTime.now())) {
-            return true;
-        }
-        return false;
+        return status == SeatStatusType.HELD && heldUntil != null && heldUntil.isBefore(LocalDateTime.now());
     }
 
     /**
@@ -71,9 +63,9 @@ public class SeatStatus extends BaseEntity {
     public boolean isHeldBy(Integer userId) {
         return status == SeatStatusType.HELD
                 && heldByUser != null
-                && heldByUser.getId(). equals(userId)
+                && heldByUser.getId().equals(userId)
                 && heldUntil != null
-                && heldUntil. isAfter(LocalDateTime.now());
+                && heldUntil.isAfter(LocalDateTime.now());
     }
 
     /**
@@ -83,7 +75,7 @@ public class SeatStatus extends BaseEntity {
         if (status != SeatStatusType.HELD || heldUntil == null) {
             return null;
         }
-        long seconds = java.time.Duration. between(LocalDateTime.now(), heldUntil). getSeconds();
+        long seconds = java.time.Duration.between(LocalDateTime.now(), heldUntil).getSeconds();
         return seconds > 0 ? seconds : null;
     }
 }

@@ -1,16 +1,16 @@
 package com.viecinema.auth.service;
 
 import com.viecinema.auth.dto.request.LoginRequest;
+import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.LoginResponse;
+import com.viecinema.auth.dto.response.RegisterResponse;
+import com.viecinema.auth.entity.User;
 import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.auth.entity.User;
 import com.viecinema.auth.security.UserDetailsServiceImpl;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.auth.dto.request.RegisterRequest;
-import com.viecinema.auth.dto.response.RegisterResponse;
 import com.viecinema.common.exception.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,13 +30,15 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.viecinema.common.constant.ErrorMessage.*;
+import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_DISABLE_ERROR;
+import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_LOCKED_ERROR;
 
 @Service
 @AllArgsConstructor
 @Builder
 public class AuthService {
 
+    private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
     private final UserRepository userRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -46,15 +48,13 @@ public class AuthService {
     private final UserDetailsServiceImpl userDetailsServiceIml;
     private final UserMapper userMapper;
 
-    private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
-
-//    Register
+    //    Register
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         String email = request.getEmail().toLowerCase().trim();
-        if(userRepository.existsByEmailAndDeletedAtIsNull(email))
+        if (userRepository.existsByEmailAndDeletedAtIsNull(email))
             throw new DuplicateResourceException("Email");
-        if(request.getPhone() != null &&
+        if (request.getPhone() != null &&
                 userRepository.existsByPhoneAndDeletedAtIsNull(request.getPhone()))
             throw new DuplicateResourceException("Phone");
         try {
@@ -67,12 +67,12 @@ public class AuthService {
 
             RegisterResponse userResponse = userMapper.toRegisterResponse(user);
             return userResponse;
-        }
-        catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ApiMessage.FIELD_ALREADY_EXISTS, e.getMessage());
         }
     }
-//  Login
+
+    //  Login
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
@@ -81,21 +81,21 @@ public class AuthService {
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
 
-        if(!user.getIsActive()) throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
-        if(!user.getEmailVerified()) throw new SpecificBusinessException("Please verify your email before logging in");
-        if(user.getLockedUntil() != null && user.getLockedUntil().isBefore(Instant.now()))
+        if (!user.getIsActive()) throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
+        if (!user.getEmailVerified()) throw new SpecificBusinessException("Please verify your email before logging in");
+        if (user.getLockedUntil() != null && user.getLockedUntil().isBefore(Instant.now()))
             throw new BadRequestException(ACCOUNT_LOCKED_ERROR);
 
         try {
 //            Get authentication by email and password
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email,password));
+                    new UsernamePasswordAuthenticationToken(email, password));
 
             user.setLastLoginAt(LocalDateTime.now());
             userRepository.save(user);
 
-            UserDetails userDetails =(UserDetails) authentication.getPrincipal();
-            String accessToken = jwtService.generateAccessToken(userDetails,null);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String accessToken = jwtService.generateAccessToken(userDetails, null);
 
 
             return LoginResponse.builder()
@@ -117,11 +117,11 @@ public class AuthService {
         String normalizedEmail = normalizeEmail(request.getEmail());
         String normalizedPhone = normalizePhone(request.getPhone());
 
-        if(userRepository.existsByEmail(normalizedEmail)) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new BusinessException(ApiMessage.DUPLICATE_EMAIL);
         }
 
-        if(userRepository.existsByPhone(normalizedPhone))
+        if (userRepository.existsByPhone(normalizedPhone))
             throw new BusinessException(ApiMessage.DUPLICATE_PHONE);
     }
 

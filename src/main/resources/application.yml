@@ -59,7 +59,7 @@ vnpay:
 
   # Cấu hình version
   version: 2.1.0
-  command:  pay
+  command: pay
   currency-code: VND
   locale: vn  # vn hoặc en
 

@@ -49,7 +49,7 @@ public class ShowtimeGroupByTimeSlotDto {
             this.totalShowtimes = showtimes.size();
             this.totalAvailableSeats = showtimes.stream()
                     .mapToInt(st -> st.getSeatAvailability() != null ?
-                            st. getSeatAvailability().getAvailableSeats() : 0)
+                            st.getSeatAvailability().getAvailableSeats() : 0)
                     .sum();
         }
         this.timeSlotDisplay = getTimeSlotDisplay(this.timeSlot);

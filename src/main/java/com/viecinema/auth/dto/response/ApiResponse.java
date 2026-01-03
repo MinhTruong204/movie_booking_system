@@ -27,6 +27,7 @@ public class ApiResponse<T> {
                 .data(data)
                 .build();
     }
+
     public static <T> ApiResponse<T> successWithoutData(ApiMessage apiMessage, Object... args) {
         String messageDetail = apiMessage.format(args);
         return ApiResponse.<T>builder()

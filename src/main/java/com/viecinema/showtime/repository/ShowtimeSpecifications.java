@@ -1,6 +1,5 @@
 package com.viecinema.showtime.repository;
 
-import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.entity.Showtime;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -11,10 +10,12 @@ public class ShowtimeSpecifications {
         return (root, query, cb)
                 -> movieId == null ? null : cb.equal(root.get("movie").get("id"), movieId);
     }
+
     public static Specification<Showtime> hasCinemaId(Integer cinemaId) {
         return (root, query, cb)
                 -> cinemaId == null ? null : cb.equal(root.get("cinema").get("id"), cinemaId);
     }
+
     public static Specification<Showtime> hasRoomId(Integer roomId) {
         return (root, query, cb)
                 -> roomId == null ? null : cb.equal(root.get("room").get("id"), roomId);

@@ -14,15 +14,15 @@ public class PhoneValidator implements ConstraintValidator<ValidPhone, String> {
 
     @Override
     public boolean isValid(String phone, jakarta.validation.ConstraintValidatorContext context) {
-        if(phone == null || phone.isBlank()) return false;
+        if (phone == null || phone.isBlank()) return false;
 
 //        Remove spaces and "-"
         String phoneNormalized = phone.replaceAll("[\\s-]", "");
 
-        if(!pattern.matcher(phoneNormalized).matches()) {
+        if (!pattern.matcher(phoneNormalized).matches()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
-                        ApiMessage.FIELD_INVALID.format("Phone"))
+                            ApiMessage.FIELD_INVALID.format("Phone"))
                     .addConstraintViolation();
             return false;
         }

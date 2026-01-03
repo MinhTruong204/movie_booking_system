@@ -3,14 +3,9 @@ package com.viecinema.booking.entity;
 import com.viecinema.common.entity.BaseEntity;
 import com.viecinema.showtime.entity.Seat;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 @Entity
 @Table(name = "booking_seats")
