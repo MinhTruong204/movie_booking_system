@@ -1,6 +1,7 @@
 package com.viecinema.booking.repository;
 
 import com.viecinema.booking.entity.Booking;
+import com.viecinema.common.enums.BookingStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,5 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     @Query("SELECT b FROM Booking b WHERE b.user.id = :userId ORDER BY b.createdAt DESC")
     List<Booking> findAllByUserIdWithDetails(@Param("userId") Integer userId);
 
+    List<Booking> findAllByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime createdAtBefore);
 }

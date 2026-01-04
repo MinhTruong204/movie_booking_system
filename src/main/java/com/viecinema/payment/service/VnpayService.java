@@ -253,7 +253,6 @@ public class VnpayService {
             // Tạo QR code cho vé
             String qrData = generateQRCodeData(booking);
             booking.setQrCodeData(qrData);
-            // TODO: Generate QR image và upload, sau đó set booking.setQrCodeImageUrl(url);
 
             bookingRepository.save(booking);
             paymentRepository.save(payment);
@@ -278,8 +277,6 @@ public class VnpayService {
             bookingRepository.save(booking);
             paymentRepository.save(payment);
 
-            // TODO: Giải phóng ghế đã giữ
-
             log.warn("Payment failed for booking {}. Response code: {}", booking.getBookingCode(), responseCode);
 
             return VnpayCallbackResponse.builder()
@@ -290,10 +287,6 @@ public class VnpayService {
         }
     }
 
-    /**
-     * Xử lý IPN (Instant Payment Notification) từ VNPay
-     * IPN được gọi từ server VNPay, không qua browser
-     */
     @Transactional
     public Map<String, String> handleIPN(Map<String, String> params) {
         log.info("Received VNPay IPN: {}", params);

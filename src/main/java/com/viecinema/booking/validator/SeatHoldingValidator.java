@@ -28,6 +28,12 @@ public class SeatHoldingValidator {
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
             throw new SpecificBusinessException("No seats selected");
         }
+        if(request.getSeatIds().size() >= 10) {
+            throw new SpecificBusinessException("Only a maximum of 10 seats can be reserved");
+        }
+        if(request.getHoldDurationSeconds() > 300) {
+            throw new SpecificBusinessException("Only allowed to hold a seat for a maximum of 5 minutes");
+        }
     }
 
     public void validateShowtime(Showtime showtime) {

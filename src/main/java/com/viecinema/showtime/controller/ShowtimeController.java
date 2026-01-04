@@ -36,18 +36,6 @@ public class ShowtimeController {
                 ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, showtimes, "Showtimes"));
     }
 
-//    @GetMapping(SHOWTIMES_DETAIL_PATH)
-//    public ResponseEntity<ApiResponse<ShowtimeDetailResponse>> getShowtimeDetail(
-//            @PathVariable @Min(1) Integer showtimeId
-//    ) {
-//        log.info("GET /api/showtimes/{}", showtimeId);
-//
-//        ShowtimeDetailResponse showtimes = showtimeService.getShowtimeDetail(showtimeId);
-//
-//        return ResponseEntity.status(HttpStatus.OK).body(
-//                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED,showtimes,"Showtimes detail"));
-//    }
-
     @GetMapping(SHOWTIMES_BY_MOVIE_PATH)
     public ResponseEntity<ApiResponse<Object>> getShowtimesByMovie(
             @PathVariable Integer movieId,

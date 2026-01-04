@@ -31,11 +31,11 @@ public class SeatmapController {
     @GetMapping(SHOWTIMES_SEATMAP_PATH)
     public ResponseEntity<ApiResponse<SeatmapResponse>> getSeatmap(
             @PathVariable Integer showtimeId,
-            @CurrentUser UserPrincipal userPrincipal
+            @CurrentUser UserPrincipal currentUser
     ) {
-        log.info("GET /api/showtimes/{}/seatmap", showtimeId);
+        log.info("GET /api/showtimes/{}/seatmap by user {}", showtimeId, currentUser.getId());
 
-        Integer currentUserId = authUtil.extractUserId(userPrincipal);
+        Integer currentUserId = currentUser.getId();
         SeatmapResponse seatmap = seatmapService.getSeatmap(showtimeId, currentUserId);
 
         return ResponseEntity.status(HttpStatus.OK).body(

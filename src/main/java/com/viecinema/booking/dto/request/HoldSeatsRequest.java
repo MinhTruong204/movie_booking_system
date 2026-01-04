@@ -19,6 +19,6 @@ public class HoldSeatsRequest {
     @Size(min = 1, max = 10, message = "Số ghế phải từ 1 đến 10")
     private List<@Positive(message = "Seat ID phải là số dương") Integer> seatIds;
 
-    @Max(value = 900, message = "Thời gian giữ tối đa 15 phút (900 giây)")
-    private Integer holdDurationSeconds = 600; // Default 10 phút
+    @Max(value = 300, message = "Thời gian giữ tối đa 15 phút (900 giây)")
+    private Integer holdDurationSeconds = 300;
 }

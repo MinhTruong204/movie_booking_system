@@ -42,7 +42,7 @@ public class BookingValidator {
             throw new SpecificBusinessException("The showtime has already started.");
         }
 
-        // Không cho đặt vé trước giờ chiếu < 15 phút
+        // Ticket reservations are not accepted less than 15 minutes before showtime.
         if (showtime.getStartTime().minusMinutes(15).isBefore(LocalDateTime.now())) {
             throw new SpecificBusinessException("Tickets cannot be booked for the upcoming screening.");
         }
@@ -88,7 +88,7 @@ public class BookingValidator {
         for (SeatStatus status : seatStatuses) {
             if (SeatStatusType.BOOKED.equals(status.getStatus())) {
                 throw new SpecificBusinessException(
-                        String.format("Ghế %s%d đã được đặt",
+                        String.format("Seat %s%d has been reserved",
                                 status.getSeat().getSeatRow(),
                                 status.getSeat().getSeatNumber())
                 );
@@ -100,7 +100,7 @@ public class BookingValidator {
                     // Nếu ghế đang được giữ bởi người khác, báo lỗi
                     if (status.getHeldByUser() != null && !status.getHeldByUser().getId().equals(userId)) {
                         throw new SpecificBusinessException(
-                                String.format("Ghế %s%d đang được giữ bởi người khác",
+                                String.format("Seat %s%d is held by another user",
                                         status.getSeat().getSeatRow(),
                                         status.getSeat().getSeatNumber())
                         );
