@@ -1,5 +1,6 @@
 package com.viecinema.showtime.repository;
 
+import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.showtime.dto.projection.SeatStatusCount;
 import com.viecinema.showtime.entity.SeatStatus;
 import jakarta.persistence.LockModeType;
@@ -56,4 +57,6 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
             "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = 'held'")
     int forceReleaseSeat(@Param("showtimeId") Integer showtimeId,
                          @Param("seatId") Integer seatId);
+
+    List<SeatStatus> findAllByStatusAndCreatedAtBefore(SeatStatusType status, LocalDateTime createdAtBefore);
 }
