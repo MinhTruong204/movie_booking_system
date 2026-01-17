@@ -1,7 +1,6 @@
-package com.viecinema.auth.dto.response;
+package com.viecinema.common.constant;
 
 
-import com.viecinema.common.constant.ApiMessage;
 import lombok.Builder;
 import lombok.Data;
 

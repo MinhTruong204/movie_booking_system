@@ -2,7 +2,7 @@ package com.viecinema.auth.controller;
 
 import com.viecinema.auth.dto.request.LoginRequest;
 import com.viecinema.auth.dto.request.RegisterRequest;
-import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.auth.dto.response.LoginResponse;
 import com.viecinema.auth.dto.response.RegisterResponse;
 import com.viecinema.auth.service.AuthService;

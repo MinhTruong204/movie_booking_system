@@ -1,6 +1,6 @@
 package com.viecinema.common.exception.handler;
 
-import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.booking.exception.SeatAlreadyHeldException;
 import com.viecinema.booking.exception.SeatNotHeldByUserException;
 import com.viecinema.common.constant.ApiMessage;

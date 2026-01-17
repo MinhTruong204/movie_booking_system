@@ -1,6 +1,6 @@
 package com.viecinema.booking.controller;
 
-import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.auth.security.CurrentUser;
 import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.booking.dto.request.HoldSeatsRequest;

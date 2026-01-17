@@ -1,6 +1,6 @@
 package com.viecinema.movie.controller;
 
-import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.movie.dto.GenreDto;
 import com.viecinema.movie.service.GenreService;
 import lombok.RequiredArgsConstructor;

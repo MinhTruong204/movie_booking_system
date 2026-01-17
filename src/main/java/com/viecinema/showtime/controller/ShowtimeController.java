@@ -1,6 +1,6 @@
 package com.viecinema.showtime.controller;
 
-import com.viecinema.auth.dto.response.ApiResponse;
+import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.showtime.dto.request.ShowtimeFilterRequest;
 import com.viecinema.showtime.service.ShowtimeService;
