@@ -10,9 +10,6 @@ import java.util.List;
 
 @Repository
 public interface MembershipTierRepository extends JpaRepository<MembershipTier, Integer> {
-    /**
-     * Tìm hạng tiếp theo dựa vào points required
-     */
     @Query("SELECT mt FROM MembershipTier mt " +
             "WHERE mt.pointsRequired > :currentPoints " +
             "ORDER BY mt.pointsRequired ASC")

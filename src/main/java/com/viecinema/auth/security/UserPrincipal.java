@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -17,8 +18,6 @@ import java.util.Objects;
 @Getter
 @ToString
 public class UserPrincipal implements UserDetails, Serializable {
-
-    private static final long serialVersionUID = 1L;
 
     private final Integer id;
     private final String fullName;
@@ -29,9 +28,9 @@ public class UserPrincipal implements UserDetails, Serializable {
 
     private final Collection<? extends GrantedAuthority> authorities;
 
-    // Một số thông tin phụ trợ (có thể lấy từ entity nếu muốn)
     private final Boolean isActive;
     private final Instant lockedUntil;
+    private final LocalDateTime deletedAt;
 
     public UserPrincipal(Integer id,
                          String fullName,
@@ -39,7 +38,8 @@ public class UserPrincipal implements UserDetails, Serializable {
                          String password,
                          Collection<? extends GrantedAuthority> authorities,
                          Boolean isActive,
-                         Instant lockedUntil) {
+                         Instant lockedUntil,
+                         LocalDateTime deletedAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -47,20 +47,14 @@ public class UserPrincipal implements UserDetails, Serializable {
         this.authorities = authorities;
         this.isActive = isActive;
         this.lockedUntil = lockedUntil;
+        this.deletedAt = deletedAt;
     }
 
-    /**
-     * Factory method — chuyển từ User entity sang UserPrincipal.
-     * Nếu entity của bạn đặt tên trường khác (ví dụ userId), điều chỉnh tương ứng.
-     */
     public static UserPrincipal create(User user) {
-        // Map role -> GrantedAuthority (ví dụ: role = 'customer' -> ROLE_CUSTOMER)
+        // Map role -> GrantedAuthority (Ex: role = 'customer' -> ROLE_CUSTOMER)
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole())
         );
-
-        // Nếu muốn map nhiều role/authority, thay đổi logic trên:
-        // e.g., user.getRoles().stream()...
 
         Instant lockedUntil = null;
         if (user.getLockedUntil() != null) {
@@ -74,7 +68,8 @@ public class UserPrincipal implements UserDetails, Serializable {
                 user.getPasswordHash(),
                 authorities,
                 user.getIsActive(),
-                lockedUntil
+                lockedUntil,
+                user.getDeletedAt()
         );
     }
 
@@ -85,7 +80,6 @@ public class UserPrincipal implements UserDetails, Serializable {
         return authorities;
     }
 
-    // username dùng email trong project này
     @Override
     public String getUsername() {
         return email;
@@ -96,13 +90,11 @@ public class UserPrincipal implements UserDetails, Serializable {
         return password;
     }
 
-    // Đơn giản trả true — nếu muốn kiểm tra expiry, thay logic ở đây
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    // Nếu có trường lockedUntil, có thể kiểm tra ở đây
     @Override
     public boolean isAccountNonLocked() {
         if (lockedUntil == null) return true;
@@ -114,25 +106,8 @@ public class UserPrincipal implements UserDetails, Serializable {
         return true;
     }
 
-    // isEnabled map tới isActive của User
     @Override
     public boolean isEnabled() {
-        return Boolean.TRUE.equals(isActive);
-    }
-
-    // -------------------- equals / hashCode --------------------
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        UserPrincipal that = (UserPrincipal) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+        return Boolean.TRUE.equals(isActive) && deletedAt == null;
     }
 }

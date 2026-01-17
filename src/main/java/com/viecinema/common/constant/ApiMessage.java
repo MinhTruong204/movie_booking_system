@@ -43,7 +43,6 @@ public enum ApiMessage {
     SERVER_ERROR("E500", "error", "An unexpected error occurred. Please try again later."),
 
     // Other
-    CUSTOM_ERROR("E503", "error", "%s"),
     SPECIFIC_ERROR("E503", "error", "%s");
 
     private final String code;

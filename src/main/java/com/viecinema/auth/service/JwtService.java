@@ -24,7 +24,7 @@ public class JwtService {
     @Value("${security.jwt.expiration}")
     private Duration accessTokenExpiration;
 
-    //  Create secret key to encode using sha
+    //  Create a secret key to encode using sha
     private SecretKey getSigninKey() {
         // Convert secret key to byte
         byte[] secretKeyByte = secretKey.getBytes();
@@ -82,11 +82,11 @@ public class JwtService {
     }
 
     private Boolean isAccessToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals("ACCESS");
+        return extractClaim(token, claims -> claims.get("type")).equals("access");
     }
 
     private Boolean isRefreshToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals("REFRESH");
+        return extractClaim(token, claims -> claims.get("type")).equals("refresh");
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {

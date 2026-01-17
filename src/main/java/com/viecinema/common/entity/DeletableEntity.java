@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @MappedSuperclass // Say that this is not an entity
 @SQLDelete(sql = "UPDATE movies SET deleted_at = NOW() WHERE movie_id = ?") // soft delete
-@Where(clause = "deleted_at IS NULL") // Automatically add this condition when querrying this entity
+@Where(clause = "deleted_at IS NULL") // Automatically add this condition when querying this entity
 @Getter
 @Setter
 public class DeletableEntity extends BaseEntity {

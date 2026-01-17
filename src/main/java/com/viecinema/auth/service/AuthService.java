@@ -9,9 +9,9 @@ import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.auth.security.UserDetailsServiceImpl;
 import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.common.exception.*;
+import com.viecinema.common.validation.validator.UserValidator;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -47,18 +47,12 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsServiceImpl userDetailsServiceIml;
     private final UserMapper userMapper;
+    private final UserValidator userValidator;
 
     //    Register
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        String email = request.getEmail().toLowerCase().trim();
-        if (userRepository.existsByEmailAndDeletedAtIsNull(email))
-            throw new DuplicateResourceException("Email");
-        if (request.getPhone() != null &&
-                userRepository.existsByPhoneAndDeletedAtIsNull(request.getPhone()))
-            throw new DuplicateResourceException("Phone");
         try {
-
             validateUniqueConstraints(request);
             User user = userMapper.registerRequestToUser(request);
             user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -80,14 +74,10 @@ public class AuthService {
 
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
-
-        if (!user.getIsActive()) throw new BadRequestException(ACCOUNT_DISABLE_ERROR);
-        if (!user.getEmailVerified()) throw new SpecificBusinessException("Please verify your email before logging in");
-        if (user.getLockedUntil() != null && user.getLockedUntil().isBefore(Instant.now()))
-            throw new BadRequestException(ACCOUNT_LOCKED_ERROR);
+        userValidator.validateUser(user);
 
         try {
-//            Get authentication by email and password
+            // Get authentication by email and password
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
 
@@ -96,7 +86,6 @@ public class AuthService {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String accessToken = jwtService.generateAccessToken(userDetails, null);
-
 
             return LoginResponse.builder()
                     .accessToken(accessToken)
@@ -117,12 +106,11 @@ public class AuthService {
         String normalizedEmail = normalizeEmail(request.getEmail());
         String normalizedPhone = normalizePhone(request.getPhone());
 
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new BusinessException(ApiMessage.DUPLICATE_EMAIL);
-        }
-
-        if (userRepository.existsByPhone(normalizedPhone))
-            throw new BusinessException(ApiMessage.DUPLICATE_PHONE);
+        if (userRepository.existsByEmailAndDeletedAtIsNull(normalizedEmail))
+            throw new DuplicateResourceException("Email");
+        if (normalizedPhone != null &&
+                userRepository.existsByPhoneAndDeletedAtIsNull(normalizedPhone))
+            throw new DuplicateResourceException("Phone");
     }
 
     private String normalizePhone(String phone) {
@@ -136,14 +124,5 @@ public class AuthService {
 
     private String normalizeEmail(String email) {
         return email.toLowerCase();
-    }
-
-    private String generateAccessToken(User user, UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
-        claims.put("role", user.getRole());
-        claims.put("membershipTier", user.getMembershipTier());
-
-        return jwtService.generateAccessToken(userDetails, claims);
     }
 }

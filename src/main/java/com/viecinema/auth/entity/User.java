@@ -73,7 +73,7 @@ public class User extends DeletableEntity {
     @ColumnDefault("1")
     @Column(name = "is_active")
     @Builder.Default
-    private Boolean isActive = true;
+    private Boolean isActive = true; // Email would be verified or Admin block
 
     @ColumnDefault("0")
     @Column(name = "email_verified")
@@ -94,5 +94,5 @@ public class User extends DeletableEntity {
     private Integer failedLoginAttempts = 0;
 
     @Column(name = "locked_until")
-    private Instant lockedUntil;
+    private Instant lockedUntil; // Login multiple time
 }

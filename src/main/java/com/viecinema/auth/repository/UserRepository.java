@@ -10,9 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-    Boolean existsByEmail(String email);
-
-    Boolean existsByPhone(String phone);
 
     Optional<User> findByEmailAndDeletedAtIsNull(String email);
 
@@ -20,23 +17,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Boolean existsByPhoneAndDeletedAtIsNull(String phone);
 
-
-    Optional<User> findByEmail(String email);
-
-    Optional<User> findByPhone(String phone);
-
-    /**
-     * Tìm user với eager loading membership tier
-     * Tránh N+1 query problem
-     */
-    @Query("SELECT u FROM User u " +
-            "LEFT JOIN FETCH u.membershipTier " +
-            "WHERE u.id = :userId AND u.deletedAt IS NULL")
-    Optional<User> findByIdWithMembership(@Param("userId") Integer userId);
-
-    /**
-     * Tìm user active với membership
-     */
     @Query("SELECT u FROM User u " +
             "LEFT JOIN FETCH u.membershipTier " +
             "WHERE u.id = :userId " +

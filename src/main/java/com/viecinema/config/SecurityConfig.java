@@ -40,7 +40,6 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Thêm filter JWT để xác thực token
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -53,7 +52,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration); // Áp dụng cho tất cả các đường dẫn /api/**
+        source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 
