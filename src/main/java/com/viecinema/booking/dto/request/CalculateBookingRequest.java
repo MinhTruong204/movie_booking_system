@@ -1,6 +1,6 @@
 package com.viecinema.booking.dto.request;
 
-import com.viecinema.booking.dto.ComboItemSelected;
+import com.viecinema.booking.dto.SelectedCombo;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,7 +22,7 @@ public class CalculateBookingRequest {
     @Size(max = 10, message = "List of seat IDs must not exceed 10 items")
     private List<Integer> seatIds;
 
-    private List<ComboItemSelected> combos;
+    private List<SelectedCombo> combos;
 
     private String promotionCode;
 }

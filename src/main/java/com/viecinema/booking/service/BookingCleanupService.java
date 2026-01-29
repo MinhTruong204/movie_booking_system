@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.viecinema.common.constant.PolicyConstants.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,44 +25,27 @@ public class BookingCleanupService {
     private final BookingRepository bookingRepository;
     private final SeatStatusRepository seatStatusRepository;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = SCHEDULER_DELAY_MS)
     @Transactional
     public void cancelUnpaidBookings() {
-        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(15);
-
-        List<Booking> expiredBookings = bookingRepository.findAllByStatusAndCreatedAtBefore(
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(BOOKING_EXPIRATION_MINUTES);
+        int updatedRows = bookingRepository.updateStatusForExpiredBookings(
+                BookingStatus.CANCELLED,
                 BookingStatus.PENDING,
                 expirationTime
         );
 
-        if (expiredBookings.isEmpty()) {
-            return;
-        }
-
-        log.info("Found {} expired bookings. Processing cancellation...", expiredBookings.size());
-
-        // Update booking status to CANCELLED
-        for (Booking booking : expiredBookings) {
-
-            booking.setStatus(BookingStatus.CANCELLED);
-
-            log.info("Auto-cancelling booking ID: {} - Created at: {}",
-                    booking.getId(), booking.getCreatedAt());
-        }
-        bookingRepository.saveAll(expiredBookings);
+        log.info("Found {} expired bookings. Processing cancellation...", updatedRows);
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = SCHEDULER_DELAY_MS)
     @Transactional
     public void releaseHeldSeats() {
-        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(5);
-
-        List<SeatStatus> expiredSeats = seatStatusRepository.findAllByStatusAndCreatedAtBefore(
-                SeatStatusType.HELD, expirationTime);
-
-        if (!expiredSeats.isEmpty()) {
-            log.info("Found {} expired held seats. Releasing...", expiredSeats.size());
-            seatStatusRepository.deleteAll(expiredSeats);
-        }
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(SEAT_HOLDING_MINUTES);
+        int updatedRows = seatStatusRepository.updateSeatStatusForExpiredHolding(
+                SeatStatusType.AVAILABLE,
+                SeatStatusType.HELD,
+                expirationTime);
+        log.info("Found {} expired holding seats. Processing release...", updatedRows);
     }
 }

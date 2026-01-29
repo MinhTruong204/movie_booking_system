@@ -1,6 +1,6 @@
 package com.viecinema.booking.service;
 
-import com.viecinema.booking.dto.ComboDto;
+import com.viecinema.booking.dto.ComboInfo;
 import com.viecinema.booking.entity.Combo;
 import com.viecinema.booking.repository.ComboRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class ComboService {
 
     private final ComboRepository comboRepository;
 
-    public List<ComboDto> getActiveCombos() {
+    public List<ComboInfo> getActiveCombos() {
         log.info("Fetching active combos");
 
         List<Combo> combos = comboRepository.findByIsActiveTrue();
@@ -33,8 +33,8 @@ public class ComboService {
         return comboRepository.findByIdInAndIsActiveTrue(ids);
     }
 
-    private ComboDto convertToDto(Combo combo) {
-        return ComboDto.builder()
+    private ComboInfo convertToDto(Combo combo) {
+        return ComboInfo.builder()
                 .comboId(combo.getId())
                 .name(combo.getName())
                 .description(combo.getDescription())

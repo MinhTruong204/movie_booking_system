@@ -1,6 +1,6 @@
 package com.viecinema.booking.dto.request;
 
-import com.viecinema.booking.dto.ComboItemSelected;
+import com.viecinema.booking.dto.SelectedCombo;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -25,21 +25,16 @@ public class BookingRequest {
     @Size(min = 1, max = 10, message = "Number of seats must be between 1 and 10.")
     private List<Integer> seatIds;
 
-    // Combo IDs với số lượng
-    private List<ComboItemSelected> combos;
+    private List<SelectedCombo> combos;
 
-    // Mã khuyến mãi (có thể null)
     @Size(max = 50)
     private String promoCode;
 
-    // Voucher code (có thể null)
     @Size(max = 50)
     private String voucherCode;
 
-    // Sử dụng điểm tích lũy (true/false)
     private Boolean useLoyaltyPoints = false;
 
-    // Số điểm muốn dùng (nếu useLoyaltyPoints = true)
     @Min(0)
     private Integer loyaltyPointsToUse = 0;
 }

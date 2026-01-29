@@ -1,7 +1,7 @@
 package com.viecinema.booking.controller;
 
 import com.viecinema.common.constant.ApiResponse;
-import com.viecinema.booking.dto.ComboDto;
+import com.viecinema.booking.dto.ComboInfo;
 import com.viecinema.booking.service.ComboService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,8 +23,8 @@ public class ComboController {
     private final ComboService comboService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ComboDto>>> getActiveCombos() {
-        List<ComboDto> combos = comboService.getActiveCombos();
+    public ResponseEntity<ApiResponse<List<ComboInfo>>> getActiveCombos() {
+        List<ComboInfo> combos = comboService.getActiveCombos();
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.success(RESOURCE_RETRIEVED, combos, "Combos"));

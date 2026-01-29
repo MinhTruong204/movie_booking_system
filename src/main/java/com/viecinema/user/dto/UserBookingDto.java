@@ -1,7 +1,7 @@
 package com.viecinema.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.viecinema.booking.dto.ComboInfo;
+import com.viecinema.booking.dto.BookingComboInfo;
 import com.viecinema.showtime.dto.CinemaInfo;
 import com.viecinema.showtime.dto.MovieInfo;
 import com.viecinema.showtime.dto.SeatInfo;
@@ -52,7 +52,7 @@ public class UserBookingDto {
     private List<SeatInfo> seats;
 
     // Combos
-    private List<ComboInfo> combos;
+    private List<BookingComboInfo> combos;
 
     // Payment info
     private PaymentInfo payment;

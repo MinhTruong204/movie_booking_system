@@ -1,4 +1,4 @@
-package com.viecinema.booking.dto;
+package com.viecinema.booking.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UnavailableSeatDto {
+public class SeatStatusResponse {
     private Integer seatId;
     private String seatRow;
     private Integer seatNumber;
-    private String status; // "held" hoặc "booked"
-    private LocalDateTime heldUntil; // Null nếu status = "booked"
+    private String status;
+    private LocalDateTime heldUntil;
 }

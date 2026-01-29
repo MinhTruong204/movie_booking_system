@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HeldSeatDto {
+public class HeldSeatInfo {
     private Integer seatId;
     private String seatRow;
     private Integer seatNumber;

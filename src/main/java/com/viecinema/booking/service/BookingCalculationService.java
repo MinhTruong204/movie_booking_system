@@ -2,8 +2,8 @@ package com.viecinema.booking.service;
 
 import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.booking.dto.ComboInfo;
-import com.viecinema.booking.dto.ComboItemSelected;
+import com.viecinema.booking.dto.BookingComboInfo;
+import com.viecinema.booking.dto.SelectedCombo;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.PricingContext;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
@@ -12,7 +12,6 @@ import com.viecinema.booking.entity.Combo;
 import com.viecinema.booking.repository.ComboRepository;
 import com.viecinema.booking.validator.BookingValidator;
 import com.viecinema.common.exception.ResourceNotFoundException;
-import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import com.viecinema.showtime.entity.Seat;
@@ -61,7 +60,6 @@ public class BookingCalculationService {
         bookingValidator.validateShowtime(showtime);
         bookingValidator.validateSeatAvailability(request.getShowtimeId(), request.getSeatIds(), userId);
 
-
         Map<Combo, Integer> selectedCombos = resolveCombos(request);
 
         PricingContext context =
@@ -99,23 +97,23 @@ public class BookingCalculationService {
         }
 
         // Calculate combo price
-        List<ComboInfo> comboInfos = new ArrayList<>();
+        List<BookingComboInfo> bookingComboInfos = new ArrayList<>();
 
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             List<Integer> comboIds = request.getCombos().stream()
-                    .map(ComboItemSelected::getComboId)
+                    .map(SelectedCombo::getComboId)
                     .collect(Collectors.toList());
 
             List<Combo> combos = comboService.getCombosByIds(comboIds);
             Map<Integer, Combo> comboMap = combos.stream()
                     .collect(Collectors.toMap(Combo::getId, c -> c));
 
-            for (ComboItemSelected item : request.getCombos()) {
+            for (SelectedCombo item : request.getCombos()) {
                 Combo combo = comboMap.get(item.getComboId());
                 if (combo == null) {
                     throw new ResourceNotFoundException("Combo doesn't exists: " + item.getComboId());
                 }
-                comboInfos.add(ComboInfo.builder()
+                bookingComboInfos.add(BookingComboInfo.builder()
                         .comboId(combo.getId())
                         .comboName(combo.getName())
                         .quantity(item.getQuantity())
@@ -128,7 +126,7 @@ public class BookingCalculationService {
         return CalculateBookingResponse.builder()
                 .showtime(buildShowtimeInfo(showtime))
                 .seats(seatInfos)
-                .combos(comboInfos)
+                .combos(bookingComboInfos)
                 .pricingBreakdown(priceBreakdown)
                 .build();
     }
@@ -162,7 +160,6 @@ public class BookingCalculationService {
         BigDecimal subtotal = ticketsSubtotal.add(combosSubtotal);
 
         // Apply discount
-
         BigDecimal promoDiscount = BigDecimal.ZERO;
         BigDecimal voucherDiscount = BigDecimal.ZERO;
         BigDecimal loyaltyDiscount = BigDecimal.ZERO;
@@ -195,21 +192,19 @@ public class BookingCalculationService {
 
 
     private Map<Combo, Integer> resolveCombos(CalculateBookingRequest request) {
-        List<ComboItemSelected> comboItemSelectedList = request.getCombos();
-        if (comboItemSelectedList == null) {
+        List<SelectedCombo> selectedCombos = request.getCombos();
+        if (selectedCombos == null) {
             return new java.util.HashMap<>();
         }
-        Map<Integer, Integer> combosIdMap = comboItemSelectedList.stream().collect(Collectors.toMap(
-                ComboItemSelected::getComboId,
-                ComboItemSelected::getQuantity));
-
-        List<Combo> comboList = comboRepository.findAllById(combosIdMap.keySet());
-
-        Map<Combo, Integer> comboMap = comboList.stream().collect(Collectors.toMap(
+        Map<Integer, Integer> quantityMap = selectedCombos.stream().collect(Collectors.toMap(
+                SelectedCombo::getComboId,
+                SelectedCombo::getQuantity));
+        List<Combo> combos = comboRepository.findAllById(quantityMap.keySet());
+        bookingValidator.validateCombo(quantityMap.keySet().stream().toList(), combos);
+        Map<Combo, Integer> combosWithQuantity = combos.stream().collect(Collectors.toMap(
                 combo -> combo,
-                combo -> combosIdMap.get(combo.getId())
-        ));
-        return comboMap;
+                combo -> quantityMap.get(combo.getId())));
+        return combosWithQuantity;
     }
 
     private ShowtimeInfo buildShowtimeInfo(Showtime showtime) {

@@ -2,8 +2,8 @@ package com.viecinema.booking.service;
 
 import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.booking.dto.ComboInfo;
-import com.viecinema.booking.dto.ComboItemSelected;
+import com.viecinema.booking.dto.BookingComboInfo;
+import com.viecinema.booking.dto.SelectedCombo;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.PricingContext;
 import com.viecinema.booking.dto.request.BookingRequest;
@@ -207,8 +207,8 @@ public class BookingService {
                 .collect(Collectors.toList());
 
         // Combos info
-        List<ComboInfo> combosInfo = bookingCombos.stream()
-                .map(bc -> ComboInfo.builder()
+        List<BookingComboInfo> combosInfo = bookingCombos.stream()
+                .map(bc -> BookingComboInfo.builder()
                         .comboId(bc.getCombo().getId())
                         .comboName(bc.getCombo().getName())
                         .quantity(bc.getQuantity())
@@ -230,13 +230,13 @@ public class BookingService {
                 .build();
     }
 
-    private Map<Combo, Integer> resolveCombos(List<ComboItemSelected> requestCombos) {
+    private Map<Combo, Integer> resolveCombos(List<SelectedCombo> requestCombos) {
         if (requestCombos == null) {
             return new HashMap<>();
         }
         Map<Integer, Integer> requestQtyMap = requestCombos.stream().collect(Collectors.toMap(
-                ComboItemSelected::getComboId,
-                ComboItemSelected::getQuantity));
+                SelectedCombo::getComboId,
+                SelectedCombo::getQuantity));
 
         List<Combo> foundCombos = comboRepository.findAllById(requestQtyMap.keySet());
         bookingValidator.validateCombo(requestQtyMap.keySet().stream().toList(), foundCombos);

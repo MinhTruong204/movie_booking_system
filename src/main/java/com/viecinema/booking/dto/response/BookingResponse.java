@@ -1,6 +1,6 @@
 package com.viecinema.booking.dto.response;
 
-import com.viecinema.booking.dto.ComboInfo;
+import com.viecinema.booking.dto.BookingComboInfo;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.showtime.dto.SeatInfo;
@@ -21,23 +21,12 @@ public class BookingResponse {
     private Integer bookingId;
     private String bookingCode;
     private BookingStatus status;
-
-    // Thông tin suất chiếu
     private ShowtimeInfo showtime;
-
-    // Thông tin ghế
     private List<SeatInfo> seats;
-
-    // Thông tin combo
-    private List<ComboInfo> combos;
-
-    // Thông tin giá
+    private List<BookingComboInfo> combos;
     private PriceBreakdown priceBreakdown;
-
-    // QR Code (sau khi thanh toán)
     private String qrCodeData;
     private String qrCodeImageUrl;
-
     private LocalDateTime createdAt;
-    private LocalDateTime expiresAt; // Thời hạn thanh toán
+    private LocalDateTime expiresAt;
 }

@@ -1,16 +1,19 @@
 package com.viecinema.booking.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ComboInfo {
     private Integer comboId;
-    private String comboName;
-    private Integer quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal totalPrice;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private String imageUrl;
+    private Boolean isActive;
 }

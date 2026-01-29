@@ -7,6 +7,7 @@ import com.viecinema.booking.dto.request.HoldSeatsRequest;
 import com.viecinema.booking.dto.request.ReleaseSeatRequest;
 import com.viecinema.booking.dto.response.HoldSeatsResponse;
 import com.viecinema.booking.service.SeatHoldingService;
+import com.viecinema.common.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ import static com.viecinema.common.constant.ApiMessage.RELEASE_SEAT;
 public class SeatHoldingController {
 
     private final SeatHoldingService seatHoldingService;
+    private final SecurityUtils securityUtils;
+
 
     @PostMapping(HOLD_SEATS_PATH)
     public ResponseEntity<ApiResponse<HoldSeatsResponse>> holdSeats(
@@ -43,7 +46,7 @@ public class SeatHoldingController {
     }
 
     @PostMapping(RELEASE_SEATS_PATH)
-    public ResponseEntity<ApiResponse<Void>> releaseSeats(
+    public ResponseEntity<ApiResponse<Void>> releaseUserSeats(
             @CurrentUser UserPrincipal userPrincipal) {
 
         seatHoldingService.releaseUserSeats(userPrincipal.getId());
@@ -59,16 +62,11 @@ public class SeatHoldingController {
 
         Integer userId = userPrincipal.getId();
 
-        boolean force = Boolean.TRUE.equals(request.getForce()) && userHasAdminRole(userPrincipal);
+        boolean force = Boolean.TRUE.equals(request.getForce()) && securityUtils.userHasAdminRole(userPrincipal);
 
         seatHoldingService.releaseSeat(request.getShowtimeId(), request.getSeatId(), userId, force);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.successWithoutData(RELEASE_SEAT));
-    }
-
-    private boolean userHasAdminRole(UserPrincipal userPrincipal) {
-        return userPrincipal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }

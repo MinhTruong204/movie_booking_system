@@ -7,12 +7,9 @@ import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.showtime.entity.Seat;
 import com.viecinema.showtime.entity.Showtime;
 import com.viecinema.showtime.repository.SeatRepository;
-import com.viecinema.showtime.repository.SeatStatusRepository;
-import com.viecinema.showtime.repository.ShowtimeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,9 +27,6 @@ public class SeatHoldingValidator {
         }
         if(request.getSeatIds().size() >= 10) {
             throw new SpecificBusinessException("Only a maximum of 10 seats can be reserved");
-        }
-        if(request.getHoldDurationSeconds() > 300) {
-            throw new SpecificBusinessException("Only allowed to hold a seat for a maximum of 5 minutes");
         }
     }
 
@@ -60,5 +54,7 @@ public class SeatHoldingValidator {
             throw new SpecificBusinessException("Some seats don't belong to the room.");
         }
     }
+
+
     
 }

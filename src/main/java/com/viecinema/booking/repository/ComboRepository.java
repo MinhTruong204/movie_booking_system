@@ -8,8 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ComboRepository extends JpaRepository<Combo, Integer> {
-
     List<Combo> findByIsActiveTrue();
-
     List<Combo> findByIdInAndIsActiveTrue(List<Integer> ids);
 }

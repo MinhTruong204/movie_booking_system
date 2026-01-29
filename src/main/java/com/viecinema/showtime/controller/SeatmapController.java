@@ -4,7 +4,6 @@ import com.viecinema.common.constant.ApiResponse;
 import com.viecinema.auth.security.CurrentUser;
 import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.common.util.AuthUtil;
 import com.viecinema.showtime.dto.response.SeatmapResponse;
 import com.viecinema.showtime.service.SeatmapService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,6 @@ import static com.viecinema.common.constant.ApiConstant.SHOWTIMES_SEATMAP_PATH;
 public class SeatmapController {
 
     private final SeatmapService seatmapService;
-    private final AuthUtil authUtil;
 
     @GetMapping(SHOWTIMES_SEATMAP_PATH)
     public ResponseEntity<ApiResponse<SeatmapResponse>> getSeatmap(

@@ -1,8 +1,6 @@
 package com.viecinema.booking.validator;
 
 import com.viecinema.auth.entity.User;
-import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.booking.dto.ComboItemSelected;
 import com.viecinema.booking.entity.Combo;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.ResourceNotFoundException;
@@ -95,9 +93,9 @@ public class BookingValidator {
             }
 
             if (SeatStatusType.HELD.equals(status.getStatus())) {
-                // Kiểm tra xem ghế có hết hạn giữ chưa
+                // Check if seat holding has expired.
                 if (status.getHeldUntil() != null && status.getHeldUntil().isAfter(now)) {
-                    // Nếu ghế đang được giữ bởi người khác, báo lỗi
+                    // If the seat is already hold by someone else
                     if (status.getHeldByUser() != null && !status.getHeldByUser().getId().equals(userId)) {
                         throw new SpecificBusinessException(
                                 String.format("Seat %s%d is held by another user",
@@ -112,12 +110,12 @@ public class BookingValidator {
 
     public void validateCombo(List<Integer> comboIds, List<Combo> combos) {
         if (combos.size() != comboIds.size()) {
-            throw new SpecificBusinessException("Một số combo không tồn tại");
+            throw new SpecificBusinessException("Some combos do not exist.");
         }
 
         for (Combo combo : combos) {
             if (!combo.getIsActive()) {
-                throw new SpecificBusinessException("Combo " + combo.getName() + " không khả dụng");
+                throw new SpecificBusinessException("Combo " + combo.getName() + "is not available");
             }
         }
     }

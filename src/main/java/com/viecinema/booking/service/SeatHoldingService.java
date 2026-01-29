@@ -2,8 +2,8 @@ package com.viecinema.booking.service;
 
 import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.booking.dto.HeldSeatDto;
-import com.viecinema.booking.dto.UnavailableSeatDto;
+import com.viecinema.booking.dto.HeldSeatInfo;
+import com.viecinema.booking.dto.response.SeatStatusResponse;
 import com.viecinema.booking.dto.request.HoldSeatsRequest;
 import com.viecinema.booking.dto.response.HoldSeatsResponse;
 import com.viecinema.booking.exception.SeatAlreadyHeldException;
@@ -11,7 +11,6 @@ import com.viecinema.booking.exception.SeatNotHeldByUserException;
 import com.viecinema.booking.validator.SeatHoldingValidator;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.ResourceNotFoundException;
-import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.showtime.entity.Seat;
 import com.viecinema.showtime.entity.SeatStatus;
 import com.viecinema.showtime.entity.Showtime;
@@ -21,7 +20,6 @@ import com.viecinema.showtime.repository.ShowtimeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -30,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.viecinema.common.constant.PolicyConstants.SEAT_HOLDING_MINUTES;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +46,6 @@ public class SeatHoldingService {
 
     @Transactional
     public HoldSeatsResponse holdSeats(HoldSeatsRequest request, Integer userId) {
-
 
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Showtime"));
@@ -66,37 +65,47 @@ public class SeatHoldingService {
                 );
 
         // Check availability
-        List<UnavailableSeatDto> unavailableSeats = new ArrayList<>();
+        List<SeatStatusResponse> unavailableSeats = new ArrayList<>();
         List<Integer> availableSeats = new ArrayList<>();
         Map<Integer, SeatStatus> statusMap = seatStatuses.stream()
                 .collect(Collectors.toMap(ss -> ss.getSeat().getSeatId(), Function.identity()));
 
+        LocalDateTime heldUntil = LocalDateTime.now().plusMinutes(SEAT_HOLDING_MINUTES);
+        List<HeldSeatInfo> heldSeats = new ArrayList<>();
+        List<Seat> seatsToHold = seatRepository.findAllById(request.getSeatIds());
+        Map<Integer, Seat> seatMap = seatsToHold.stream()
+                .collect(Collectors.toMap(Seat::getSeatId, Function.identity()));
+        List<SeatStatus> seatStatusToSave = new ArrayList<>();
+
         for (Integer seatId : request.getSeatIds()) {
             SeatStatus status = statusMap.get(seatId);
-
+            Seat seat = seatMap.get(seatId);
             // Seat has no status record -> available for holding
             if (status == null) {
                 availableSeats.add(seatId);
+                status = SeatStatus.builder()
+                        .showtime(showtime)
+                        .seat(seat)
+                        .status(SeatStatusType.HELD)
+                        .heldByUser(user)
+                        .heldUntil(heldUntil)
+                        .build();
+                seatStatusToSave.add(status);
             }
-            // Seat is already held by another user
+            // Seat is already BOOKED by the user
             else if (status.getStatus() == SeatStatusType.BOOKED) {
-                // Seat is already booked
-                Seat seat = seatRepository.findById(seatId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Seat"));
-                unavailableSeats.add(UnavailableSeatDto.builder()
+                unavailableSeats.add(SeatStatusResponse.builder()
                         .seatId(seatId)
                         .seatRow(seat.getSeatRow())
                         .seatNumber(seat.getSeatNumber())
                         .status(SeatStatusType.BOOKED.getValue())
                         .build());
             }
-            // One user already holds a seat
+            // Seat is already HELD by the user
             else if (status.getStatus() == SeatStatusType.HELD) {
                 // Seat is already held by another user
                 if (!userId.equals(status.getHeldByUser().getId())) {
-                    Seat seat = seatRepository.findById(seatId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Seat"));
-                    unavailableSeats.add(UnavailableSeatDto.builder()
+                    unavailableSeats.add(SeatStatusResponse.builder()
                             .seatId(seatId)
                             .seatRow(seat.getSeatRow())
                             .seatNumber(seat.getSeatNumber())
@@ -106,11 +115,24 @@ public class SeatHoldingService {
                 } else {
                     // Seat is already held by the current user
                     availableSeats.add(seatId);
+                    status.setHeldUntil(heldUntil);
+                    seatStatusToSave.add(status);
                 }
             } else {
-                // available
+                // Seat is AVAILABLE
                 availableSeats.add(seatId);
+                status.setStatus(SeatStatusType.HELD);
+                status.setHeldByUser(user);
+                status.setHeldUntil(heldUntil);
+                seatStatusToSave.add(status);
             }
+            heldSeats.add(HeldSeatInfo.builder()
+                    .seatId(seatId)
+                    .seatRow(seat.getSeatRow())
+                    .seatNumber(seat.getSeatNumber())
+                    .seatType(seat.getSeatType().getName())
+                    .heldUntil(heldUntil)
+                    .build());
         }
 
         if (!unavailableSeats.isEmpty()) {
@@ -121,45 +143,7 @@ public class SeatHoldingService {
             );
         }
 
-        // Hold seats
-        LocalDateTime heldUntil = LocalDateTime.now().plusSeconds(request.getHoldDurationSeconds());
-        List<HeldSeatDto> heldSeats = new ArrayList<>();
-        List<Seat> seatsToHold = seatRepository.findAllById(request.getSeatIds());
-        Map<Integer, Seat> seatMap = seatsToHold.stream()
-                .collect(Collectors.toMap(Seat::getSeatId, Function.identity()));
-
-        // Update status for each seat
-        for (Integer seatId : request.getSeatIds()) {
-            SeatStatus status = statusMap.get(seatId);
-            Seat seat = seatMap.get(seatId);
-
-            if (status == null) {
-                // Create
-                status = SeatStatus.builder()
-                        .showtime(showtime)
-                        .seat(seat)
-                        .status(SeatStatusType.HELD)
-                        .heldByUser(user)
-                        .heldUntil(heldUntil)
-                        .build();
-            } else {
-                // Update
-                status.setStatus(SeatStatusType.HELD);
-                status.setHeldByUser(user);
-                status.setHeldUntil(heldUntil);
-            }
-
-            seatStatusRepository.save(status);
-
-            // Build response DTO
-            heldSeats.add(HeldSeatDto.builder()
-                    .seatId(seatId)
-                    .seatRow(seat.getSeatRow())
-                    .seatNumber(seat.getSeatNumber())
-                    .seatType(seat.getSeatType().getName())
-                    .heldUntil(heldUntil)
-                    .build());
-        }
+        seatStatusRepository.saveAll(seatStatusToSave);
 
         log.info("User {} held {} seats for showtime {}", userId, request.getSeatIds().size(), request.getShowtimeId());
 
@@ -167,7 +151,7 @@ public class SeatHoldingService {
                 .showtimeId(request.getShowtimeId())
                 .heldSeats(heldSeats)
                 .heldUntil(heldUntil)
-                .remainingSeconds(request.getHoldDurationSeconds())
+                .remainingSeconds(SEAT_HOLDING_MINUTES*60)
                 .build();
     }
 
@@ -179,11 +163,6 @@ public class SeatHoldingService {
 
     @Transactional
     public void releaseSeat(Integer showtimeId, Integer seatId, Integer userId, boolean force) {
-        // Optional: validate showtime exists (can skip if not necessary)
-        if (!showtimeRepository.existsById(showtimeId)) {
-            throw new IllegalArgumentException("Showtime not found: " + showtimeId);
-        }
-
         int updated;
         if (force) {
             updated = seatStatusRepository.forceReleaseSeat(showtimeId, seatId);

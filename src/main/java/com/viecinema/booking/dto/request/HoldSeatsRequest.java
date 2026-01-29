@@ -11,14 +11,11 @@ import java.util.List;
 @Data
 public class HoldSeatsRequest {
 
-    @NotNull(message = "Showtime ID không được để trống")
-    @Positive(message = "Showtime ID phải là số dương")
+    @NotNull(message = "Showtime ID cannot be null.")
+    @Positive(message = "Showtime ID must be a positive number.")
     private Integer showtimeId;
 
-    @NotNull(message = "Danh sách ghế không được để trống")
-    @Size(min = 1, max = 10, message = "Số ghế phải từ 1 đến 10")
-    private List<@Positive(message = "Seat ID phải là số dương") Integer> seatIds;
-
-    @Max(value = 300, message = "Thời gian giữ tối đa 5 phút (900 giây)")
-    private Integer holdDurationSeconds = 300;
+    @NotNull(message = "List of seat IDs cannot be null.")
+    @Size(min = 1, max = 10, message = "List of seat IDs must have at least 1 and at most 10 items")
+    private List<@Positive(message = "Seat ID must be a positive number") Integer> seatIds;
 }

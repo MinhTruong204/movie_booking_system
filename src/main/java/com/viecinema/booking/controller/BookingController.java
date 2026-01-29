@@ -9,7 +9,6 @@ import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.service.BookingCalculationService;
 import com.viecinema.booking.service.BookingService;
-import com.viecinema.common.util.AuthUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ public class BookingController {
 
     private final BookingCalculationService calculationService;
     private final BookingService bookingService;
-    private final AuthUtil authUtil;
 
     @PostMapping(CAlCULATE_PATH)
     public ResponseEntity<ApiResponse<CalculateBookingResponse>> calculateBooking(

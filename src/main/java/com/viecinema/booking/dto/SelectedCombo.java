@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ComboItemSelected {
+public class SelectedCombo {
     @NotNull
     private Integer comboId;
 

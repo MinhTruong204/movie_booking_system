@@ -1,5 +1,6 @@
 package com.viecinema.showtime.repository;
 
+import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.showtime.dto.projection.SeatStatusCount;
 import com.viecinema.showtime.entity.SeatStatus;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,4 +61,10 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
                          @Param("seatId") Integer seatId);
 
     List<SeatStatus> findAllByStatusAndCreatedAtBefore(SeatStatusType status, LocalDateTime createdAtBefore);
+
+    @Modifying(clearAutomatically = true) // Reset cache after update
+    @Query("update SeatStatus s set s.status = :newStatus where s.status = :oldStatus and s.createdAt < :expirationTime")
+    int updateSeatStatusForExpiredHolding(@Param("newStatus") SeatStatusType newStatus,
+                                          @Param("oldStatus") SeatStatusType oldStatus,
+                                          @Param("expirationTime") LocalDateTime expirationTime);
 }

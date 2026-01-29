@@ -1,6 +1,6 @@
 package com.viecinema.booking.dto.response;
 
-import com.viecinema.booking.dto.ComboInfo;
+import com.viecinema.booking.dto.BookingComboInfo;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
@@ -16,6 +16,6 @@ import java.util.List;
 public class CalculateBookingResponse {
     private ShowtimeInfo showtime;
     private List<SeatInfo> seats;
-    private List<ComboInfo> combos;
+    private List<BookingComboInfo> combos;
     private PriceBreakdown pricingBreakdown;
 }

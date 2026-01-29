@@ -1,6 +1,6 @@
 package com.viecinema.user.service;
 
-import com.viecinema.booking.dto.ComboInfo;
+import com.viecinema.booking.dto.BookingComboInfo;
 import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.entity.BookingCombo;
 import com.viecinema.booking.entity.BookingSeat;
@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -158,9 +157,9 @@ public class UserBookingService {
                 .collect(Collectors.toList());
 
         // Build Combos
-        List<ComboInfo> comboInfos = Collections.emptyList();
+        List<BookingComboInfo> bookingComboInfos = Collections.emptyList();
         if (combos != null && !combos.isEmpty()) {
-            comboInfos = combos.stream()
+            bookingComboInfos = combos.stream()
                     .map(this::convertComboToDto)
                     .collect(Collectors.toList());
         }
@@ -198,7 +197,7 @@ public class UserBookingService {
                 .movie(movieInfo)
                 .cinema(cinemaInfo)
                 .seats(seats)
-                .combos(comboInfos)
+                .combos(bookingComboInfos)
                 .payment(paymentInfo)
                 .canCancel(canCancel)
                 .canCheckIn(canCheckIn)
@@ -222,10 +221,10 @@ public class UserBookingService {
     }
 
     /**
-     * Convert BookingCombo sang ComboInfo DTO
+     * Convert BookingCombo sang BookingComboInfo DTO
      */
-    private ComboInfo convertComboToDto(BookingCombo bookingCombo) {
-        return ComboInfo.builder()
+    private BookingComboInfo convertComboToDto(BookingCombo bookingCombo) {
+        return BookingComboInfo.builder()
                 .comboId(bookingCombo.getCombo().getId())
                 .comboName(bookingCombo.getCombo().getName())
                 .quantity(bookingCombo.getQuantity())
