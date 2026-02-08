@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MovieDetailDto {
+public class MovieDetail {
 
     // Basic Info
     private Integer movieId;
@@ -35,13 +35,11 @@ public class MovieDetailDto {
     private LocalDate endDate;
 
     private String status;
-
     private String posterUrl;
     private String trailerUrl;
-
-    private List<GenreDto> genres;
+    private List<GenreInfo> genres;
     private List<DirectorDto> directors;
-    private List<ActorDto> actors;
+    private List<ActorInfo> actors;
 
     // Statistics
     private BigDecimal averageRating;

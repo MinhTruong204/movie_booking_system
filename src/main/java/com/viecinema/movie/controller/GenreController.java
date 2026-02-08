@@ -1,7 +1,7 @@
 package com.viecinema.movie.controller;
 
 import com.viecinema.common.constant.ApiResponse;
-import com.viecinema.movie.dto.GenreDto;
+import com.viecinema.movie.dto.GenreInfo;
 import com.viecinema.movie.service.GenreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +24,17 @@ public class GenreController {
     private final GenreService genreService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<GenreDto>>> getAllGenres(
+    public ResponseEntity<ApiResponse<List<GenreInfo>>> getAllGenres(
             @RequestParam(required = false, defaultValue = "false")
             Boolean includeCount) {
         log.info("API GET /api/genres called with includeCount={}", includeCount);
 
-        List<GenreDto> genres;
+        List<GenreInfo> genres;
 
         if (Boolean.TRUE.equals(includeCount)) {
-            genres = genreService.getAllGenresWithMovieCount();
+            genres = genreService.getAllGenreWithMovieCount();
         } else {
-            genres = genreService.getAllGenres();
+            genres = genreService.getAllGenre();
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
@@ -43,15 +43,15 @@ public class GenreController {
     }
 
     @GetMapping(GENRE_DETAIL_PATH)
-    public ResponseEntity<ApiResponse<GenreDto>> getGenreById(
+    public ResponseEntity<ApiResponse<GenreInfo>> getGenreById(
             @PathVariable Integer id
     ) {
         log.info("API GET /api/genres/{} called", id);
 
-        GenreDto genre = genreService.getGenreById(id);
+        GenreInfo genre = genreService.getGenreById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.success(RESOURCE_RETRIEVED, genre, "Genre")
+                ApiResponse.success(RESOURCE_RETRIEVED, genre, "Genres")
         );
     }
 }

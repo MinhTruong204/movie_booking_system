@@ -60,20 +60,6 @@ public class MovieFilterRequest {
         return PageRequest.of(page, size, Sort.by(direction, property));
     }
 
-    public void validate() {
-        if (genreIds != null && !genreIds.isEmpty()) {
-            genreIds.removeIf(id -> id == null || id <= 0);
-        }
-    }
-
-    public boolean hasFilters() {
-        return (genreIds != null && !genreIds.isEmpty())
-                || keyword != null
-                || language != null
-                || ageRating != null
-                || city != null;
-    }
-
     public String toCacheKey(MovieStatus status) {
         return String.format("movies:%s:%s:%d:%d:%s:%s:%s:%s:%s",
                 status.name(),

@@ -2,11 +2,12 @@ package com.viecinema.movie.service;
 
 import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.common.exception.ResourceNotFoundException;
-import com.viecinema.movie.dto.MovieDetailDto;
-import com.viecinema.movie.dto.MovieSummaryDto;
+import com.viecinema.movie.dto.MovieDetail;
+import com.viecinema.movie.dto.MovieSummary;
 import com.viecinema.movie.dto.request.MovieFilterRequest;
 import com.viecinema.movie.dto.response.PagedResponse;
 import com.viecinema.movie.entity.Movie;
+import com.viecinema.movie.entity.MovieStatistic;
 import com.viecinema.movie.mapper.MovieMapper;
 import com.viecinema.movie.repository.MovieRepository;
 import com.viecinema.movie.repository.MovieSpecification;
@@ -32,32 +33,35 @@ public class MovieService {
     private final MovieMapper movieMapper;
     private final MovieStatisticsRepository movieStatisticsRepository;
 
-    @Cacheable( // Save data to cache, when the same request be sent, use this cache instead querry to database
+    @Cacheable( // Save data to cache, when the same request be sent, use this cache instead query to database
             value = "moviesByStatus",
             key = "#request.toCacheKey(#status)",  // Cache key for distinguish different request
-            unless = "#result == null || #result.content.isEmpty()"// dont save to cache if result is null or empty
+            unless = "#result == null || #result.content.isEmpty()"// don't save to cache if result is null or empty
     )
-    public PagedResponse<MovieSummaryDto> getMoviesByStatus(MovieFilterRequest request, MovieStatus status) {
+    public PagedResponse<MovieSummary> getMoviesByStatus(MovieFilterRequest request, MovieStatus status) {
         log.info("Fetching movies with status '{}' and filters: {}", status, request);
-
-        request.validate();
 
         Specification<Movie> spec = buildSpecification(request, status);
         Pageable pageable = request.toPageable();
         Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
 
-        log.info("✅ Found {} movies out of {} total",
+        List<Integer> movieIds = moviePage.getContent().stream()
+                .map(Movie::getMovieId)
+                .collect(Collectors.toList());
+        var statsMap = movieStatisticsRepository.findAllById(movieIds).stream()
+                .collect(Collectors.toMap(s -> s.getMovies().getMovieId(), s -> s));
+
+        log.info("Found {} movies out of {} total",
                 moviePage.getNumberOfElements(),
                 moviePage.getTotalElements()
         );
 
-        // Convert to DTO
-        List<MovieSummaryDto> content = moviePage.getContent()
+        List<MovieSummary> content = moviePage.getContent()
                 .stream()
-                .map(this::convertToSummaryDto)
+                .map(movie -> mapToSummaryWithStats(movie,statsMap.get(movie.getMovieId())))
                 .collect(Collectors.toList());
 
-        return PagedResponse.<MovieSummaryDto>builder()
+        return PagedResponse.<MovieSummary>builder()
                 .content(content)
                 .pageNumber(moviePage.getNumber())
                 .pageSize(moviePage.getSize())
@@ -69,9 +73,8 @@ public class MovieService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "movieDetails", key = "#movieId", unless = "#result == null")
-    public MovieDetailDto getMovieDetail(Integer movieId) {
+    public MovieDetail getMovieDetail(Integer movieId) {
         log.info("Fetching movie detail for ID: {}", movieId);
 
         Movie movie = movieRepository.findByIdWithDetails(movieId)
@@ -87,18 +90,12 @@ public class MovieService {
                 .and(MovieSpecification.hasGenres(request.getGenreIds()));
     }
 
-    private MovieSummaryDto convertToSummaryDto(Movie movie) {
-        MovieSummaryDto dto = movieMapper.toMovieSummaryDto(movie);
-
-        // Set average rating and total reviews
-        movieStatisticsRepository.findById(movie.getMovieId())
-                .ifPresent(stats -> {
-                    dto.setAverageRating(stats.getAverageRating() != null
-                            ? stats.getAverageRating().doubleValue()
-                            : null);
-                    dto.setTotalReviews(stats.getTotalReviews());
-                });
-
+    private MovieSummary mapToSummaryWithStats(Movie movie, MovieStatistic statistic) {
+        MovieSummary dto = movieMapper.toMovieSummaryDto(movie);
+        if (statistic != null) {
+            dto.setAverageRating(statistic.getAverageRating() != null ? statistic.getAverageRating().doubleValue() : null);
+            dto.setTotalReviews(statistic.getTotalReviews());
+        }
         return dto;
     }
 }

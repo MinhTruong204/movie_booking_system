@@ -1,8 +1,11 @@
 package com.viecinema.movie.service;
 
 import com.viecinema.common.exception.ResourceNotFoundException;
-import com.viecinema.movie.dto.GenreDto;
+import com.viecinema.movie.dto.GenreBasicProjection;
+import com.viecinema.movie.dto.GenreFullProjection;
+import com.viecinema.movie.dto.GenreInfo;
 import com.viecinema.movie.entity.Genre;
+import com.viecinema.movie.mapper.GenreMapper;
 import com.viecinema.movie.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,55 +22,37 @@ import java.util.List;
 public class GenreService {
 
     private final GenreRepository genreRepository;
+    private final GenreMapper genreMapper;
 
     @Cacheable(value = "genres", key = "'all'")
-    public List<GenreDto> getAllGenres() {
+    public List<GenreInfo> getAllGenre() {
         log.debug("Fetching all genres from database");
 
-        List<Genre> genres = genreRepository.findAll();
+        List<GenreBasicProjection> genres = genreRepository.findAllGenre();
 
         return genres
                 .stream()
-                .map(this::convertToDto)
+                .map(genreMapper::toGenreDto)
                 .toList();
     }
 
     @Cacheable(value = "genres", key = "'all-with-count'")
-    public List<GenreDto> getAllGenresWithMovieCount() {
+    public List<GenreInfo> getAllGenreWithMovieCount() {
         log.debug("Fetching all genres with movie count");
 
-        List<GenreRepository.GenreProjection> projections =
-                genreRepository.findAllWithMovieCount();
+        List<GenreFullProjection> projections =
+                genreRepository.findAllGenreWithMovieCount();
 
         return projections
                 .stream()
-                .map(this::convertProjectionToDto)
+                .map(genreMapper::toGenreDto)
                 .toList();
     }
 
-    public GenreDto getGenreById(Integer genreId) {
+    public GenreInfo getGenreById(Integer genreId) {
         log.debug("Fetching genres by ID: {}", genreId);
         Genre genre = genreRepository.findById(genreId)
                 .orElseThrow(() -> new ResourceNotFoundException("Genre with ID: " + genreId));
-        return convertToDto(genre);
-    }
-
-    // ========== MAPPER METHODS ==========
-
-    private GenreDto convertToDto(Genre genre) {
-        return GenreDto.builder()
-                .genreId(genre.getGenreId())
-                .name(genre.getName())
-                .description(genre.getDescription())
-                .build();
-    }
-
-    private GenreDto convertProjectionToDto(GenreRepository.GenreProjection projection) {
-        return GenreDto.builder()
-                .genreId(projection.getGenreId())
-                .name(projection.getName())
-                .description(projection.getDescription())
-                .movieCount(projection.getMovieCount())
-                .build();
+        return genreMapper.toGenreDto(genre);
     }
 }

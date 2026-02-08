@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL) // Null field will not be included in JSON response
-public class MovieSummaryDto {
+public class MovieSummary {
     private Integer movieId;
     private String title;
     private String description;
@@ -29,20 +29,11 @@ public class MovieSummaryDto {
     private String status;
     private String posterUrl;
     private String trailerUrl;
-    private List<GenreDto> genres;
+    private List<GenreInfo> genres;
 
     //    For now showing movie
     private Double averageRating;
     private Integer totalReviews;
     //    For coming soon movie
     private Integer daysUntilRelease;
-
-    // Helper method
-    public String getDurationFormatted() {
-        if (duration == null) return null;
-        int hours = duration / 60;
-        int minutes = duration % 60;
-        return String.format("%dh %02dm", hours, minutes);
-    }
-
 }
