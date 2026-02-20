@@ -18,11 +18,13 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class) // Listener for date field like createdAt, updatedAt
 public abstract class BaseEntity {
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false,
+            columnDefinition = "datetime default CURRENT_TIMESTAMP")
     @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false,
+            columnDefinition = "datetime default CURRENT_TIMESTAMP")
     @LastModifiedDate
     private LocalDateTime updatedAt;
 }

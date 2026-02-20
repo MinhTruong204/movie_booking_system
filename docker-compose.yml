@@ -9,31 +9,32 @@ services:
       - "8080:8080" # Ánh xạ cổng 8080 của container ra máy host
     environment:
       # Cấu hình để ứng dụng Spring Boot kết nối tới DB
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=user
-      - SPRING_DATASOURCE_PASSWORD=password
-    depends_on:
-      mysql:
-        condition: service_healthy # Chỉ khởi động app khi mysql đã sẵn sàng
-  mysql:
-    image: mysql:8.0
-    container_name: viecinema-mysql
-    restart: always
-    environment:
-      MYSQL_DATABASE: movie_booking_system
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: rootpassword
-    ports:
-      - "3306:3306"
-    volumes:
-      - db-data:/var/lib/mysql
-      - ./database/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+#    depends_on:
+#      mysql:
+#        condition: service_healthy # Chỉ khởi động app khi mysql đã sẵn sàng
+#  mysql:
+#    image: mysql:8.0
+#    container_name: viecinema-mysql
+#    restart: always
+#    environment:
+#      MYSQL_DATABASE: movie_booking_system
+#      MYSQL_USER: user
+#      MYSQL_PASSWORD: password
+#      MYSQL_ROOT_PASSWORD: rootpassword
+#    ports:
+#      - "3306:3306"
+#    volumes:
+#      - db-data:/var/lib/mysql
+#      - ./database/init:/docker-entrypoint-initdb.d:ro
+#    healthcheck:
+#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
 
-volumes:
-  db-data:
+#volumes:
+#  db-data:
