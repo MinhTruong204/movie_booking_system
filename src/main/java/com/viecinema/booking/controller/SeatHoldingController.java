@@ -8,6 +8,12 @@ import com.viecinema.booking.dto.request.ReleaseSeatRequest;
 import com.viecinema.booking.dto.response.HoldSeatsResponse;
 import com.viecinema.booking.service.SeatHoldingService;
 import com.viecinema.common.util.SecurityUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +32,23 @@ import static com.viecinema.common.constant.ApiMessage.RELEASE_SEAT;
 @RequestMapping(BOOKING_PATH)
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Bookings", description = "Create and manage ticket bookings")
 public class SeatHoldingController {
 
     private final SeatHoldingService seatHoldingService;
     private final SecurityUtils securityUtils;
 
-
+    @Operation(
+            summary = "Hold seats temporarily",
+            description = "Temporarily reserves the specified seats for the authenticated user for a limited time (e.g. 10 minutes). Must be done before creating a booking.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Seats held successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or seats already taken"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @PostMapping(HOLD_SEATS_PATH)
     public ResponseEntity<ApiResponse<HoldSeatsResponse>> holdSeats(
             @Valid @RequestBody HoldSeatsRequest request,
@@ -45,6 +62,15 @@ public class SeatHoldingController {
                 ApiResponse.success(HOLD_SEAT, response));
     }
 
+    @Operation(
+            summary = "Release all held seats for current user",
+            description = "Releases all seats currently held by the authenticated user across all showtimes.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Seats released successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @PostMapping(RELEASE_SEATS_PATH)
     public ResponseEntity<ApiResponse<Void>> releaseUserSeats(
             @CurrentUser UserPrincipal userPrincipal) {
@@ -55,6 +81,17 @@ public class SeatHoldingController {
                 ApiResponse.successWithoutData(RELEASE_SEAT));
     }
 
+    @Operation(
+            summary = "Release a specific held seat",
+            description = "Releases a single held seat. Admin users may force-release any seat regardless of who holds it. Regular users can only release their own seats.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Seat released successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not authorized to release this seat")
+    })
     @PostMapping(RELEASE_SEAT_PATH)
     public ResponseEntity<ApiResponse<Void>> releaseSeat(
             @Valid @RequestBody ReleaseSeatRequest request,
@@ -70,3 +107,5 @@ public class SeatHoldingController {
                 ApiResponse.successWithoutData(RELEASE_SEAT));
     }
 }
+
+

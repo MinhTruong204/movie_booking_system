@@ -1,3 +1,11 @@
+# Copy this file to `application.yml` and fill in secret values before running.
+# This example is safe to commit; it does NOT contain real secrets.
+# Replace placeholders (values in ALL_CAPS) with real values or provide them via environment variables.
+#
+# Example usage:
+#   cp src/main/resources/application.yml.example src/main/resources/application.yml
+#   Edit the new file to set real secrets/credentials.
+
 # language: yaml
 # General configuration for all environments
 spring:
@@ -45,7 +53,8 @@ springdoc:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:6yJp4vC1S3f7mQ9hF2uX8LgR0kWzB5Pd7aTnV4YqH0cJr9KxNw}
+    # Replace with a secure secret (do NOT commit real secret to VCS)
+    secret: ${JWT_SECRET:REPLACE_WITH_SECURE_JWT_SECRET}
     expiration: ${JWT_EXPIRATION:7d}
 
 app:
@@ -58,8 +67,8 @@ app:
 
 vnpay:
   # Information from VNPay Sandbox
-  tmn-code: HLBPLRMV # e.g.: DEMOV01P
-  hash-secret: PM6GQJ9RQ8FYXHTC55O1NR1TW0MR361A  # e.g.: LMREXAMPLEKEY123456789
+  tmn-code: VNPAY_TMN_PLACEHOLDER # e.g.: DEMOV01P
+  hash-secret: VNPAY_HASH_PLACEHOLDER  # e.g.: LMREXAMPLEKEY123456789
   api-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
   return-url: ${app.base-url}/api/payments/vnpay/callback  # URL to receive results
   ipn-url: ${app.base-url}/api/payments/vnpay/ipn  # URL to receive IPN (Instant Payment Notification)
@@ -81,8 +90,8 @@ spring:
       on-profile: dev
   datasource:
     url: "jdbc:mysql://localhost:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    username: root
-    password: root
+    username: DB_USER_PLACEHOLDER
+    password: DB_PASSWORD_PLACEHOLDER
     driver-class-name: "com.mysql.cj.jdbc.Driver"
 
 ---
@@ -96,3 +105,4 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # Safer for "production-like" environments
+

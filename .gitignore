@@ -34,5 +34,7 @@ build/
 /document/
 /skipfeuture.txt
 /logs/
-/document/
 /ApiDescription.txt
+
+# Ignore local application config containing secrets
+/src/main/resources/application.yml
