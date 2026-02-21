@@ -37,6 +37,7 @@ public class MovieDetail {
     private String status;
     private String posterUrl;
     private String trailerUrl;
+    private String bannerUrl;
     private List<GenreInfo> genres;
     private List<DirectorDto> directors;
     private List<ActorInfo> actors;

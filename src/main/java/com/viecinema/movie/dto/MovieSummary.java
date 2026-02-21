@@ -29,6 +29,7 @@ public class MovieSummary {
     private String status;
     private String posterUrl;
     private String trailerUrl;
+    private String bannerUrl;
     private List<GenreInfo> genres;
 
     //    For now showing movie

@@ -59,6 +59,9 @@ public class Movie extends DeletableEntity {
     @Column(name = "trailer_url")
     private String trailerUrl;
 
+    @Column(name = "banner_url")
+    private String bannerUrl;
+
     // Relationships
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
