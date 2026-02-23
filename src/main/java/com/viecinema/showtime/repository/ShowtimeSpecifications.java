@@ -3,6 +3,7 @@ package com.viecinema.showtime.repository;
 import com.viecinema.showtime.entity.Showtime;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ShowtimeSpecifications {
@@ -21,9 +22,13 @@ public class ShowtimeSpecifications {
                 -> roomId == null ? null : cb.equal(root.get("room").get("id"), roomId);
     }
 
-    public static Specification<Showtime> hasDate(LocalDateTime date) {
-        return (root, query, cb)
-                -> date == null ? null : cb.between(root.get("startTime"), date, date.plusDays(1));
+    public static Specification<Showtime> hasDate(LocalDate date) {
+        return (root, query, cb) -> {
+            if (date == null) return null;
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+            return cb.between(root.get("startTime"), startOfDay, endOfDay);
+        };
     }
 
     public static Specification<Showtime> hasCity(String city) {
