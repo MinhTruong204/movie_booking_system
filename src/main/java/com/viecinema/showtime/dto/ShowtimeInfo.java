@@ -14,6 +14,7 @@ public class ShowtimeInfo {
     private Integer movieId;
     private String movieTitle;
     private String posterUrl;
+    private String bannerUrl;
     private Integer duration;
     private String ageRating;
     private String cinemaName;

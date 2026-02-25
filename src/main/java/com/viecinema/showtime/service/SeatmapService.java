@@ -118,6 +118,7 @@ public class SeatmapService {
                 .movieId(movie.getMovieId())
                 .movieTitle(movie.getTitle())
                 .posterUrl(movie.getPosterUrl())
+                .bannerUrl(movie.getBannerUrl())
                 .duration(movie.getDuration())
                 .ageRating(movie.getAgeRating())
                 .startTime(showtime.getStartTime())
