@@ -1,6 +1,5 @@
 package com.viecinema.showtime.repository;
 
-import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.showtime.dto.projection.SeatStatusCount;
 import com.viecinema.showtime.entity.SeatStatus;
@@ -11,9 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -43,8 +40,11 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
             @Param("seatIds") List<Integer> seatIds);
 
     @Modifying
-    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, " +
-            "ss.heldUntil = NULL WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
+    @Query("UPDATE SeatStatus ss " +
+            "SET ss.status = 'available', " +
+            "ss.heldByUser.id = NULL, " +
+            "ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
     int releaseUserSeats(@Param("userId") Integer userId);
 
     @Modifying
@@ -60,11 +60,13 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
     int forceReleaseSeat(@Param("showtimeId") Integer showtimeId,
                          @Param("seatId") Integer seatId);
 
-    List<SeatStatus> findAllByStatusAndCreatedAtBefore(SeatStatusType status, LocalDateTime createdAtBefore);
-
     @Modifying(clearAutomatically = true) // Reset cache after update
-    @Query("update SeatStatus s set s.status = :newStatus where s.status = :oldStatus and s.createdAt < :expirationTime")
+    @Query("UPDATE SeatStatus s " +
+            "SET s.status = :newStatus, " +
+            "s.heldByUser = NULL, " +
+            "s.heldUntil = NULL, " +
+            "s.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE s.status = :oldStatus AND s.heldUntil < CURRENT_TIMESTAMP")
     int updateSeatStatusForExpiredHolding(@Param("newStatus") SeatStatusType newStatus,
-                                          @Param("oldStatus") SeatStatusType oldStatus,
-                                          @Param("expirationTime") LocalDateTime expirationTime);
+                                          @Param("oldStatus") SeatStatusType oldStatus);
 }

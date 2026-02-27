@@ -1,10 +1,8 @@
 package com.viecinema.booking.service;
 
-import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.repository.BookingRepository;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.SeatStatusType;
-import com.viecinema.showtime.entity.SeatStatus;
 import com.viecinema.showtime.repository.SeatStatusRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-import static com.viecinema.common.constant.PolicyConstants.*;
+import static com.viecinema.common.constant.PolicyConstants.BOOKING_EXPIRATION_MINUTES;
+import static com.viecinema.common.constant.PolicyConstants.SCHEDULER_DELAY_MS;
 
 @Slf4j
 @Service
@@ -41,11 +39,9 @@ public class BookingCleanupService {
     @Scheduled(fixedDelay = SCHEDULER_DELAY_MS)
     @Transactional
     public void releaseHeldSeats() {
-        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(SEAT_HOLDING_MINUTES);
         int updatedRows = seatStatusRepository.updateSeatStatusForExpiredHolding(
                 SeatStatusType.AVAILABLE,
-                SeatStatusType.HELD,
-                expirationTime);
+                SeatStatusType.HELD);
         log.info("Found {} expired holding seats. Processing release...", updatedRows);
     }
 }
