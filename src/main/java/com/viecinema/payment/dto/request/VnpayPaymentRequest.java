@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 public class VnpayPaymentRequest {
     private Integer bookingId;
     private BigDecimal amount;
-    private String orderInfo;  // Mô tả đơn hàng
-    private String bankCode;   // Mã ngân hàng (optional, để user chọn)
-    private String locale;     // vn hoặc en
+    private String orderInfo;
+    private String bankCode;
+    private String locale;
 }

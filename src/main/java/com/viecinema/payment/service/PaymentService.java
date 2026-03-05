@@ -23,13 +23,6 @@ public class PaymentService {
         this.vnpayService = vnpayService;
     }
 
-    /**
-     * Lấy thông tin thanh toán từ booking ID
-     *
-     * @param bookingId   ID của booking
-     * @param httpRequest HttpServletRequest để tạo payment URL nếu cần
-     * @return PaymentInfoResponse thông tin thanh toán
-     */
     @Transactional(readOnly = true)
     public PaymentInfoResponse getPaymentByBookingId(Integer bookingId, HttpServletRequest httpRequest) {
         log.info("Getting payment info for booking ID: {}", bookingId);
@@ -39,14 +32,13 @@ public class PaymentService {
 
         String paymentUrl = null;
 
-        // Nếu payment đang ở trạng thái PENDING và method là vnpay, tạo lại payment URL từ payment hiện tại
+        // Only create a URL if the payment is in the PENDING state and the payment method is vnpay.
         if (PaymentStatus.PENDING.equals(payment.getStatus()) && "vnpay".equalsIgnoreCase(payment.getMethod())) {
             try {
-                // Sử dụng phương thức không transactional để build URL từ payment đã tồn tại
+                // Use a non-transactional method to build the URL from an existing payment.
                 paymentUrl = vnpayService.buildPaymentUrlForExistingPayment(payment, httpRequest);
             } catch (Exception e) {
                 log.error("Error creating payment URL for booking {}: {}", bookingId, e.getMessage());
-                // Không throw exception, chỉ log lỗi và trả về null cho paymentUrl
             }
         }
 

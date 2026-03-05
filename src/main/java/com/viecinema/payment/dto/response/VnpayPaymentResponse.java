@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class VnpayPaymentResponse {
     private String code;           // 00 = success
     private String message;
-    private String paymentUrl;     // URL redirect đến VNPay
+    private String paymentUrl;     // URL redirect to VNPay
 }

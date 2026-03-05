@@ -35,9 +35,6 @@ public class VnpayService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
 
-    /**
-     * Tạo URL thanh toán VNPay
-     */
     @Transactional
     public VnpayPaymentResponse createPayment(
             Integer bookingId,
@@ -54,14 +51,14 @@ public class VnpayService {
             throw new SpecificBusinessException("Booking đã được thanh toán hoặc đã hủy");
         }
 
-        // Kiểm tra booking có hết hạn chưa (10 phút)
+        // 1.Check if the booking has expired (10 minutes)
         if (booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now())) {
             booking.setStatus(BookingStatus.CANCELLED);
             bookingRepository.save(booking);
             throw new SpecificBusinessException("Booking đã hết hạn thanh toán");
         }
 
-        // 2. Tạo payment record
+        // 2. Create payment record with PENDING status
         String txnRef = VnpayUtil.generateTxnRef();
 
         Payment payment = Payment.builder()
@@ -81,13 +78,13 @@ public class VnpayService {
         vnpParams.put("vnp_Command", vnpayConfig.getCommand());
         vnpParams.put("vnp_TmnCode", vnpayConfig.getTmnCode());
 
-        // Amount phải nhân 100 (VNPay yêu cầu đơn vị là xu, không có dấu phẩy)
+        // Amount in VND, multiplied by 100 (e.g. 100.50 VND -> 10050)
         long amount = booking.getFinalAmount().multiply(BigDecimal.valueOf(100)).longValue();
         vnpParams.put("vnp_Amount", String.valueOf(amount));
 
         vnpParams.put("vnp_CurrCode", vnpayConfig.getCurrencyCode());
 
-        // Bank code (nếu có)
+        // Bank code (optional)
         if (request.getBankCode() != null && !request.getBankCode().isEmpty()) {
             vnpParams.put("vnp_BankCode", request.getBankCode());
         }
@@ -121,7 +118,7 @@ public class VnpayService {
         calendar.add(Calendar.MINUTE, vnpayConfig.getTimeout());
         vnpParams.put("vnp_ExpireDate", VnpayUtil.formatDateTime(calendar.getTime()));
 
-        // 4. Tạo secure hash
+        // 4. Calculate secure hash
         String hashData = VnpayUtil.hashAllFields(vnpParams);
         String secureHash = VnpayUtil.hmacSHA512(vnpayConfig.getHashSecret(), hashData);
         vnpParams.put("vnp_SecureHash", secureHash);
@@ -139,10 +136,6 @@ public class VnpayService {
                 .build();
     }
 
-    /**
-     * Tạo payment URL từ một Payment đã tồn tại (không lưu mới)
-     * Không đánh dấu transactional để tránh ghi vào DB khi đang trong transaction read-only
-     */
     public String buildPaymentUrlForExistingPayment(com.viecinema.payment.entity.Payment payment, jakarta.servlet.http.HttpServletRequest httpRequest) {
         log.info("Building VNPay payment URL for existing payment: {}", payment.getPaymentId());
 
@@ -193,9 +186,6 @@ public class VnpayService {
         return vnpayConfig.getApiUrl() + "?" + queryString2;
     }
 
-    /**
-     * Xử lý callback từ VNPay (Return URL)
-     */
     @Transactional
     public VnpayCallbackResponse handleCallback(Map<String, String> params) {
         log.info("Received VNPay callback: {}", params);
@@ -216,7 +206,7 @@ public class VnpayService {
                     .build();
         }
 
-        // 2. Lấy thông tin từ params
+        // 2. Extract parameters
         String txnRef = params.get("vnp_TxnRef");
         String responseCode = params.get("vnp_ResponseCode");
         String transactionNo = params.get("vnp_TransactionNo");
@@ -225,10 +215,10 @@ public class VnpayService {
         String cardType = params.get("vnp_CardType");
         String payDate = params.get("vnp_PayDate");
 
-        // 3. Tìm payment
+        // 3. Find payment by transaction ID
         Payment payment = paymentRepository.findByTransactionId(txnRef);
 
-        // Kiểm tra xem đã xử lý chưa (tránh duplicate)
+        // Check if payment exists
         if (!PaymentStatus.PENDING.equals(payment.getStatus())) {
             log.warn("Payment {} already processed with status: {}", txnRef, payment.getStatus());
             return VnpayCallbackResponse.builder()
@@ -238,11 +228,11 @@ public class VnpayService {
                     .build();
         }
 
-        // 4. Xử lý kết quả
+        // 4. Handle payment result
         Booking booking = payment.getBooking();
 
         if ("00".equals(responseCode)) {
-            // Thanh toán thành công
+            // Payment successful
             payment.setStatus(PaymentStatus.SUCCESS);
             // include details in gateway response
             payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
@@ -250,7 +240,7 @@ public class VnpayService {
 
             booking.setStatus(BookingStatus.PAID);
 
-            // Tạo QR code cho vé
+            // Generate QR code data for the booking
             String qrData = generateQRCodeData(booking);
             booking.setQrCodeData(qrData);
 
@@ -267,7 +257,7 @@ public class VnpayService {
                     .build();
 
         } else {
-            // Thanh toán thất bại
+            // Payment failed
             payment.setStatus(PaymentStatus.FAILED);
             payment.setGatewayResponse(String.format("response=%s, bankCode=%s, bankTranNo=%s, cardType=%s, payDate=%s",
                     params, bankCode, bankTranNo, cardType, payDate));
@@ -313,14 +303,14 @@ public class VnpayService {
 
             Payment payment = paymentRepository.findByTransactionId(txnRef);
 
-            // Kiểm tra order đã được confirm chưa
+            // Check if the order has been confirmed.
             if (!PaymentStatus.PENDING.equals(payment.getStatus())) {
                 response.put("RspCode", "02");
                 response.put("Message", "Order already confirmed");
                 return response;
             }
 
-            // Kiểm tra số tiền
+            // Validate amount
             long vnpAmount = Long.parseLong(params.get("vnp_Amount"));
             long orderAmount = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
 
@@ -330,7 +320,7 @@ public class VnpayService {
                 return response;
             }
 
-            // Xử lý kết quả
+            // Update payment and booking status based on response code
             if ("00".equals(responseCode)) {
                 payment.setStatus(PaymentStatus.SUCCESS);
                 payment.getBooking().setStatus(BookingStatus.PAID);
@@ -356,18 +346,6 @@ public class VnpayService {
         return response;
     }
 
-    /**
-     * Query transaction status từ VNPay
-     */
-    public Map<String, String> queryTransaction(String txnRef, String transactionDate) {
-        // Log parameters to avoid unused-parameter warnings and help debugging
-        log.info("queryTransaction called with txnRef={} transactionDate={}", txnRef, transactionDate);
-
-        // TODO: Implement query API của VNPay nếu cần
-        // Cần call API:  https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
     // ========== HELPER METHODS ==========
 
     private String generateQRCodeData(Booking booking) {
@@ -382,20 +360,20 @@ public class VnpayService {
 
     private String getResponseMessage(String responseCode) {
         Map<String, String> messages = new HashMap<>();
-        messages.put("00", "Giao dịch thành công");
-        messages.put("07", "Trừ tiền thành công.  Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường)");
-        messages.put("09", "Giao dịch không thành công do:  Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng");
-        messages.put("10", "Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần");
-        messages.put("11", "Giao dịch không thành công do:  Đã hết hạn chờ thanh toán");
-        messages.put("12", "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa");
-        messages.put("13", "Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP)");
-        messages.put("24", "Giao dịch không thành công do: Khách hàng hủy giao dịch");
-        messages.put("51", "Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch");
-        messages.put("65", "Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày");
-        messages.put("75", "Ngân hàng thanh toán đang bảo trì");
-        messages.put("79", "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định");
-        messages.put("99", "Các lỗi khác");
+        messages.put("00", "Payment successful");
+        messages.put("07", "Deduction successful. Transaction is suspicious (related to fraud, unusual transaction)");
+        messages.put("09", "Payment unsuccessful due to: The customer's card/account has not registered for Internet Banking services at the bank.");
+        messages.put("10", "Payment unsuccessful due to: Customers who provide incorrect card/account information verification more than 3 times.");
+        messages.put("11", "Payment unsuccessful due to: The payment deadline has expired.");
+        messages.put("12", "Payment unsuccessful due to: The customer's card/account has been locked.");
+        messages.put("13", "Payment unsuccessful due to: You have entered the wrong transaction authentication password (OTP).");
+        messages.put("24", "Payment unsuccessful due to: Customer cancels transaction.");
+        messages.put("51", "Payment unsuccessful due to: The customer's card/account has insufficient funds.");
+        messages.put("65", "Payment unsuccessful due to: The customer's card/account has reached the limit of allowed transactions.");
+        messages.put("75", "The clearing bank is undergoing maintenance.");
+        messages.put("79", "Payment unsuccessful due to: Customer enters incorrect payment password too many times.");
+        messages.put("99", "Payment unsuccessful due to: Other errors.");
 
-        return messages.getOrDefault(responseCode, "Lỗi không xác định");
+        return messages.getOrDefault(responseCode, "Unknown response code");
     }
 }

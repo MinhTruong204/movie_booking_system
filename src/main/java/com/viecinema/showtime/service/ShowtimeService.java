@@ -52,7 +52,7 @@ public class ShowtimeService {
     public List<ShowtimeDetailResponse> findAllShowtime(ShowtimeFilterRequest request) {
         log.info("Finding showtimes with request: {}", request);
 
-        // Query from repository
+        // Query from a repository
         Specification<Showtime> spec = Specification
                 .where(ShowtimeSpecifications.hasMovieId(request.getMovieId()))
                 .and(ShowtimeSpecifications.hasCinemaId(request.getCinemaId()))
@@ -95,10 +95,9 @@ public class ShowtimeService {
                 .collect(Collectors.groupingBy(st -> st.getCinema().getCinemaId()));
 
         // Convert to DTO
-        List<ShowtimeGroupByCinemaDto> result = groupedMap.entrySet().stream()
-                .map(entry -> {
-                    List<ShowtimeDetailResponse> showtimes = entry.getValue();
-                    ShowtimeDetailResponse first = showtimes.get(0);
+        List<ShowtimeGroupByCinemaDto> result = groupedMap.values().stream()
+                .map(showtimes -> {
+                    ShowtimeDetailResponse first = showtimes.getFirst();
 
                     ShowtimeGroupByCinemaDto dto = ShowtimeGroupByCinemaDto.builder()
                             .cinemaId(first.getCinema().getCinemaId())
@@ -158,7 +157,6 @@ public class ShowtimeService {
         }
 
         Map<String, BigDecimal> pricesBySeatType = new HashMap<>();
-        Map<String, Integer> availableSeatsByType = new HashMap<>();
         BigDecimal minPrice = null;
         BigDecimal maxPrice = null;
 
@@ -168,7 +166,6 @@ public class ShowtimeService {
             Integer availableCount = data.getAvailableCount();
 
             pricesBySeatType.put(seatTypeName, price.setScale(0, RoundingMode.HALF_UP));
-            availableSeatsByType.put(seatTypeName, availableCount);
 
             if (minPrice == null || price.compareTo(minPrice) < 0) {
                 minPrice = price;

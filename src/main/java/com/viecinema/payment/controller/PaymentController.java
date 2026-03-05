@@ -48,7 +48,7 @@ public class PaymentController {
     private String frontendUrl;
 
     /**
-     * Lấy thông tin thanh toán từ booking ID
+     * Get payment info by booking ID. Only the booking owner can access this endpoint.
      */
     @Operation(
             summary = "Get payment info by booking ID",
@@ -76,7 +76,7 @@ public class PaymentController {
     }
 
     /**
-     * Tạo URL thanh toán VNPay
+     * Create VNPay payment URL for a booking.
      */
     @Operation(
             summary = "Create VNPay payment URL",
@@ -112,8 +112,8 @@ public class PaymentController {
     }
 
     /**
-     * Callback từ VNPay (Return URL)
-     * VNPay sẽ redirect user về đây sau khi thanh toán
+     * Callback from VNPay (Return URL)
+     * VNPay redirects the user to this endpoint after payment.
      */
     @Operation(
             summary = "VNPay return URL (callback)",
@@ -149,8 +149,8 @@ public class PaymentController {
     }
 
     /**
-     * IPN (Instant Payment Notification) từ VNPay
-     * VNPay gọi API này từ server, không qua browser
+     * IPN (Instant Payment Notification) endpoint for VNPay to confirm payment status asynchronously.
+     * VNPay calls this endpoint server-to-server to notify about payment results.
      */
     @Operation(
             summary = "VNPay IPN handler",

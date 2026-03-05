@@ -19,10 +19,10 @@ public class PaymentInfoResponse {
     private Integer bookingId;
     private String bookingCode;
     private BigDecimal amount;
-    private String method; // vnpay, momo, zalopay
+    private String method;
     private PaymentStatus status;
     private String transactionId;
-    private String paymentUrl; // URL để thanh toán (nếu status là PENDING)
+    private String paymentUrl;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime transactionTime;
