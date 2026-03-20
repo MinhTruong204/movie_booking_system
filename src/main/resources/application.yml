@@ -1,18 +1,17 @@
-# language: yaml
 # General configuration for all environments
 spring:
   profiles:
-    active: dev # Default profile when running locally
+    active: dev
   jpa:
     hibernate:
-      ddl-auto: update # Will be overridden in docker environment
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         format_sql: true
   jackson:
     serialization:
-      write-dates-as-timestamps: true
+      write-dates-as-timestamps: false
 
 server:
   port: 8080
@@ -45,21 +44,19 @@ springdoc:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:6yJp4vC1S3f7mQ9hF2uX8LgR0kWzB5Pd7aTnV4YqH0cJr9KxNw}
-    expiration: ${JWT_EXPIRATION:7d}
+    access-token-secret: ${JWT_ACCESS_SECRET:6yJp4vC1S3f7mQ9hF2uX8LgR0kWzB5Pd7aTnV4YqH0cJr9KxNw}
+    refresh-token-secret: ${JWT_REFRESH_SECRET:DKdy/eACbmk2vTPGfnIPmYGWiDrMVRT2BGhUgIddRrA=}
+    access-token-expiration: ${JWT_ACCESS_EXPIRATION:1h}
+    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:7d}
 
 app:
-  name: viecinema
-  timezone: UTC
-  development:
-    ignore-showtime-time-filter: false
   base-url: http://localhost:8080  # Dev
   frontend-url: http://localhost:3000  # Frontend URL for redirects
 
 vnpay:
   # Information from VNPay Sandbox
-  tmn-code: HLBPLRMV # e.g.: DEMOV01P
-  hash-secret: PM6GQJ9RQ8FYXHTC55O1NR1TW0MR361A  # e.g.: LMREXAMPLEKEY123456789
+  tmn-code: HLBPLRMV
+  hash-secret: PM6GQJ9RQ8FYXHTC55O1NR1TW0MR361A
   api-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
   return-url: ${app.base-url}/api/payments/vnpay/callback  # URL to receive results
   ipn-url: ${app.base-url}/api/payments/vnpay/ipn  # URL to receive IPN (Instant Payment Notification)
@@ -72,27 +69,3 @@ vnpay:
   command: pay
   currency-code: VND
   locale: vn  # vn or en
-
----
-# Configuration for Development environment (dev)
-spring:
-  config:
-    activate:
-      on-profile: dev
-  datasource:
-    url: "jdbc:mysql://localhost:3306/movie_booking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    username: root
-    password: root
-    driver-class-name: "com.mysql.cj.jdbc.Driver"
-
----
-# Configuration for Docker environment
-spring:
-  config:
-    activate:
-      on-profile: docker
-  # In docker environment, datasource values will be provided entirely
-  # by environment variables in docker-compose.yml; no need to define them here.
-  jpa:
-    hibernate:
-      ddl-auto: validate # Safer for "production-like" environments

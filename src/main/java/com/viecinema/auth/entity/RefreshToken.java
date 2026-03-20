@@ -50,10 +50,17 @@ public class RefreshToken {
     @NotNull
     @ColumnDefault("0")
     @Column(name = "revoked", nullable = false)
+    @Builder.Default
     private Boolean revoked = false;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "last_used_at")
+    @Builder.Default
+    private Instant lastUsedAt = Instant.now();
+
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
+    @Builder.Default
     private Instant createdAt = Instant.now();
 
 }

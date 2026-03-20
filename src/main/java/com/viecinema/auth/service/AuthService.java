@@ -10,31 +10,30 @@ import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
 import com.viecinema.common.constant.ApiMessage;
-import com.viecinema.common.exception.*;
+import com.viecinema.common.enums.TokenType;
+import com.viecinema.common.exception.BadRequestException;
+import com.viecinema.common.exception.BusinessException;
+import com.viecinema.common.exception.DuplicateResourceException;
+import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.common.validation.validator.UserValidator;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_DISABLE_ERROR;
 import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_LOCKED_ERROR;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Builder
 public class AuthService {
 
@@ -48,6 +47,7 @@ public class AuthService {
     private final UserDetailsServiceImpl userDetailsServiceIml;
     private final UserMapper userMapper;
     private final UserValidator userValidator;
+    private final RefreshTokenService refreshTokenService;
 
     //    Register
     @Transactional
@@ -59,8 +59,7 @@ public class AuthService {
             user.setEmailVerified(true);
             userRepository.save(user);
 
-            RegisterResponse userResponse = userMapper.toRegisterResponse(user);
-            return userResponse;
+            return userMapper.toRegisterResponse(user);
         } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ApiMessage.FIELD_ALREADY_EXISTS, e.getMessage());
         }
@@ -68,29 +67,30 @@ public class AuthService {
 
     //  Login
     @Transactional
-    public LoginResponse login(LoginRequest loginRequest) {
+    public LoginResponse login(LoginRequest loginRequest, String ipAddress, String userAgent) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
 
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
+
         userValidator.validateUser(user);
 
         try {
-            // Get authentication by email and password
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
+            // Check email and password
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
             user.setLastLoginAt(LocalDateTime.now());
             userRepository.save(user);
 
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String accessToken = jwtService.generateAccessToken(userDetails, null);
+            String accessToken = jwtService.generateAccessToken(email,null);
+            String refreshToken = refreshTokenService.createAndSaveRefreshToken(user.getId(),user.getEmail(), ipAddress, userAgent);
 
             return LoginResponse.builder()
                     .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .fullName(user.getFullName())
-                    .expiresIn(jwtService.extractExpiration(accessToken).getTime())
+                    .expiresIn(jwtService.extractExpiration(accessToken,TokenType.ACCESS).getTime())
                     .build();
         } catch (LockedException e) {
             throw new BadRequestException(ACCOUNT_LOCKED_ERROR);

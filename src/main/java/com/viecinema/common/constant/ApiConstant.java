@@ -8,7 +8,6 @@ public final class ApiConstant {
     public static final String GENRE_PATH = "/api/genres";
     public static final String BOOKING_PATH = "/api/bookings";
     public static final String COMBO_PATH = "/api/combos";
-    public static final String PROMOTION_PATH = "/api/promotions";
     public static final String PAYMENT_PATH = "/api/payments";
     public static final String VNPAY_IPN_PATH = "/vnpay/ipn";
     public static final String USER_PATH = "/api/users";
@@ -33,6 +32,6 @@ public final class ApiConstant {
     public static final String USER_PROFILE_PATH = "/profile";
     public static final String BOOKINGS_USER_PATH = "/my-bookings";
     public static final String PAYMENT_DETAIL_PATH = "/booking/{bookingId}";
-
+    public static final String REFRESH_TOKEN_PATH = "/refresh-token";
 
 }

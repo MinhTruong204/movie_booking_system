@@ -1,37 +1,37 @@
 package com.viecinema.auth.service;
 
-import com.viecinema.common.constant.SecurityConstant;
+import com.viecinema.common.enums.TokenType;
+import com.viecinema.config.AuthConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${security.jwt.secret}")
-    private String secretKey;
-
-    @Value("${security.jwt.expiration}")
-    private Duration accessTokenExpiration;
+    private final AuthConfig authConfig;
 
     //  Create a secret key to encode using sha
-    private SecretKey getSigninKey() {
+    private SecretKey getSigninKey(TokenType tokenType) {
         // Convert secret key to byte
-        byte[] secretKeyByte = secretKey.getBytes();
+        byte[] secretKeyByte = (tokenType == TokenType.ACCESS)
+                ? authConfig.getAccessTokenSecret().getBytes()
+                : authConfig.getRefreshTokenSecret().getBytes();
         return Keys.hmacShaKeyFor(secretKeyByte);
     }
 
-    public String generateAccessToken(UserDetails userDetails, Map<String, Object> extraClaims) {
+    public String generateAccessToken(String email, Map<String, Object> extraClaims) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "access");
         if (extraClaims != null)
@@ -39,59 +39,60 @@ public class JwtService {
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(userDetails.getUsername())
+                .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration.toMillis()))
-                .signWith(getSigninKey())
+                .expiration(new Date(System.currentTimeMillis() + authConfig.getAccessTokenExpire().toMillis()))
+                .signWith(getSigninKey(TokenType.ACCESS))
                 .compact();
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
+    public String generateRefreshToken(String email, Map<String, Object> extraClaims) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+        if (extraClaims != null)
+            claims.putAll(extraClaims);
         return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claim("type", "refresh")
+                .subject(email)
+                .claims(claims)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + SecurityConstant.REFRESH_TOKEN_EXPIRATION))
-                .signWith(getSigninKey())
+                .expiration(new Date(System.currentTimeMillis() + authConfig.getRefreshTokenExpire().toMillis()))
+                .signWith(getSigninKey(TokenType.REFRESH))
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public String extractUsername(String token, TokenType tokenType) {
+        return extractClaim(token,tokenType, Claims::getSubject);
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public Date extractExpiration(String token, TokenType tokenType) {
+        return extractClaim(token,tokenType, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
+    public <T> T extractClaim(String token, TokenType tokenType, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token,tokenType);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token, TokenType tokenType) {
         return Jwts.parser()
-                .verifyWith(getSigninKey())
+                .verifyWith(getSigninKey(tokenType))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
 
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    private Boolean isTokenExpired(String token, TokenType tokenType) {
+        return extractExpiration(token,tokenType).before(new Date());
     }
 
-    private Boolean isAccessToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals("access");
+    public Boolean validateToken(String token, TokenType tokenType) {
+        return  !isTokenExpired(token,tokenType);
     }
 
-    private Boolean isRefreshToken(String token) {
-        return extractClaim(token, claims -> claims.get("type")).equals("refresh");
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public long getExpirationInSeconds(String token, TokenType tokenType) {
+        Date expiration = extractClaim(token,tokenType, Claims::getExpiration);
+        long diff = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(0, diff / 1000);
     }
 
 }
