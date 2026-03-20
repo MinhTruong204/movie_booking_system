@@ -1,5 +1,0 @@
-# Configuration for Docker environment
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: validate
