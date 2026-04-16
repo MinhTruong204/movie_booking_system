@@ -1,5 +1,6 @@
 package com.viecinema.movie.dto.request;
 
+import com.viecinema.common.enums.MovieLanguage;
 import com.viecinema.common.enums.MovieStatus;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -42,7 +43,7 @@ public class MovieFilterRequest {
     private String sort = "releaseDate,desc";
 
     private String keyword;
-    private String language;
+    private MovieLanguage language;
     private String ageRating;
     private String city;
 

@@ -32,7 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 /document/
-/skipfeuture.txt
 /logs/
 /ApiDescription.txt
 
@@ -40,3 +39,4 @@ build/
 /src/main/resources/application.yml
 /src/main/resources/application-dev.yml
 /src/main/resources/application-docker.yml
+/skipfeature.txt

@@ -87,6 +87,7 @@ public class MovieService {
                 .where(MovieSpecification.hasStatus(status))
                 .and(MovieSpecification.isNotDeleted())
                 .and(MovieSpecification.fetchGenres())
+                .and(MovieSpecification.hasKeyWords(request.getKeyword()))
                 .and(MovieSpecification.hasGenres(request.getGenreIds()));
     }
 

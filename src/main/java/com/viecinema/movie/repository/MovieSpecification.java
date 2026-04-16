@@ -20,6 +20,7 @@ public class MovieSpecification {
         };
     }
 
+    @SuppressWarnings("unchecked")
     public static Specification<Movie> hasGenres(List<Integer> genreIds) {
         return (root, query, criteriaBuilder) -> {
             if (genreIds == null || genreIds.isEmpty()) {
@@ -27,7 +28,7 @@ public class MovieSpecification {
             }
 
             Class<?> resultType = query.getResultType();
-            boolean isCountQuery = (Long.class.equals(resultType) || long.class.equals(resultType));
+            boolean isCountQuery = Long.class.equals(resultType) || long.class.equals(resultType);
 
             Join<Movie, Genre> genreJoin;
 
@@ -57,6 +58,24 @@ public class MovieSpecification {
                 query.distinct(true);
             }
             return criteriaBuilder.conjunction();
+        };
+    }
+
+    public static Specification<Movie> hasKeyWords(String keyword) {
+        return  (root, query, criteriaBuilder) -> {
+            if(keyword == null || keyword.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), "%" + keyword.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Movie> hasLanguage(String keyword) {
+        return  (root, query, criteriaBuilder) -> {
+            if(keyword == null || keyword.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), "%" + keyword.toLowerCase() + "%");
         };
     }
 }
