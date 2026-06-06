@@ -9,16 +9,13 @@ import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
-import com.viecinema.common.constant.ApiMessage;
 import com.viecinema.common.enums.TokenType;
 import com.viecinema.common.exception.BadRequestException;
-import com.viecinema.common.exception.BusinessException;
 import com.viecinema.common.exception.DuplicateResourceException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.common.validation.validator.UserValidator;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -52,24 +49,20 @@ public class AuthService {
     //    Register
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        try {
-            validateUniqueConstraints(request);
-            User user = userMapper.registerRequestToUser(request);
-            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-            user.setEmailVerified(true);
-            userRepository.save(user);
+        validateUniqueConstraints(request);
+        User user = userMapper.registerRequestToUser(request);
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setEmailVerified(true);
+        userRepository.save(user);
 
-            return userMapper.toRegisterResponse(user);
-        } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(ApiMessage.FIELD_ALREADY_EXISTS, e.getMessage());
-        }
+        return userMapper.toRegisterResponse(user);
     }
 
     //  Login
     @Transactional
     public LoginResponse login(LoginRequest loginRequest, String ipAddress, String userAgent) {
-        String email = loginRequest.getEmail();
-        String password = loginRequest.getPassword();
+        String email = normalizeEmail(loginRequest.getEmail());
+        String password = normalizePhone(loginRequest.getPassword());
 
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
