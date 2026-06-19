@@ -74,7 +74,7 @@ public class MovieService {
     }
 
     @Cacheable(value = "movieDetails", key = "#movieId", unless = "#result == null")
-    public MovieDetail getMovieDetail(Integer movieId) {
+    public MovieDetail  getMovieDetail(Integer movieId) {
         log.info("Fetching movie detail for ID: {}", movieId);
 
         Movie movie = movieRepository.findByIdWithDetails(movieId)

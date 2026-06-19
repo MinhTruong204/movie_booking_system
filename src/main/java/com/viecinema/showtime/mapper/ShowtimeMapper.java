@@ -36,6 +36,7 @@ public interface ShowtimeMapper {
     CinemaInfo toCinemaInfo(Cinema cinema);
 
     @Mapping(source = "id", target = "roomId")
+    @Mapping(source = "name", target = "roomName")
     RoomInfo toRoomInfo(Room room);
 
     default List<String> mapGenres(Set<Genre> genres) {

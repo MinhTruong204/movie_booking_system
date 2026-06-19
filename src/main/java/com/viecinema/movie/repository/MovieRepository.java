@@ -16,7 +16,7 @@ public interface MovieRepository extends JpaRepository<Movie, Integer>, JpaSpeci
             SELECT DISTINCT m FROM Movie m
             LEFT JOIN FETCH m.genres
             LEFT JOIN FETCH m.actors
-            LEFT JOIN FETCH m. directors
+            LEFT JOIN FETCH m.directors
             WHERE m.movieId = :movieId
             AND m.deletedAt IS NULL
             """)

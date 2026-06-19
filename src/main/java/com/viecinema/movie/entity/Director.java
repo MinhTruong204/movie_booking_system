@@ -4,6 +4,7 @@ import com.viecinema.common.entity.DeletableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,10 +12,12 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "directors")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Director extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "director_id", nullable = false)
+    @EqualsAndHashCode.Include
     private Integer id;
 
     @Size(max = 100)

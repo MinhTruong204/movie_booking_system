@@ -163,7 +163,6 @@ public class ShowtimeService {
         for (PricingSummary data : pricingData) {
             String seatTypeName = data.getSeatTypeName();
             BigDecimal price = data.getFinalPrice();
-            Integer availableCount = data.getAvailableCount();
 
             pricesBySeatType.put(seatTypeName, price.setScale(0, RoundingMode.HALF_UP));
 
