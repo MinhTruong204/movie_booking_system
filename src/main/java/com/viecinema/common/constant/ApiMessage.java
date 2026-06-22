@@ -12,10 +12,21 @@ public enum ApiMessage {
     RESOURCE_CREATE("S004", "success", "%s created successfully"),
 
     // Update operations
+    RESOURCE_UPDATED("S005", "success", "%s updated successfully"),
     HOLD_SEAT("S014", "success", "Hold seats successfully"),
     RELEASE_SEAT("S015", "success", "Release seats successfully"),
 
     // Delete operations
+    RESOURCE_DELETED("S006", "success", "%s deleted successfully"),
+    RESOURCE_RESTORED("S007", "success", "%s restored successfully"),
+
+    // Admin operations
+    USER_BANNED("S008", "success", "User banned successfully"),
+    USER_UNBANNED("S009", "success", "User unbanned successfully"),
+    PASSWORD_RESET_SUCCESS("S010", "success", "Password reset successfully"),
+    ROLE_CHANGED("S011", "success", "Role changed successfully"),
+    IMPORT_COMPLETED("S012", "success", "Import completed: %s success, %s failed"),
+    SESSIONS_REVOKED("S013", "success", "Sessions revoked successfully"),
 
     // Retrieve operations
     RESOURCE_RETRIEVED("S033", "success", "%s retrieved successfully"),
@@ -25,6 +36,7 @@ public enum ApiMessage {
 
     // Authentication & Authorization (HTTP 401, 403)
     INVALID_CREDENTIALS("E401", "error", "Invalid username or password"),
+    FORBIDDEN("E403", "error", "You don't have permission to perform this action"),
 
     // Not Found (HTTP 404)
     RESOURCE_NOT_FOUND("E404", "error", "Resource not found"),

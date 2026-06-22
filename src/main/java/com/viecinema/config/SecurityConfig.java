@@ -21,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.viecinema.common.constant.ApiConstant.ADMIN_PATH;
 import static com.viecinema.common.constant.ApiConstant.BOOKING_PATH;
 
 @Configuration
@@ -42,6 +43,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml"
                         ).permitAll()
+                        .requestMatchers(ADMIN_PATH + "/**").hasRole("ADMIN")
                         .requestMatchers(BOOKING_PATH + "/**").authenticated()
                         .anyRequest().permitAll()
                 )

@@ -1,9 +1,8 @@
 -- ============================================================
--- CINEMA BOOKING SYSTEM - COMPLETE SCHEMA
--- Version: 3.0 Final
+-- Movie BOOKING SYSTEM 
+-- Version: 8
 -- Author: MinhTruong204
--- Date: 2025-10-22
--- Description: Complete database schema with all features
+-- Date: 2026-06-01
 -- ============================================================
 
 -- ============================================================
@@ -46,9 +45,9 @@ CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    phone VARCHAR(20) UNIQUE,
+    phone VARCHAR(20),
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
+    role ENUM('CUSTOMER', 'ADMIN','GUEST') NOT NULL DEFAULT 'GUEST',
     gender ENUM('MALE', 'FEMALE', 'OTHER'),
     birth_date DATE,
     
@@ -107,29 +106,16 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     expiry_date DATETIME NOT NULL,
     ip_address VARCHAR(45),
     user_agent TEXT,
+    last_used_at TIMESTAMP NULL DEFAULT NULL, 
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_refresh_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     INDEX idx_user (user_id),
-    INDEX idx_token (token),
     INDEX idx_expiry (expiry_date),
-    INDEX idx_revoked (revoked)
+    INDEX idx_revoked (revoked),
+    INDEX idx_last_used (last_used_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Login Attempts
-CREATE TABLE login_attempts (
-    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(100) NOT NULL,
-    ip_address VARCHAR(45) NOT NULL,
-    user_agent TEXT,
-    success BOOLEAN NOT NULL,
-    failure_reason VARCHAR(255),
-    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_email_time (email, attempted_at),
-    INDEX idx_ip_time (ip_address, attempted_at),
-    INDEX idx_success (success)
-) ENGINE=InnoDB COMMENT='Lịch sử đăng nhập';
-
+ 
 -- Loyalty Points History
 CREATE TABLE loyalty_points_history (
     history_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,25 +134,6 @@ CREATE TABLE loyalty_points_history (
     INDEX idx_type (points_type),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB COMMENT='Lịch sử tích điểm';
-
--- Audit Logs
-CREATE TABLE audit_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    action VARCHAR(100) NOT NULL,
-    table_name VARCHAR(50),
-    record_id INT,
-    old_value TEXT,
-    new_value TEXT,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
-    INDEX idx_user (user_id),
-    INDEX idx_table (table_name),
-    INDEX idx_action (action),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB COMMENT='Log hoạt động hệ thống';
 
 -- ============================================================
 -- 2. MOVIE CATALOG
@@ -224,6 +191,7 @@ CREATE TABLE movies (
     status ENUM('COMING_SOON', 'NOW_SHOWING', 'ENDED') DEFAULT 'NOW_SHOWING',
     poster_url VARCHAR(255),
     trailer_url VARCHAR(255),
+    banner_url VARCHAR(255),
     deleted_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -231,7 +199,9 @@ CREATE TABLE movies (
     INDEX idx_release_date (release_date),
     INDEX idx_status_date (status, release_date),
     INDEX idx_deleted (deleted_at),
-    FULLTEXT INDEX ft_title_desc (title, description)
+--     FULLTEXT INDEX ft_title_desc (title, description)
+    FULLTEXT INDEX ft_title (title),
+    FULLTEXT INDEX ft_description (description)
 ) ENGINE=InnoDB COMMENT='Phim';
 
 -- Movie Directors (Many-to-Many)
@@ -294,18 +264,6 @@ CREATE TABLE movie_reviews (
     INDEX idx_rating (rating),
     INDEX idx_deleted (deleted_at)
 ) ENGINE=InnoDB COMMENT='Đánh giá phim';
-
--- Review Helpfulness
-CREATE TABLE review_helpfulness (
-    helpfulness_id INT AUTO_INCREMENT PRIMARY KEY,
-    review_id INT NOT NULL,
-    user_id INT NOT NULL,
-    is_helpful BOOLEAN NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (review_id) REFERENCES movie_reviews(review_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    UNIQUE KEY uk_review_user (review_id, user_id)
-) ENGINE=InnoDB COMMENT='Vote review hữu ích';
 
 -- ============================================================
 -- 3. CINEMA & ROOM MANAGEMENT
@@ -375,28 +333,6 @@ CREATE TABLE seats (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB COMMENT='Ghế ngồi';
 
--- Cinema Reviews
-CREATE TABLE cinema_reviews (
-    review_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    cinema_id INT NOT NULL,
-    booking_id INT COMMENT 'Review từ booking thật',
-    rating_cleanliness INT CHECK (rating_cleanliness >= 1 AND rating_cleanliness <= 5) COMMENT 'Vệ sinh',
-    rating_comfort INT CHECK (rating_comfort >= 1 AND rating_comfort <= 5) COMMENT 'Tiện nghi',
-    rating_service INT CHECK (rating_service >= 1 AND rating_service <= 5) COMMENT 'Phục vụ',
-    rating_facilities INT CHECK (rating_facilities >= 1 AND rating_facilities <= 5) COMMENT 'Cơ sở vật chất',
-    comment TEXT,
-    is_verified BOOLEAN DEFAULT FALSE,
-    is_approved BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (cinema_id) REFERENCES cinemas(cinema_id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_cinema_booking (user_id, cinema_id, booking_id),
-    INDEX idx_cinema (cinema_id),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB COMMENT='Đánh giá rạp';
-
 -- ============================================================
 -- 4. SHOWTIME & BOOKING
 -- ============================================================
@@ -458,9 +394,6 @@ CREATE TABLE bookings (
     -- E-Ticket fields
     qr_code_data VARCHAR(255) UNIQUE COMMENT 'Dữ liệu QR code',
     qr_code_image_url VARCHAR(255) COMMENT 'URL ảnh QR',
-    checked_in_at TIMESTAMP NULL COMMENT 'Thời gian check-in',
-    checked_in_by INT COMMENT 'Admin user_id check-in',
-    checked_in_location VARCHAR(100) COMMENT 'Vị trí check-in',
     
     deleted_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -468,7 +401,6 @@ CREATE TABLE bookings (
     
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT,
     FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE RESTRICT,
-    FOREIGN KEY (checked_in_by) REFERENCES users(user_id) ON DELETE SET NULL,
     
     INDEX idx_user (user_id),
     INDEX idx_showtime (showtime_id),
@@ -486,26 +418,26 @@ CREATE TABLE booking_seats (
     booking_id INT NOT NULL,
     seat_id INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL COMMENT 'Giá ghế cuối cùng',
+    
+    is_printed BOOLEAN DEFAULT FALSE COMMENT 'Ghế này đã đổi/in thành vé giấy chưa',
+    printed_at TIMESTAMP NULL,
+    printed_by INT NULL,
+    
+    checked_in_at TIMESTAMP NULL COMMENT 'Thời gian ghế này được quét QR vào rạp',
+    checked_in_by INT NULL,
+    checked_in_location VARCHAR(100),
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE,
     FOREIGN KEY (seat_id) REFERENCES seats(seat_id) ON DELETE RESTRICT,
+    FOREIGN KEY (printed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (checked_in_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    
     INDEX idx_booking (booking_id),
-    INDEX idx_seat (seat_id)
+    INDEX idx_check_in_status (checked_in_at, is_printed)
 ) ENGINE=InnoDB COMMENT='Ghế đã đặt';
-
--- Check-in Logs
-CREATE TABLE checkin_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT NOT NULL,
-    checked_in_by INT COMMENT 'Admin user_id hoặc NULL (self check-in)',
-    device_info TEXT,
-    location VARCHAR(100),
-    ip_address VARCHAR(45),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE,
-    INDEX idx_booking (booking_id),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB COMMENT='Lịch sử check-in';
 
 -- Payments
 CREATE TABLE payments (
@@ -620,27 +552,32 @@ CREATE TABLE booking_promotions (
 -- Vouchers
 CREATE TABLE vouchers (
     voucher_id INT AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(50) NOT NULL UNIQUE,
-    voucher_type ENUM('GIFT_CARD', 'DISCOUNT', 'FREE_TICKET') NOT NULL,
-    value DECIMAL(10, 2) NOT NULL COMMENT 'Giá trị',
-    original_value DECIMAL(10, 2) NOT NULL,
-    current_balance DECIMAL(10, 2) NOT NULL COMMENT 'Số dư còn lại',
-    purchased_by INT COMMENT 'User mua voucher',
-    recipient_email VARCHAR(100) COMMENT 'Email người nhận',
+    code VARCHAR(50) NOT NULL UNIQUE COMMENT 'Mã chuỗi ký tự bí mật để kích hoạt/áp dụng',
+    
+    -- Trị giá
+    original_value DECIMAL(10, 2) NOT NULL COMMENT 'Mệnh giá gốc của voucher (Ví dụ: 500.000đ)',
+    current_balance DECIMAL(10, 2) NOT NULL COMMENT 'Số dư còn lại có thể chi trả',
+    
+    -- Sở hữu & Phân phối (Cho tính năng mua tặng bạn bè)
+    purchased_by INT COMMENT 'User chi tiền mua voucher này',
+    owner_id INT COMMENT 'User hiện tại đang sở hữu/đã nạp voucher này vào ví',
+    recipient_email VARCHAR(100) COMMENT 'Email người nhận nếu mua tặng',
     recipient_name VARCHAR(100),
-    message TEXT COMMENT 'Lời nhắn',
-    is_redeemed BOOLEAN DEFAULT FALSE,
-    redeemed_by INT COMMENT 'User sử dụng',
-    redeemed_at TIMESTAMP NULL,
-    expires_at DATE,
+    message TEXT COMMENT 'Lời nhắn chúc mừng',
+    
+    -- Trạng thái vận hành
+    status ENUM('PENDING', 'ACTIVE', 'EXPIRED', 'LOCKED') DEFAULT 'ACTIVE',
+    expires_at DATE NOT NULL COMMENT 'Hạn sử dụng của voucher',
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
     FOREIGN KEY (purchased_by) REFERENCES users(user_id) ON DELETE SET NULL,
-    FOREIGN KEY (redeemed_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_code (code),
-    INDEX idx_redeemed (is_redeemed),
-    INDEX idx_purchased (purchased_by)
-) ENGINE=InnoDB COMMENT='Gift voucher';
+    INDEX idx_owner (owner_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB COMMENT='Gift voucher dạng thẻ quà tặng trừ dần tiền';
 
 -- Voucher Usage History
 CREATE TABLE voucher_usage_history (
@@ -656,43 +593,6 @@ CREATE TABLE voucher_usage_history (
     INDEX idx_voucher (voucher_id),
     INDEX idx_booking (booking_id)
 ) ENGINE=InnoDB COMMENT='Lịch sử dùng voucher';
-
--- ============================================================
--- 7. REFERRAL PROGRAM
--- ============================================================
-
--- Referral Codes
-CREATE TABLE referral_codes (
-    referral_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL COMMENT 'Người giới thiệu',
-    code VARCHAR(20) NOT NULL UNIQUE,
-    total_uses INT DEFAULT 0,
-    total_rewards DECIMAL(10, 2) DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_code (code),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB COMMENT='Mã giới thiệu';
-
--- Referral Usage
-CREATE TABLE referral_usage (
-    usage_id INT AUTO_INCREMENT PRIMARY KEY,
-    referral_code_id INT NOT NULL,
-    referred_user_id INT NOT NULL COMMENT 'Người được giới thiệu',
-    booking_id INT COMMENT 'Booking đầu tiên',
-    referrer_reward DECIMAL(10, 2) DEFAULT 0 COMMENT 'Thưởng cho người giới thiệu',
-    referee_reward DECIMAL(10, 2) DEFAULT 0 COMMENT 'Thưởng cho người đăng ký',
-    status ENUM('PENDING', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (referral_code_id) REFERENCES referral_codes(referral_id) ON DELETE CASCADE,
-    FOREIGN KEY (referred_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE SET NULL,
-    INDEX idx_referral (referral_code_id),
-    INDEX idx_referred_user (referred_user_id)
-) ENGINE=InnoDB COMMENT='Lịch sử giới thiệu';
 
 -- ============================================================
 -- 8. WATCHLIST & NOTIFICATIONS
@@ -712,125 +612,6 @@ CREATE TABLE user_watchlist (
     INDEX idx_user (user_id),
     INDEX idx_movie (movie_id)
 ) ENGINE=InnoDB COMMENT='Danh sách yêu thích';
-
--- Notification Preferences
-CREATE TABLE notification_preferences (
-    pref_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    email_notifications BOOLEAN DEFAULT TRUE,
-    sms_notifications BOOLEAN DEFAULT FALSE,
-    push_notifications BOOLEAN DEFAULT TRUE,
-    notify_new_movies BOOLEAN DEFAULT TRUE,
-    notify_promotions BOOLEAN DEFAULT TRUE,
-    notify_booking_reminders BOOLEAN DEFAULT TRUE COMMENT 'Nhắc trước 2 giờ',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user (user_id)
-) ENGINE=InnoDB COMMENT='Cài đặt thông báo';
-
--- Notifications
-CREATE TABLE notifications (
-    notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    notification_type VARCHAR(50) NOT NULL COMMENT 'new_movie, new_showtime, promotion, reminder',
-    title VARCHAR(255) NOT NULL,
-    message TEXT,
-    related_type VARCHAR(50) COMMENT 'movie, booking, promotion',
-    related_id INT,
-    is_read BOOLEAN DEFAULT FALSE,
-    read_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_user_read (user_id, is_read),
-    INDEX idx_user (user_id),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB COMMENT='Thông báo';
-
--- ============================================================
--- 9. ADVANCED FEATURES
--- ============================================================
-
--- Advance Booking Rules
-CREATE TABLE advance_booking_rules (
-    rule_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    days_in_advance INT NOT NULL COMMENT 'Đặt trước bao nhiêu ngày',
-    discount_percent DECIMAL(5, 2) DEFAULT 0,
-    max_seats_per_booking INT DEFAULT 10,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_active (is_active),
-    INDEX idx_days (days_in_advance)
-) ENGINE=InnoDB COMMENT='Quy tắc đặt vé sớm';
-
--- User Seat Preferences
-CREATE TABLE user_seat_preferences (
-    pref_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    preferred_seat_type_id INT,
-    preferred_row_start VARCHAR(10) COMMENT 'Hàng ưa thích: D',
-    preferred_row_end VARCHAR(10) COMMENT 'Đến hàng: F',
-    preferred_position ENUM('LEFT', 'CENTER', 'RIGHT'),
-    avoid_first_row BOOLEAN DEFAULT TRUE,
-    avoid_last_row BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (preferred_seat_type_id) REFERENCES seat_types(seat_type_id),
-    UNIQUE KEY uk_user (user_id)
-) ENGINE=InnoDB COMMENT='Sở thích ghế ngồi';
-
--- Social Shares
-CREATE TABLE social_shares (
-    share_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    share_type ENUM('FACEBOOK', 'INSTAGRAM', 'TWITTER', 'ZALO') NOT NULL,
-    content_type ENUM('MOVIE', 'BOOKING', 'REVIEW') NOT NULL,
-    content_id INT NOT NULL COMMENT 'movie_id hoặc booking_id',
-    share_url TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_type (share_type)
-) ENGINE=InnoDB COMMENT='Chia sẻ mạng xã hội';
-
--- Group Bookings
-CREATE TABLE group_bookings (
-    group_booking_id INT AUTO_INCREMENT PRIMARY KEY,
-    organizer_user_id INT NOT NULL COMMENT 'Người tổ chức',
-    group_name VARCHAR(100),
-    showtime_id INT NOT NULL,
-    total_seats INT NOT NULL,
-    status ENUM('PENDING', 'CONFIRMED', 'CANCELLED') DEFAULT 'PENDING',
-    discount_percent DECIMAL(5, 2) DEFAULT 0,
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (organizer_user_id) REFERENCES users(user_id) ON DELETE RESTRICT,
-    FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE RESTRICT,
-    INDEX idx_organizer (organizer_user_id),
-    INDEX idx_showtime (showtime_id)
-) ENGINE=InnoDB COMMENT='Đặt vé nhóm';
-
--- Group Booking Members
-CREATE TABLE group_booking_members (
-    member_id INT AUTO_INCREMENT PRIMARY KEY,
-    group_booking_id INT NOT NULL,
-    user_id INT,
-    email VARCHAR(100) COMMENT 'Email người được mời',
-    seat_id INT,
-    paid_status ENUM('PENDING', 'PAID') DEFAULT 'PENDING',
-    invited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    confirmed_at TIMESTAMP NULL,
-    FOREIGN KEY (group_booking_id) REFERENCES group_bookings(group_booking_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
-    FOREIGN KEY (seat_id) REFERENCES seats(seat_id) ON DELETE SET NULL,
-    INDEX idx_group (group_booking_id),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB COMMENT='Thành viên nhóm';
 
 -- ============================================================
 -- 10. STATISTICS (Materialized Views)
@@ -869,6 +650,22 @@ CREATE TABLE daily_revenue_summary (
     INDEX idx_date (summary_date),
     INDEX idx_cinema (cinema_id)
 ) ENGINE=InnoDB COMMENT='Doanh thu theo ngày';
+
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(50) NOT NULL COMMENT 'CREATED, UPDATED, BANNED, ACTIVATED, SOFT_DELETED, RESTORED, PASSWORD_RESET, ROLE_CHANGED',
+    target_user_id INT NOT NULL,
+    performed_by INT NOT NULL,
+    reason TEXT,
+    details JSON COMMENT 'JSON chứa old/new values khi cần',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (target_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (performed_by) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_target_user (target_user_id),
+    INDEX idx_performed_by (performed_by),
+    INDEX idx_action (action),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Admin audit trail';
 
 -- ============================================================
 -- END OF SCHEMA
