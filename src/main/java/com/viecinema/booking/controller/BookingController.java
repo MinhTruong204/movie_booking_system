@@ -5,6 +5,7 @@ import com.viecinema.auth.security.CurrentUser;
 import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.booking.dto.request.BookingRequest;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
+import com.viecinema.booking.dto.request.GuestBookingRequest;
 import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.service.BookingCalculationService;
@@ -85,6 +86,59 @@ public class BookingController {
 
         try {
             BookingResponse response = bookingService.createBooking(currentUser.getId(), request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(RESOURCE_CREATE, response, "Booking"));
+
+        } catch (Exception e) {
+            log.error("Error creating booking", e);
+            throw e;
+        }
+    }
+
+    @Operation(
+            summary = "Calculate booking cost for Guest",
+            description = "Calculates the total price for a booking including seat prices, combo charges, and any applicable promotions. Does NOT create a booking.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Calculation successful",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid booking request data"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required")
+    })
+    @PostMapping("/public/guestCaculate")
+    public ResponseEntity<ApiResponse<CalculateBookingResponse>> calculateBookingPublic(
+            @Valid @RequestBody CalculateBookingRequest request) {
+
+        Integer userId = 1;
+        CalculateBookingResponse response = calculationService.calculateBooking(userId, request);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.success(RESOURCE_RETRIEVED, response, "Booking calculation"));
+    }
+
+    @Operation(
+            summary = "Create a booking",
+            description = "Confirms and creates a ticket booking for the authenticated customer. Requires CUSTOMER role. Seats must be held before calling this endpoint.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Booking created successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid booking data or seats no longer held"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CUSTOMER role required")
+    })
+    @PostMapping("/public/guestCreateBooking")
+    public ResponseEntity<ApiResponse<BookingResponse>> createGuestBooking(
+            @Valid @RequestBody GuestBookingRequest request) {
+
+        log.info("User {} creating booking for showtime {}",
+                request.getEmail(), request.getShowtimeId());
+
+        
+
+        try {
+            BookingResponse response = bookingService.createBookingForGuest(request);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(RESOURCE_CREATE, response, "Booking"));
 

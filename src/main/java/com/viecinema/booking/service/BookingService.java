@@ -7,6 +7,7 @@ import com.viecinema.booking.dto.SelectedCombo;
 import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.PricingContext;
 import com.viecinema.booking.dto.request.BookingRequest;
+import com.viecinema.booking.dto.request.GuestBookingRequest;
 import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.entity.BookingCombo;
@@ -18,6 +19,7 @@ import com.viecinema.booking.repository.BookingSeatRepository;
 import com.viecinema.booking.repository.ComboRepository;
 import com.viecinema.booking.validator.BookingValidator;
 import com.viecinema.common.enums.BookingStatus;
+import com.viecinema.common.enums.Role;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.showtime.dto.SeatInfo;
@@ -111,6 +113,73 @@ public class BookingService {
         log.info("Booking created successfully: {}", booking.getBookingCode());
         return response;
     }
+
+    @Transactional
+    public BookingResponse createBookingForGuest(GuestBookingRequest request) {
+        log.info("Creating booking for guest {} - showtime {}", request.getEmail(), request.getShowtimeId());
+
+        User user = userRepository.findByEmail(request.getEmail());
+        if(user == null) {
+            user = User.builder()
+                    .email(request.getEmail())
+                    .phone(request.getPhoneNumber())
+                    .fullName(request.getFullName())
+                    .role(Role.GUEST)
+                    .passwordHash("guestpass")
+                    .build();
+            user = userRepository.save(user);
+        }
+        Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime"));
+
+        List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
+        Map<Combo, Integer> selectedCombos = resolveCombos(request.getCombos());
+
+        // bookingValidator.validateUser(user);
+        bookingValidator.validateShowtime(showtime);
+        bookingValidator.validateSeatAvailability(request.getShowtimeId(), request.getSeatIds(), user.getId());
+
+
+        PricingContext context = PricingContext.builder()
+                .user(user)
+                .showtime(showtime)
+                .seats(seats)
+                .selectedCombos(selectedCombos != null ? selectedCombos : new HashMap<>())
+                .promoCode(request.getPromoCode())
+                .voucherCode(request.getVoucherCode())
+                .useLoyaltyPoints(request.getUseLoyaltyPoints() ? request.getLoyaltyPointsToUse() : 0)
+                .build();
+
+        PriceBreakdown priceBreakdown = bookingCalculationService.calculatePrice(context);
+
+        Booking booking = Booking.builder()
+                .user(user)
+                .showtime(showtime)
+                .bookingCode(generateBookingCode())
+                .status(BookingStatus.PENDING)
+                .totalAmount(priceBreakdown.getSubtotal())
+                .finalAmount(priceBreakdown.getFinalAmount())
+                .build();
+
+        booking = bookingRepository.save(booking);
+
+        // Save booking seats and combos
+        List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
+        List<BookingCombo> bookingCombos = saveBookingCombos(booking, selectedCombos);
+        updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), booking);
+
+        // Build response
+        BookingResponse response = buildBookingResponse(
+                booking,
+                showtime,
+                bookingSeats,
+                bookingCombos,
+                priceBreakdown
+        );
+
+        log.info("Booking created successfully: {}", booking.getBookingCode());
+        return response;
+    } 
 
     // ========== PRIVATE HELPER METHODS ==========
 

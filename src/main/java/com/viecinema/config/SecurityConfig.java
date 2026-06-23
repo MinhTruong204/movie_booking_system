@@ -41,12 +41,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/v3/api-docs.yaml"
-                        ).permitAll()
+                                "/v3/api-docs.yaml")
+                        .permitAll()
                         .requestMatchers(ADMIN_PATH + "/**").hasRole("ADMIN")
+                        .requestMatchers(BOOKING_PATH + "/public/**").permitAll()
                         .requestMatchers(BOOKING_PATH + "/**").authenticated()
-                        .anyRequest().permitAll()
-                )
+                        .anyRequest().permitAll())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -71,7 +71,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    //    Get authentication manager from Spring Security for using in Application
+    // Get authentication manager from Spring Security for using in Application
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

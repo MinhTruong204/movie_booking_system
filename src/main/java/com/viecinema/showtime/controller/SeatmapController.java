@@ -48,12 +48,14 @@ public class SeatmapController {
     @GetMapping(SHOWTIMES_SEATMAP_PATH)
     public ResponseEntity<ApiResponse<SeatmapResponse>> getSeatmap(
             @Parameter(description = "ID of the showtime", required = true, example = "1")
-            @PathVariable Integer showtimeId,
-            @CurrentUser UserPrincipal currentUser
+            @PathVariable Integer showtimeId
+        //     ,
+        //     @CurrentUser UserPrincipal currentUser
     ) {
-        log.info("GET /api/showtimes/{}/seatmap by user {}", showtimeId, currentUser.getId());
+        // Integer currentUserId = currentUser.getId();
+        Integer currentUserId = 1;
 
-        Integer currentUserId = currentUser.getId();
+        log.info("GET /api/showtimes/{}/seatmap by user {}", showtimeId, currentUserId);
         SeatmapResponse seatmap = seatmapService.getSeatmap(showtimeId, currentUserId);
 
         return ResponseEntity.status(HttpStatus.OK).body(

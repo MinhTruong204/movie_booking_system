@@ -67,4 +67,7 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
             "WHERE u.phone = :phone AND u.id <> :excludeUserId AND u.deletedAt IS NULL")
     Boolean existsByPhoneAndIdNotAndDeletedAtIsNull(@Param("phone") String phone,
                                                     @Param("excludeUserId") Integer excludeUserId);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    User findByEmail(@Param("email") String email);
 }
