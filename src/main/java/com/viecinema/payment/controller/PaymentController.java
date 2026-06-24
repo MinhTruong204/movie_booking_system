@@ -169,4 +169,38 @@ public class PaymentController {
 
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Create VNPay payment for Guest URL for a booking.
+     */
+    @Operation(
+            summary = "Create VNPay payment URL",
+            description = "Generates a VNPay payment URL for the specified booking. The user should be redirected to the returned URL to complete payment.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Payment URL created successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Booking already paid or invalid state"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CUSTOMER role required")
+    })
+    @PostMapping("/public" + "/vnpay/createForGuest")
+    public ResponseEntity<ApiResponse<VnpayPaymentResponse>> createVnpayPaymentForGuest(
+            @Parameter(description = "ID of the booking to pay for", required = true, example = "1")
+            @RequestParam Integer bookingId,
+            @RequestBody(required = false) VnpayPaymentRequest request,
+            HttpServletRequest httpRequest) {
+
+        log.info("Guest creating VNPay payment for booking {}", bookingId);
+
+        if (request == null) {
+            request = new VnpayPaymentRequest();
+        }
+        request.setBookingId(bookingId);
+
+        VnpayPaymentResponse response = vnpayService.createPayment(bookingId, request, httpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.success(RESOURCE_CREATE, response, "Payment"));
+    }
 }
