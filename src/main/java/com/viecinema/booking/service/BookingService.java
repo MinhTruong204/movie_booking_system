@@ -34,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,6 +56,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final BookingCalculationService bookingCalculationService;
     private final BookingValidator bookingValidator;
+    private final PromotionValidationService promotionValidationService;
 
     @Transactional
     public BookingResponse createBooking(Integer userId, BookingRequest request) {
@@ -100,6 +102,15 @@ public class BookingService {
         List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
         List<BookingCombo> bookingCombos = saveBookingCombos(booking, selectedCombos);
         updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), booking);
+
+        // Bước 4: Commit promotion nếu có mã KM
+        if (StringUtils.hasText(request.getPromoCode())) {
+            promotionValidationService.commitPromotion(
+                    booking,
+                    request.getPromoCode(),
+                    priceBreakdown.getPromoDiscount()
+            );
+        }
 
         // Build response
         BookingResponse response = buildBookingResponse(
@@ -167,6 +178,15 @@ public class BookingService {
         List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
         List<BookingCombo> bookingCombos = saveBookingCombos(booking, selectedCombos);
         updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), booking);
+
+        // Bước 4: Commit promotion nếu có mã KM
+        if (StringUtils.hasText(request.getPromoCode())) {
+            promotionValidationService.commitPromotion(
+                    booking,
+                    request.getPromoCode(),
+                    priceBreakdown.getPromoDiscount()
+            );
+        }
 
         // Build response
         BookingResponse response = buildBookingResponse(

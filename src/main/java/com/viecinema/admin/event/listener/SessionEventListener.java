@@ -11,10 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Listener tự động revoke refresh tokens khi user bị ban/delete/reset password.
- * <p>
  * Đây là Observer Pattern: Khi AdminUserService phát sự kiện,
  * listener này tự "nghe" và xử lý mà service KHÔNG cần biết.
- * </p>
  */
 @Slf4j
 @Component

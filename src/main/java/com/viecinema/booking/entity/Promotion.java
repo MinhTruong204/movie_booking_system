@@ -6,10 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -64,16 +62,30 @@ public class Promotion extends DeletableEntity {
     @Column(name = "current_usage")
     private Integer currentUsage = 0;
 
-    // JSON array: [1, 5, 10] - movie IDs
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "applicable_movies", columnDefinition = "JSON")
+    /**
+     * Danh sách movie_id được áp dụng KM.
+     * Map sang bảng promotion_movies (3NF).
+     * Nếu rỗng = áp dụng cho tất cả phim.
+     */
+    @ElementCollection
+    @CollectionTable(
+            name = "promotion_movies",
+            joinColumns = @JoinColumn(name = "promo_id")
+    )
+    @Column(name = "movie_id")
     private List<Integer> applicableMovies;
 
-    // Set: Mon, Tue, Wed...
+    /**
+     * Các ngày trong tuần được áp dụng KM.
+     * Map sang bảng promotion_applicable_days (3NF).
+     * Nếu rỗng = áp dụng cho tất cả ngày.
+     */
     @ElementCollection(targetClass = DayOfWeek.class)
-    @CollectionTable(name = "promotion_applicable_days",
-            joinColumns = @JoinColumn(name = "promo_id"))
-    @Column(name = "day")
+    @CollectionTable(
+            name = "promotion_applicable_days",
+            joinColumns = @JoinColumn(name = "promo_id")
+    )
+    @Column(name = "applicable_day")
     @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> applicableDays;
 

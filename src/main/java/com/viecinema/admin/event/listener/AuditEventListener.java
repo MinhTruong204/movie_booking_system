@@ -11,10 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Listener ghi nhận audit log cho mọi thao tác admin trên User.
- * <p>
  * Observer Pattern: Mọi event từ AdminUserService đều được log lại,
  * giúp truy vết và báo cáo mà không cần sửa logic trong service.
- * </p>
  */
 @Slf4j
 @Component

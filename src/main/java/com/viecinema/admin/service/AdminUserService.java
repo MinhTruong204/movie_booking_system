@@ -53,9 +53,7 @@ public class AdminUserService {
 
     // ============ CRUD Operations ============
 
-    /**
-     * Lấy danh sách user với search/filter/sort/pagination
-     */
+    // Get all user with search/filter/sort/pagination
     @Transactional(readOnly = true)
     public Page<AdminUserListDto> getUsers(UserSearchCriteria criteria) {
         log.info("Admin fetching users with criteria: keyword={}, role={}, page={}, size={}",
@@ -81,9 +79,7 @@ public class AdminUserService {
         return userPage.map(adminUserMapper::toListDto);
     }
 
-    /**
-     * Lấy chi tiết user (kể cả đã soft delete, cho admin xem)
-     */
+    // Get user by ID (even if soft deleted)
     @Transactional(readOnly = true)
     public AdminUserDetailDto getUserById(Integer userId) {
         log.info("Admin fetching user detail for ID: {}", userId);

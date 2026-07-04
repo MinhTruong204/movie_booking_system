@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,6 +43,7 @@ public class BookingCalculationService {
 
     private final ComboService comboService;
     private final BookingValidator bookingValidator;
+    private final PromotionValidationService promotionValidationService;
 
     @Transactional
     public CalculateBookingResponse calculateBooking(
@@ -165,6 +167,19 @@ public class BookingCalculationService {
         BigDecimal loyaltyDiscount = BigDecimal.ZERO;
         BigDecimal membershipDiscount = BigDecimal.ZERO;
         int pointsEarned = 0;
+
+        // Validate mã KM và tính discount
+        String promoCode = context.getPromoCode();
+        if (StringUtils.hasText(promoCode)) {
+            Integer movieId = context.getShowtime().getMovie().getMovieId();
+            promoDiscount = promotionValidationService.validateAndCalculate(
+                    promoCode,
+                    context.getUser().getId(),
+                    subtotal,
+                    movieId,
+                    context.getShowtime().getStartTime()
+            );
+        }
 
         BigDecimal totalDiscount = promoDiscount
                 .add(voucherDiscount)
