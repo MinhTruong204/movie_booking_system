@@ -9,6 +9,7 @@ import com.viecinema.auth.mapper.UserMapper;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.RefreshTokenRepository;
 import com.viecinema.auth.repository.UserRepository;
+import com.viecinema.common.enums.Role;
 import com.viecinema.common.enums.TokenType;
 import com.viecinema.common.exception.BadRequestException;
 import com.viecinema.common.exception.DuplicateResourceException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_DISABLE_ERROR;
 import static com.viecinema.common.constant.ErrorMessage.ACCOUNT_LOCKED_ERROR;
@@ -49,7 +51,27 @@ public class AuthService {
     //    Register
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        validateUniqueConstraints(request);
+        String normalizedEmail = normalizeEmail(request.getEmail());
+        String normalizedPhone = normalizePhone(request.getPhone());
+
+        Optional<User> existingByEmail = userRepository.findByEmailAndDeletedAtIsNull(normalizedEmail);
+
+        if (existingByEmail.isPresent()) {
+            User existing = existingByEmail.get();
+            // Claim: guest chưa từng có password -> nâng cấp thành tài khoản thật
+            if (existing.getRole() == Role.GUEST && existing.getPasswordHash() == null) {
+                existing.setFullName (request.getFullName());
+                existing.setPhone (normalizedPhone);
+                existing.setPasswordHash (passwordEncoder.encode(request.getPassword()));
+                existing.setRole (Role.CUSTOMER);
+                existing.setEmailVerified(true);
+                userRepository.save(existing);
+                return userMapper.toRegisterResponse (existing);
+            }
+        // Đã là tài khoản thật (có password) -> mới báo trùng
+            throw new DuplicateResourceException("Email");
+        }
+
         User user = userMapper.registerRequestToUser(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setEmailVerified(true);
@@ -62,7 +84,7 @@ public class AuthService {
     @Transactional
     public LoginResponse login(LoginRequest loginRequest, String ipAddress, String userAgent) {
         String email = normalizeEmail(loginRequest.getEmail());
-        String password = normalizePhone(loginRequest.getPassword());
+        String password = loginRequest.getPassword();
 
         User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User"));
