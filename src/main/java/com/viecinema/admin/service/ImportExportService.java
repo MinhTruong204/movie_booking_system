@@ -5,8 +5,6 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import com.viecinema.admin.dto.ImportResult;
 import com.viecinema.admin.dto.request.UserSearchCriteria;
-import com.viecinema.admin.event.UserAction;
-import com.viecinema.admin.event.UserStatusChangedEvent;
 import com.viecinema.admin.specification.UserSpecification;
 import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.UserRepository;

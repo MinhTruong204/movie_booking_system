@@ -2,6 +2,7 @@ package com.viecinema.auth.repository;
 
 import com.viecinema.auth.entity.User;
 import com.viecinema.common.enums.Role;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -70,4 +71,23 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     @Query("SELECT u FROM User u WHERE u.email = :email")
     User findByEmail(@Param("email") String email);
+
+    // ============ Loyalty / Birthday Bonus ============
+
+    /**
+     * Tìm tất cả user có sinh nhật hôm nay (month + day khớp), còn active, chưa bị xóa.
+     * Hỗ trợ phân trang để scheduler xử lý theo batch.
+     */
+    @Query("""
+            SELECT u FROM User u
+            WHERE FUNCTION('MONTH', u.birthDate) = :month
+              AND FUNCTION('DAY', u.birthDate) = :day
+              AND u.isActive = true
+              AND u.deletedAt IS NULL
+            """)
+    List<User> findUsersWithBirthdayToday(
+            @Param("month") int month,
+            @Param("day") int day,
+            Pageable pageable
+    );
 }

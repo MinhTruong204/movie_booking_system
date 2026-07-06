@@ -8,6 +8,7 @@ import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.util.VnpayUtil;
 import com.viecinema.config.VnpayConfig;
+import com.viecinema.loyalty.service.LoyaltyPointsService;
 import com.viecinema.payment.dto.request.VnpayPaymentRequest;
 import com.viecinema.payment.dto.response.VnpayCallbackResponse;
 import com.viecinema.payment.dto.response.VnpayPaymentResponse;
@@ -34,6 +35,7 @@ public class VnpayService {
     private final VnpayConfig vnpayConfig;
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
+    private final LoyaltyPointsService loyaltyPointsService;
 
     @Transactional
     public VnpayPaymentResponse createPayment(
@@ -247,6 +249,14 @@ public class VnpayService {
             bookingRepository.save(booking);
             paymentRepository.save(payment);
 
+            // Cộng điểm EARN sau khi thanh toán thành công
+            try {
+                loyaltyPointsService.awardTransactionPoints(booking);
+            } catch (Exception e) {
+                log.error("[Loyalty] Lỗi cộng điểm EARN cho booking {}: {}",
+                        booking.getBookingCode(), e.getMessage(), e);
+            }
+
             log.info("Payment success for booking {}", booking.getBookingCode());
 
             return VnpayCallbackResponse.builder()
@@ -324,6 +334,14 @@ public class VnpayService {
             if ("00".equals(responseCode)) {
                 payment.setStatus(PaymentStatus.SUCCESS);
                 payment.getBooking().setStatus(BookingStatus.PAID);
+
+                // Cộng điểm EARN sau khi IPN xác nhận thanh toán thành công
+                try {
+                    loyaltyPointsService.awardTransactionPoints(payment.getBooking());
+                } catch (Exception e) {
+                    log.error("[Loyalty] Lỗi cộng điểm EARN (IPN) cho booking {}: {}",
+                            payment.getBooking().getBookingCode(), e.getMessage(), e);
+                }
 
                 response.put("RspCode", "00");
                 response.put("Message", "Confirm Success");

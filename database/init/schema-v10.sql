@@ -1,8 +1,12 @@
 -- ============================================================
 -- Movie BOOKING SYSTEM 
--- Version: 8
+-- Version: 10 — Loyalty Points Earning
 -- Author: MinhTruong204
--- Date: 2026-06-01
+-- Date: 2026-07-05
+-- Changes from v9:
+--   + Thêm bảng loyalty_points_config (cấu hình tỉ lệ điểm)
+--   + Thêm cột review_id vào loyalty_points_history (chống duplicate bonus review)
+--   + Seed data cho loyalty_points_config
 -- ============================================================
 
 -- ============================================================
@@ -79,7 +83,8 @@ CREATE TABLE users (
     INDEX idx_role (role),
     INDEX idx_active (is_active),
     INDEX idx_membership (membership_tier_id),
-    INDEX idx_deleted (deleted_at)
+    INDEX idx_deleted (deleted_at),
+    INDEX idx_birth_date (birth_date) COMMENT 'Dùng cho birthday bonus scheduler'
 ) ENGINE=InnoDB COMMENT='Người dùng hệ thống';
 
 -- Email Verification
@@ -115,25 +120,20 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     INDEX idx_revoked (revoked),
     INDEX idx_last_used (last_used_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
- 
--- Loyalty Points History
-CREATE TABLE loyalty_points_history (
-    history_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    booking_id INT,
-    points_change INT NOT NULL COMMENT 'Số điểm thay đổi (+/-)',
-    points_type ENUM('EARN', 'REDEEM', 'EXPIRE', 'BONUS', 'ADJUSTMENT') NOT NULL,
-    description TEXT,
-    old_balance INT NOT NULL,
-    new_balance INT NOT NULL,
-    expires_at DATE COMMENT 'Điểm có hạn sử dụng',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_booking (booking_id),
-    INDEX idx_type (points_type),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB COMMENT='Lịch sử tích điểm';
+
+-- ============================================================
+-- 1b. LOYALTY POINTS SYSTEM (v10 — MỚI)
+-- ============================================================
+
+-- Bảng cấu hình tỉ lệ tích điểm — admin thay đổi không cần deploy
+CREATE TABLE loyalty_points_config (
+    config_id INT AUTO_INCREMENT PRIMARY KEY,
+    config_key VARCHAR(100) NOT NULL UNIQUE COMMENT 'Tên cấu hình',
+    config_value DECIMAL(10, 4) NOT NULL COMMENT 'Giá trị cấu hình',
+    description TEXT COMMENT 'Giải thích ý nghĩa',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_key (config_key)
+) ENGINE=InnoDB COMMENT='Cấu hình hệ thống tích điểm';
 
 -- ============================================================
 -- 2. MOVIE CATALOG
@@ -199,7 +199,6 @@ CREATE TABLE movies (
     INDEX idx_release_date (release_date),
     INDEX idx_status_date (status, release_date),
     INDEX idx_deleted (deleted_at),
---     FULLTEXT INDEX ft_title_desc (title, description)
     FULLTEXT INDEX ft_title (title),
     FULLTEXT INDEX ft_description (description)
 ) ENGINE=InnoDB COMMENT='Phim';
@@ -244,12 +243,13 @@ CREATE TABLE movie_reviews (
     review_id INT AUTO_INCREMENT PRIMARY KEY,
     movie_id INT NOT NULL,
     user_id INT NOT NULL,
+    booking_id INT COMMENT 'Đơn hàng đã xem (để xác minh)',
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     rating_video INT CHECK (rating_video >= 1 AND rating_video <= 5) COMMENT 'Đánh giá hình ảnh',
     rating_audio INT CHECK (rating_audio >= 1 AND rating_audio <= 5) COMMENT 'Đánh giá âm thanh',
     rating_subtitle INT CHECK (rating_subtitle >= 1 AND rating_subtitle <= 5) COMMENT 'Đánh giá phụ đề',
     comment TEXT,
-    is_verified_booking BOOLEAN DEFAULT FALSE COMMENT 'User đã xem phim',
+    is_verified_booking BOOLEAN DEFAULT FALSE COMMENT 'User đã xem phim (xác minh qua booking)',
     is_approved BOOLEAN DEFAULT TRUE,
     helpful_count INT DEFAULT 0,
     not_helpful_count INT DEFAULT 0,
@@ -262,8 +262,33 @@ CREATE TABLE movie_reviews (
     INDEX idx_movie (movie_id),
     INDEX idx_user (user_id),
     INDEX idx_rating (rating),
+    INDEX idx_verified (is_verified_booking),
     INDEX idx_deleted (deleted_at)
 ) ENGINE=InnoDB COMMENT='Đánh giá phim';
+
+-- Loyalty Points History (v10: thêm review_id)
+CREATE TABLE loyalty_points_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    booking_id INT COMMENT 'Liên kết đơn hàng (cho EARN)',
+    review_id INT COMMENT 'Liên kết review (cho BONUS review) — v10',
+    points_change INT NOT NULL COMMENT 'Số điểm thay đổi (+/-)',
+    points_type ENUM('EARN', 'REDEEM', 'EXPIRE', 'BONUS', 'ADJUSTMENT') NOT NULL,
+    description TEXT,
+    old_balance INT NOT NULL,
+    new_balance INT NOT NULL,
+    expires_at DATE COMMENT 'Điểm có hạn sử dụng',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (review_id) REFERENCES movie_reviews(review_id) ON DELETE SET NULL,
+    UNIQUE KEY uk_booking_earn (booking_id, points_type) COMMENT 'Chống duplicate: 1 booking chỉ EARN 1 lần',
+    UNIQUE KEY uk_review_bonus (review_id) COMMENT 'Chống duplicate: 1 review chỉ BONUS 1 lần',
+    INDEX idx_user (user_id),
+    INDEX idx_booking (booking_id),
+    INDEX idx_review (review_id),
+    INDEX idx_type (points_type),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB COMMENT='Lịch sử tích điểm — v10';
 
 -- ============================================================
 -- 3. CINEMA & ROOM MANAGEMENT
@@ -504,8 +529,6 @@ CREATE TABLE promotions (
     max_usage INT COMMENT 'Số lượt dùng tổng',
     max_usage_per_user INT DEFAULT 1 COMMENT 'Số lượt dùng/user',
     current_usage INT DEFAULT 0,
-    applicable_movies JSON COMMENT 'Array of movie_ids, null = all',
-    applicable_days SET('Mon','Tue','Wed','Thu','Fri','Sat','Sun') COMMENT 'null = all days',
     is_active BOOLEAN DEFAULT TRUE,
     deleted_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -515,6 +538,27 @@ CREATE TABLE promotions (
     INDEX idx_dates (start_date, end_date),
     INDEX idx_deleted (deleted_at)
 ) ENGINE=InnoDB COMMENT='Khuyến mãi';
+
+-- Promotion Movies (Many-to-Many)
+CREATE TABLE promotion_movies (
+    promo_id INT NOT NULL,
+    movie_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (promo_id, movie_id),
+    FOREIGN KEY (promo_id) REFERENCES promotions(promo_id) ON DELETE CASCADE,
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id) ON DELETE CASCADE,
+    INDEX idx_movie (movie_id)
+) ENGINE=InnoDB COMMENT='Các phim được áp dụng khuyến mãi';
+
+-- Promotion Applicable Days
+CREATE TABLE promotion_applicable_days (
+    promo_id INT NOT NULL,
+    applicable_day ENUM('Mon','Tue','Wed','Thu','Fri','Sat','Sun') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (promo_id, applicable_day),
+    FOREIGN KEY (promo_id) REFERENCES promotions(promo_id) ON DELETE CASCADE,
+    INDEX idx_day (applicable_day)
+) ENGINE=InnoDB COMMENT='Các ngày trong tuần được áp dụng khuyến mãi';
 
 -- User Promotion Usage
 CREATE TABLE user_promotion_usage (
@@ -558,7 +602,7 @@ CREATE TABLE vouchers (
     original_value DECIMAL(10, 2) NOT NULL COMMENT 'Mệnh giá gốc của voucher (Ví dụ: 500.000đ)',
     current_balance DECIMAL(10, 2) NOT NULL COMMENT 'Số dư còn lại có thể chi trả',
     
-    -- Sở hữu & Phân phối (Cho tính năng mua tặng bạn bè)
+    -- Sở hữu & Phân phối
     purchased_by INT COMMENT 'User chi tiền mua voucher này',
     owner_id INT COMMENT 'User hiện tại đang sở hữu/đã nạp voucher này vào ví',
     recipient_email VARCHAR(100) COMMENT 'Email người nhận nếu mua tặng',
@@ -668,5 +712,15 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Admin audit trail';
 
 -- ============================================================
--- END OF SCHEMA
+-- SEED DATA — Loyalty Points Config (v10)
+-- ============================================================
+
+INSERT INTO loyalty_points_config (config_key, config_value, description) VALUES
+('EARN_RATE_PER_VND',     0.0001, '1 điểm / 10.000 VND thanh toán (0.0001 điểm/VND)'),
+('REVIEW_BONUS_POINTS',   20,     'Số điểm thưởng khi để lại review đã xác thực booking'),
+('BIRTHDAY_BONUS_POINTS', 100,    'Số điểm thưởng tặng mỗi năm vào ngày sinh nhật'),
+('POINTS_EXPIRY_MONTHS',  12,     'Số tháng điểm có hiệu lực kể từ ngày cộng (0 = không hết hạn)');
+
+-- ============================================================
+-- END OF SCHEMA v10
 -- ============================================================

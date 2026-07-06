@@ -4,6 +4,7 @@ public final class ApiConstant {
     //  Root API
     public static final String AUTH_PATH = "/api/auth";
     public static final String MOVIE_PATH = "/api/movies";
+    public static final String REVIEW_PATH = "/api/reviews";
     public static final String SHOWTIMES_PATH = "/api/showtimes";
     public static final String GENRE_PATH = "/api/genres";
     public static final String BOOKING_PATH = "/api/bookings";
@@ -14,7 +15,9 @@ public final class ApiConstant {
     public static final String ADMIN_PATH = "/api/admin";
     public static final String ADMIN_USERS_PATH = ADMIN_PATH + "/users";
     public static final String ADMIN_DASHBOARD_PATH = ADMIN_PATH + "/dashboard";
-
+    public static final String LOYALTY_PATH = "/api/loyalty";
+    public static final String LOYALTY_MY_POINTS_PATH = "/my-points";
+    public static final String LOYALTY_HISTORY_PATH = "/history";
 
     //  Detail API
     public static final String LOGIN_PATH = "/login";
