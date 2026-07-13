@@ -69,4 +69,14 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
             "WHERE s.status = :oldStatus AND s.heldUntil < CURRENT_TIMESTAMP")
     int updateSeatStatusForExpiredHolding(@Param("newStatus") SeatStatusType newStatus,
                                           @Param("oldStatus") SeatStatusType oldStatus);
+    @Modifying(clearAutomatically = true) // Reset cache after update
+    @Query("UPDATE SeatStatus s " +
+            "SET s.status = :newStatus, " +
+            "s.heldByUser = NULL, " +
+            "s.heldUntil = NULL, " +
+            "s.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE s.showtime.id = :showtimeId AND s.seat.seatId IN :seatIds")
+    int releaseSeats(@Param("showtimeId") Integer showtimeId,
+                     @Param("seatIds") List<Integer> seatIds,
+                     @Param("newStatus") SeatStatusType newStatus);
 }

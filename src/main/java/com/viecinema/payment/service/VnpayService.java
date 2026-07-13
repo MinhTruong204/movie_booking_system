@@ -14,6 +14,7 @@ import com.viecinema.payment.dto.response.VnpayCallbackResponse;
 import com.viecinema.payment.dto.response.VnpayPaymentResponse;
 import com.viecinema.payment.entity.Payment;
 import com.viecinema.payment.repository.PaymentRepository;
+import com.viecinema.showtime.repository.SeatStatusRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class VnpayService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final LoyaltyPointsService loyaltyPointsService;
+    private final SeatStatusRepository seatStatusRepository;
 
     @Transactional
     public VnpayPaymentResponse createPayment(
@@ -57,6 +59,7 @@ public class VnpayService {
         if (booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now())) {
             booking.setStatus(BookingStatus.CANCELLED);
             bookingRepository.save(booking);
+            releaseSeatsForBooking(booking);
             throw new SpecificBusinessException("Booking đã hết hạn thanh toán");
         }
 
@@ -277,6 +280,9 @@ public class VnpayService {
             bookingRepository.save(booking);
             paymentRepository.save(payment);
 
+            // Release seats
+            releaseSeatsForBooking(booking);
+
             log.warn("Payment failed for booking {}. Response code: {}", booking.getBookingCode(), responseCode);
 
             return VnpayCallbackResponse.builder()
@@ -347,7 +353,12 @@ public class VnpayService {
                 response.put("Message", "Confirm Success");
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
-                payment.getBooking().setStatus(BookingStatus.CANCELLED);
+                Booking booking = payment.getBooking();
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+
+                // Release seats
+                releaseSeatsForBooking(booking);
 
                 response.put("RspCode", "00");
                 response.put("Message", "Confirm Success");
@@ -393,5 +404,19 @@ public class VnpayService {
         messages.put("99", "Payment unsuccessful due to: Other errors.");
 
         return messages.getOrDefault(responseCode, "Unknown response code");
+    }
+
+    private void releaseSeatsForBooking(Booking booking) {
+        if (booking.getBookingSeats() != null && !booking.getBookingSeats().isEmpty()) {
+            java.util.List<Integer> seatIds = booking.getBookingSeats().stream()
+                    .map(bs -> bs.getSeat().getSeatId())
+                    .collect(java.util.stream.Collectors.toList());
+            seatStatusRepository.releaseSeats(
+                    booking.getShowtime().getId(),
+                    seatIds,
+                    com.viecinema.common.enums.SeatStatusType.AVAILABLE
+            );
+            log.info("Released {} seats for cancelled booking {}", seatIds.size(), booking.getBookingCode());
+        }
     }
 }

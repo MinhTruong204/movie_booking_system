@@ -1,5 +1,6 @@
 package com.viecinema.booking.service;
 
+import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.repository.BookingRepository;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.SeatStatusType;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.viecinema.common.constant.PolicyConstants.BOOKING_EXPIRATION_MINUTES;
 import static com.viecinema.common.constant.PolicyConstants.SCHEDULER_DELAY_MS;
@@ -27,13 +30,35 @@ public class BookingCleanupService {
     @Transactional
     public void cancelUnpaidBookings() {
         LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(BOOKING_EXPIRATION_MINUTES);
-        int updatedRows = bookingRepository.updateStatusForExpiredBookings(
-                BookingStatus.CANCELLED,
+        List<Booking> expiredBookings = bookingRepository.findExpiredBookings(
                 BookingStatus.PENDING,
                 expirationTime
         );
 
-        log.info("Found {} expired bookings. Processing cancellation...", updatedRows);
+        if (expiredBookings.isEmpty()) {
+            return;
+        }
+
+        log.info("Found {} expired bookings. Processing cancellation...", expiredBookings.size());
+
+        for (Booking booking : expiredBookings) {
+            // 1. Update Booking status to CANCELLED
+            booking.setStatus(BookingStatus.CANCELLED);
+            bookingRepository.save(booking);
+
+            // 2. Release corresponding seats to AVAILABLE
+            if (booking.getBookingSeats() != null && !booking.getBookingSeats().isEmpty()) {
+                List<Integer> seatIds = booking.getBookingSeats().stream()
+                        .map(bs -> bs.getSeat().getSeatId())
+                        .collect(Collectors.toList());
+                int releasedRows = seatStatusRepository.releaseSeats(
+                        booking.getShowtime().getId(),
+                        seatIds,
+                        SeatStatusType.AVAILABLE
+                );
+                log.info("Released {} seats for expired booking {}", releasedRows, booking.getBookingCode());
+            }
+        }
     }
 
     @Scheduled(fixedDelay = SCHEDULER_DELAY_MS)

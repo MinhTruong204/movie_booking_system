@@ -33,4 +33,13 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             @Param("oldStatus") BookingStatus oldStatus,
             @Param("expirationTime") LocalDateTime expirationTime
     );
+    @EntityGraph(attributePaths = {
+            "showtime",
+            "bookingSeats.seat"
+    })
+    @Query("SELECT b FROM Booking b WHERE b.status = :status AND b.createdAt < :expirationTime")
+    List<Booking> findExpiredBookings(
+            @Param("status") BookingStatus status,
+            @Param("expirationTime") LocalDateTime expirationTime
+    );
 }
