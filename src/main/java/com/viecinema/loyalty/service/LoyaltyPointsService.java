@@ -97,6 +97,14 @@ public class LoyaltyPointsService {
             return;
         }
 
+        // Cập nhật tổng chi tiêu (total_spent) của User
+        BigDecimal finalAmount = booking.getFinalAmount();
+        BigDecimal oldTotalSpent = user.getTotalSpent() != null ? user.getTotalSpent() : BigDecimal.ZERO;
+        user.setTotalSpent(oldTotalSpent.add(finalAmount));
+        userRepository.save(user);
+        log.info("[Loyalty] Cập nhật tổng chi tiêu cho user {}: {} -> {}",
+                user.getId(), oldTotalSpent, user.getTotalSpent());
+
         BigDecimal earnRate = getConfigValue(KEY_EARN_RATE, DEFAULT_EARN_RATE);
         int points = booking.getFinalAmount()
                 .multiply(earnRate)
