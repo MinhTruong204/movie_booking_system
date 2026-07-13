@@ -59,7 +59,7 @@ public class AuthService {
         if (existingByEmail.isPresent()) {
             User existing = existingByEmail.get();
             // Claim: guest chưa từng có password -> nâng cấp thành tài khoản thật
-            if (existing.getRole() == Role.GUEST && existing.getPasswordHash() == null) {
+            if (existing.getRole() == Role.GUEST && existing.getPasswordHash() == "guestpass") {
                 existing.setFullName (request.getFullName());
                 existing.setPhone (normalizedPhone);
                 existing.setPasswordHash (passwordEncoder.encode(request.getPassword()));
