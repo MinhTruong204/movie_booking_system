@@ -20,4 +20,8 @@ public class PricingContext {
     private String promoCode;
     private String voucherCode;
     private Integer useLoyaltyPoints;
+    /** ID voucher loại TICKET_DISCOUNT (giảm tiền vé). */
+    private Integer ticketVoucherId;
+    /** ID voucher loại COMBO_DISCOUNT (miễn phí/giảm combo). */
+    private Integer comboVoucherId;
 }

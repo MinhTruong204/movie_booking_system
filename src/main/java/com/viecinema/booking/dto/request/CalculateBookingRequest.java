@@ -25,4 +25,10 @@ public class CalculateBookingRequest {
     private List<SelectedCombo> combos;
 
     private String promotionCode;
+
+    /** ID voucher loại TICKET_DISCOUNT để giảm tiền vé. */
+    private Integer ticketVoucherId;
+
+    /** ID voucher loại COMBO_DISCOUNT để miễn phí combo. */
+    private Integer comboVoucherId;
 }

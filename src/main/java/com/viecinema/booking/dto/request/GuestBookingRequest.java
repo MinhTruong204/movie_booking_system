@@ -42,6 +42,7 @@ public class GuestBookingRequest {
     @Min(0)
     private Integer loyaltyPointsToUse = 0;
 
+
     @NotBlank
     @ValidEmail
     private String email;

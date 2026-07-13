@@ -21,6 +21,12 @@ public interface LoyaltyPointsHistoryRepository extends JpaRepository<LoyaltyPoi
     boolean existsByBookingIdAndPointsType(Integer bookingId, PointsType pointsType);
 
     /**
+     * Tìm bản ghi lịch sử điểm theo bookingId và type.
+     * Dùng để tìm record EARN khi cần thu hồi điểm lúc hủy booking.
+     */
+    java.util.Optional<LoyaltyPointsHistory> findByBookingIdAndPointsType(Integer bookingId, PointsType pointsType);
+
+    /**
      * Kiểm tra đã BONUS cho review này chưa — chống duplicate.
      */
     boolean existsByReviewId(Integer reviewId);

@@ -37,4 +37,10 @@ public class BookingRequest {
 
     @Min(0)
     private Integer loyaltyPointsToUse = 0;
+
+    /** ID voucher loại TICKET_DISCOUNT để giảm tiền vé. Chỉ được dùng 1 voucher loại này/booking. */
+    private Integer ticketVoucherId;
+
+    /** ID voucher loại COMBO_DISCOUNT để miễn phí combo. Chỉ được dùng 1 voucher loại này/booking. */
+    private Integer comboVoucherId;
 }

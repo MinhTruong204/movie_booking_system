@@ -18,6 +18,8 @@ public final class ApiConstant {
     public static final String LOYALTY_PATH = "/api/loyalty";
     public static final String LOYALTY_MY_POINTS_PATH = "/my-points";
     public static final String LOYALTY_HISTORY_PATH = "/history";
+    public static final String LOYALTY_REDEEM_PATH = "/redeem";
+    public static final String LOYALTY_MY_VOUCHERS_PATH = "/my-vouchers";
 
     //  Detail API
     public static final String LOGIN_PATH = "/login";

@@ -40,7 +40,7 @@ public class BookingCalculationService {
     private final SeatRepository seatRepository;
     private final UserRepository userRepository;
     private final ComboRepository comboRepository;
-
+    private final VoucherService voucherService;
     private final ComboService comboService;
     private final BookingValidator bookingValidator;
     private final PromotionValidationService promotionValidationService;
@@ -73,6 +73,8 @@ public class BookingCalculationService {
                         .promoCode(request.getPromotionCode())
                         .voucherCode("")
                         .useLoyaltyPoints(0)
+                        .ticketVoucherId(request.getTicketVoucherId())
+                        .comboVoucherId(request.getComboVoucherId())
                         .build();
 
         PriceBreakdown priceBreakdown = calculatePrice(context);
@@ -163,7 +165,8 @@ public class BookingCalculationService {
 
         // Apply discount
         BigDecimal promoDiscount = BigDecimal.ZERO;
-        BigDecimal voucherDiscount = BigDecimal.ZERO;
+        BigDecimal ticketVoucherDiscount = BigDecimal.ZERO;
+        BigDecimal comboVoucherDiscount = BigDecimal.ZERO;
         BigDecimal loyaltyDiscount = BigDecimal.ZERO;
         BigDecimal membershipDiscount = BigDecimal.ZERO;
         int pointsEarned = 0;
@@ -181,6 +184,26 @@ public class BookingCalculationService {
             );
         }
 
+        // Tính voucher TICKET_DISCOUNT (giảm tiền vé)
+        if (context.getTicketVoucherId() != null) {
+            ticketVoucherDiscount = voucherService.calculateTicketVoucherDiscount(
+                    context.getTicketVoucherId(),
+                    context.getUser().getId(),
+                    ticketsSubtotal
+            );
+        }
+
+        // Tính voucher COMBO_DISCOUNT (giảm tiền combo)
+        if (context.getComboVoucherId() != null) {
+            comboVoucherDiscount = voucherService.calculateComboVoucherDiscount(
+                    context.getComboVoucherId(),
+                    context.getUser().getId(),
+                    combosSubtotal
+            );
+        }
+
+        BigDecimal voucherDiscount = ticketVoucherDiscount.add(comboVoucherDiscount);
+
         BigDecimal totalDiscount = promoDiscount
                 .add(voucherDiscount)
                 .add(loyaltyDiscount)
@@ -196,6 +219,8 @@ public class BookingCalculationService {
                 .combosSubtotal(combosSubtotal)
                 .subtotal(subtotal)
                 .promoDiscount(promoDiscount)
+                .ticketVoucherDiscount(ticketVoucherDiscount)
+                .comboVoucherDiscount(comboVoucherDiscount)
                 .voucherDiscount(voucherDiscount)
                 .loyaltyDiscount(loyaltyDiscount)
                 .membershipDiscount(membershipDiscount)

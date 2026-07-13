@@ -81,6 +81,10 @@ public class Booking extends DeletableEntity {
     @Column(name = "checked_in_location", length = 100)
     private String checkedInLocation;
 
+    /** Số điểm loyalty đã dùng để giảm giá cho đơn hàng này. Dùng để hoàn điểm khi hủy. */
+    @Column(name = "loyalty_points_used", nullable = false)
+    private Integer loyaltyPointsUsed = 0;
+
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<BookingSeat> bookingSeats;
 }

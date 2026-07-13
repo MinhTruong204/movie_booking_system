@@ -86,4 +86,13 @@ public class LoyaltyQueryService {
                 .findByUser_IdOrderByCreatedAtDesc(userId, pageable)
                 .map(loyaltyMapper::toHistoryItemDto);
     }
+
+    /**
+     * Tải thông tin user (dùng để lấy số dư điểm sau khi redeem).
+     */
+    @Transactional(readOnly = true)
+    public User getUserById(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại: " + userId));
+    }
 }

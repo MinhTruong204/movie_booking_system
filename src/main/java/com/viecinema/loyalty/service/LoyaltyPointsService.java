@@ -4,11 +4,20 @@ import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.UserRepository;
 import com.viecinema.booking.entity.Booking;
+import com.viecinema.booking.entity.Combo;
+import com.viecinema.booking.entity.Voucher;
+import com.viecinema.booking.repository.ComboRepository;
+import com.viecinema.booking.service.VoucherService;
+import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.loyalty.entity.LoyaltyPointsConfig;
 import com.viecinema.loyalty.entity.LoyaltyPointsHistory;
 import com.viecinema.loyalty.entity.LoyaltyPointsHistory.PointsType;
+import com.viecinema.loyalty.entity.PointRedemption;
+import com.viecinema.loyalty.entity.PointRedemption.RedemptionType;
 import com.viecinema.loyalty.repository.LoyaltyPointsConfigRepository;
 import com.viecinema.loyalty.repository.LoyaltyPointsHistoryRepository;
+import com.viecinema.loyalty.repository.PointRedemptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,17 +52,26 @@ public class LoyaltyPointsService {
     public static final String KEY_REVIEW_BONUS = "REVIEW_BONUS_POINTS";
     public static final String KEY_BIRTHDAY_BONUS = "BIRTHDAY_BONUS_POINTS";
     public static final String KEY_EXPIRY_MONTHS = "POINTS_EXPIRY_MONTHS";
+    public static final String KEY_REDEEM_RATE = "REDEEM_RATE_PER_POINT";
+    public static final String KEY_REDEEM_MIN = "REDEEM_MIN_POINTS";
+    public static final String KEY_VOUCHER_EXPIRY_DAYS = "VOUCHER_EXPIRY_DAYS";
 
     // Fallback defaults (nếu DB config chưa seed)
     private static final BigDecimal DEFAULT_EARN_RATE = new BigDecimal("0.0001");
     private static final int DEFAULT_REVIEW_BONUS = 20;
     private static final int DEFAULT_BIRTHDAY_BONUS = 100;
     private static final int DEFAULT_EXPIRY_MONTHS = 12;
+    private static final BigDecimal DEFAULT_REDEEM_RATE = new BigDecimal("100"); // 1 điểm = 100 VND
+    private static final int DEFAULT_REDEEM_MIN = 100;
+    private static final int DEFAULT_VOUCHER_EXPIRY_DAYS = 90;
 
     private final LoyaltyPointsHistoryRepository historyRepository;
     private final LoyaltyPointsConfigRepository configRepository;
     private final UserRepository userRepository;
     private final MembershipTierRepository membershipTierRepository;
+    private final PointRedemptionRepository redemptionRepository;
+    private final ComboRepository comboRepository;
+    private final VoucherService voucherService;
 
     // ============================================================
     // 1. TRANSACTION-BASED EARNING
@@ -265,5 +283,201 @@ public class LoyaltyPointsService {
      */
     public int getReviewBonusPoints() {
         return getConfigInt(KEY_REVIEW_BONUS, DEFAULT_REVIEW_BONUS);
+    }
+
+    // ============================================================
+    // 4. REDEEM POINTS — Đổi điểm lấy Voucher
+    // ============================================================
+
+    /**
+     * Trừ điểm và tạo voucher TICKET_DISCOUNT.
+     * Công thức: voucherValue = pointsToUse * REDEEM_RATE_PER_POINT (VND).
+     *
+     * @param userId      ID user muốn đổi điểm
+     * @param pointsToUse Số điểm muốn tiêu
+     * @return PointRedemption vừa được tạo
+     */
+    @Transactional
+    public PointRedemption redeemPointsForVoucher(Integer userId, int pointsToUse) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
+
+        validateRedeemRequest(user, pointsToUse);
+
+        BigDecimal rate = getConfigValue(KEY_REDEEM_RATE, DEFAULT_REDEEM_RATE);
+        BigDecimal voucherValue = BigDecimal.valueOf(pointsToUse).multiply(rate);
+        int expiryDays = getConfigInt(KEY_VOUCHER_EXPIRY_DAYS, DEFAULT_VOUCHER_EXPIRY_DAYS);
+        LocalDate expiresAt = LocalDate.now().plusDays(expiryDays);
+
+        // Tạo voucher
+        Voucher voucher = voucherService.createTicketDiscountVoucher(user, voucherValue, expiresAt);
+
+        // Trừ điểm
+        String desc = String.format("Đổi %d điểm lấy voucher giảm %,.0f VND (mã %s)",
+                pointsToUse, voucherValue, voucher.getCode());
+        debitPoints(user, pointsToUse, PointsType.REDEEM, desc, null);
+
+        // Ghi lịch sử đổi điểm
+        PointRedemption redemption = PointRedemption.builder()
+                .user(user)
+                .pointsUsed(pointsToUse)
+                .redemptionType(RedemptionType.VOUCHER)
+                .voucherId(voucher.getId())
+                .description(desc)
+                .build();
+        redemption = redemptionRepository.save(redemption);
+
+        log.info("[Loyalty] User {} đổi {} điểm lấy voucher {} ({} VND)",
+                userId, pointsToUse, voucher.getCode(), voucherValue);
+        return redemption;
+    }
+
+    /**
+     * Trừ điểm và tạo voucher COMBO_DISCOUNT.
+     * Số điểm cần = ceil(combo.price * quantity / REDEEM_RATE_PER_POINT).
+     *
+     * @param userId   ID user
+     * @param comboId  ID combo muốn đổi
+     * @param quantity Số lượng combo
+     * @return PointRedemption vừa được tạo
+     */
+    @Transactional
+    public PointRedemption redeemPointsForCombo(Integer userId, Integer comboId, int quantity) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
+        Combo combo = comboRepository.findById(comboId)
+                .orElseThrow(() -> new ResourceNotFoundException("Combo"));
+
+        if (!Boolean.TRUE.equals(combo.getIsActive())) {
+            throw new SpecificBusinessException("Combo " + combo.getName() + " hiện không còn bán.");
+        }
+
+        BigDecimal rate = getConfigValue(KEY_REDEEM_RATE, DEFAULT_REDEEM_RATE);
+        BigDecimal totalComboValue = combo.getPrice().multiply(BigDecimal.valueOf(quantity));
+        int pointsNeeded = totalComboValue.divide(rate, 0, java.math.RoundingMode.CEILING).intValue();
+
+        validateRedeemRequest(user, pointsNeeded);
+
+        int expiryDays = getConfigInt(KEY_VOUCHER_EXPIRY_DAYS, DEFAULT_VOUCHER_EXPIRY_DAYS);
+        LocalDate expiresAt = LocalDate.now().plusDays(expiryDays);
+
+        // Tạo voucher combo
+        Voucher voucher = voucherService.createComboDiscountVoucher(user, combo, quantity, expiresAt);
+
+        // Trừ điểm
+        String desc = String.format("Đổi %d điểm lấy combo '%s' x%d (mã %s)",
+                pointsNeeded, combo.getName(), quantity, voucher.getCode());
+        debitPoints(user, pointsNeeded, PointsType.REDEEM, desc, null);
+
+        // Ghi lịch sử đổi điểm
+        PointRedemption redemption = PointRedemption.builder()
+                .user(user)
+                .pointsUsed(pointsNeeded)
+                .redemptionType(RedemptionType.COMBO)
+                .voucherId(voucher.getId())
+                .comboId(comboId)
+                .comboQuantity(quantity)
+                .description(desc)
+                .build();
+        redemption = redemptionRepository.save(redemption);
+
+        log.info("[Loyalty] User {} đổi {} điểm lấy combo '{}' x{} (voucher {})",
+                userId, pointsNeeded, combo.getName(), quantity, voucher.getCode());
+        return redemption;
+    }
+
+    // ============================================================
+    // 5. ADJUSTMENT — Hoàn điểm khi hủy
+    // ============================================================
+
+    /**
+     * Xử lý hoàn điểm khi booking bị hủy từ phía rạp.
+     *
+     * <p>Thực hiện 2 thao tác (dùng type ADJUSTMENT):
+     * <ol>
+     *   <li>Hoàn lại số điểm user đã tiêu (điểm loyalty dùng để giảm giá) → +điểm</li>
+     *   <li>Thu hồi số điểm user đã nhận từ đơn hàng đó (EARN) → -điểm</li>
+     * </ol>
+     *
+     * @param booking Booking vừa bị chuyển sang CANCELLED
+     */
+    @Transactional
+    public void adjustPointsForCancelledBooking(Booking booking) {
+        Integer bookingId = booking.getId();
+        User user = booking.getUser();
+        String bookingCode = booking.getBookingCode();
+
+        // 1. Hoàn lại điểm đã dùng (nếu có)
+        int pointsUsed = booking.getLoyaltyPointsUsed() != null ? booking.getLoyaltyPointsUsed() : 0;
+        if (pointsUsed > 0) {
+            String refundDesc = String.format("Hoàn %d điểm do suất chiếu #%s bị hủy",
+                    pointsUsed, bookingCode);
+            creditPoints(user, pointsUsed, PointsType.ADJUSTMENT, refundDesc, bookingId, null, null);
+            log.info("[Loyalty] Hoàn {} điểm cho user {} (booking {} bị hủy)",
+                    pointsUsed, user.getId(), bookingCode);
+        }
+
+        // 2. Thu hồi điểm EARN từ booking này (nếu đã được cộng)
+        historyRepository.findByBookingIdAndPointsType(bookingId, PointsType.EARN)
+                .ifPresent(earnHistory -> {
+                    int earnedPoints = earnHistory.getPointsChange();
+                    String clawbackDesc = String.format(
+                            "Thu hồi %d điểm EARN từ đơn hàng #%s (suất chiếu bị hủy)",
+                            earnedPoints, bookingCode);
+                    debitPoints(user, earnedPoints, PointsType.ADJUSTMENT, clawbackDesc, bookingId);
+                    log.info("[Loyalty] Thu hồi {} điểm EARN của user {} (booking {} bị hủy)",
+                            earnedPoints, user.getId(), bookingCode);
+                });
+    }
+
+    // ============================================================
+    // PRIVATE HELPERS (mở rộng)
+    // ============================================================
+
+    /**
+     * Validate điều kiện đổi điểm:
+     * - User phải là CUSTOMER (không phải GUEST)
+     * - Số điểm đủ để đổi
+     * - Vượt mức tối thiểu
+     */
+    private void validateRedeemRequest(User user, int pointsToUse) {
+        if (com.viecinema.common.enums.Role.GUEST.equals(user.getRole())) {
+            throw new SpecificBusinessException("Khách vãng lai không thể đổi điểm.");
+        }
+        int minPoints = getConfigInt(KEY_REDEEM_MIN, DEFAULT_REDEEM_MIN);
+        if (pointsToUse < minPoints) {
+            throw new SpecificBusinessException(
+                    String.format("Cần ít nhất %d điểm để đổi. Bạn đang muốn đổi %d điểm.",
+                            minPoints, pointsToUse));
+        }
+        int currentPoints = user.getLoyaltyPoints() == null ? 0 : user.getLoyaltyPoints();
+        if (currentPoints < pointsToUse) {
+            throw new SpecificBusinessException(
+                    String.format("Không đủ điểm. Hiện có: %d, cần: %d.", currentPoints, pointsToUse));
+        }
+    }
+
+    /**
+     * Trừ điểm khỏi tài khoản user và ghi lịch sử.
+     * Điểm trừ không được xuống dưới 0.
+     */
+    private void debitPoints(User user, int points, PointsType type,
+                             String description, Integer bookingId) {
+        int oldBalance = user.getLoyaltyPoints() == null ? 0 : user.getLoyaltyPoints();
+        int newBalance = Math.max(0, oldBalance - points);
+
+        user.setLoyaltyPoints(newBalance);
+        userRepository.save(user);
+
+        LoyaltyPointsHistory history = LoyaltyPointsHistory.builder()
+                .user(user)
+                .bookingId(bookingId)
+                .pointsChange(-points) // âm = trừ
+                .pointsType(type)
+                .description(description)
+                .oldBalance(oldBalance)
+                .newBalance(newBalance)
+                .build();
+        historyRepository.save(history);
     }
 }

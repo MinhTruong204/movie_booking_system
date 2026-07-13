@@ -22,6 +22,7 @@ import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.Role;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.loyalty.service.LoyaltyPointsService;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import com.viecinema.showtime.entity.Seat;
@@ -57,6 +58,8 @@ public class BookingService {
     private final BookingCalculationService bookingCalculationService;
     private final BookingValidator bookingValidator;
     private final PromotionValidationService promotionValidationService;
+    private final VoucherService voucherService;
+    private final LoyaltyPointsService loyaltyPointsService;
 
     @Transactional
     public BookingResponse createBooking(Integer userId, BookingRequest request) {
@@ -83,9 +86,14 @@ public class BookingService {
                 .promoCode(request.getPromoCode())
                 .voucherCode(request.getVoucherCode())
                 .useLoyaltyPoints(request.getUseLoyaltyPoints() ? request.getLoyaltyPointsToUse() : 0)
+                .ticketVoucherId(request.getTicketVoucherId())
+                .comboVoucherId(request.getComboVoucherId())
                 .build();
 
         PriceBreakdown priceBreakdown = bookingCalculationService.calculatePrice(context);
+
+        // Tính số điểm loyalty sử dụng (hiện tại placeholder, sẽ tích hợp sau)
+        int loyaltyPointsUsed = context.getUseLoyaltyPoints() != null ? context.getUseLoyaltyPoints() : 0;
 
         Booking booking = Booking.builder()
                 .user(user)
@@ -94,6 +102,7 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .totalAmount(priceBreakdown.getSubtotal())
                 .finalAmount(priceBreakdown.getFinalAmount())
+                .loyaltyPointsUsed(loyaltyPointsUsed)
                 .build();
 
         booking = bookingRepository.save(booking);
@@ -109,6 +118,30 @@ public class BookingService {
                     booking,
                     request.getPromoCode(),
                     priceBreakdown.getPromoDiscount()
+            );
+        }
+
+        // Bước 5: Commit voucher TICKET_DISCOUNT nếu có
+        if (request.getTicketVoucherId() != null
+                && priceBreakdown.getTicketVoucherDiscount() != null
+                && priceBreakdown.getTicketVoucherDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            voucherService.commitVoucherUsage(
+                    booking,
+                    request.getTicketVoucherId(),
+                    priceBreakdown.getTicketVoucherDiscount(),
+                    com.viecinema.booking.entity.Voucher.VoucherType.TICKET_DISCOUNT
+            );
+        }
+
+        // Bước 6: Commit voucher COMBO_DISCOUNT nếu có
+        if (request.getComboVoucherId() != null
+                && priceBreakdown.getComboVoucherDiscount() != null
+                && priceBreakdown.getComboVoucherDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            voucherService.commitVoucherUsage(
+                    booking,
+                    request.getComboVoucherId(),
+                    priceBreakdown.getComboVoucherDiscount(),
+                    com.viecinema.booking.entity.Voucher.VoucherType.COMBO_DISCOUNT
             );
         }
 
@@ -159,9 +192,13 @@ public class BookingService {
                 .promoCode(request.getPromoCode())
                 .voucherCode(request.getVoucherCode())
                 .useLoyaltyPoints(request.getUseLoyaltyPoints() ? request.getLoyaltyPointsToUse() : 0)
+                .ticketVoucherId(null)
+                .comboVoucherId(null)
                 .build();
 
         PriceBreakdown priceBreakdown = bookingCalculationService.calculatePrice(context);
+
+        int loyaltyPointsUsed = context.getUseLoyaltyPoints() != null ? context.getUseLoyaltyPoints() : 0;
 
         Booking booking = Booking.builder()
                 .user(user)
@@ -170,6 +207,7 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .totalAmount(priceBreakdown.getSubtotal())
                 .finalAmount(priceBreakdown.getFinalAmount())
+                .loyaltyPointsUsed(loyaltyPointsUsed)
                 .build();
 
         booking = bookingRepository.save(booking);
@@ -187,6 +225,7 @@ public class BookingService {
                     priceBreakdown.getPromoDiscount()
             );
         }
+
 
         // Build response
         BookingResponse response = buildBookingResponse(
