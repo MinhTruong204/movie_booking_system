@@ -42,4 +42,18 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             @Param("status") BookingStatus status,
             @Param("expirationTime") LocalDateTime expirationTime
     );
+
+    /**
+     * Load booking với đầy đủ associations cần thiết để gửi email xác nhận.
+     * Sử dụng EntityGraph để tránh LazyInitializationException khi chạy @Async.
+     */
+    @EntityGraph(attributePaths = {
+            "user",
+            "showtime.movie",
+            "showtime.room.cinema",
+            "bookingSeats.seat.seatType"
+    })
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForEmail(@Param("id") Integer id);
 }
+

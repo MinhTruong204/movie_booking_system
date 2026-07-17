@@ -1,0 +1,640 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Xác Nhận Đặt Vé - VieCinema</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0f0f1a;
+            color: #ffffff;
+        }
+
+        .wrapper {
+            max-width: 620px;
+            margin: 0 auto;
+            background-color: #0f0f1a;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 36px 30px;
+            text-align: center;
+            border-bottom: 3px solid #e50914;
+        }
+        .logo-text {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #ffffff;
+        }
+        .logo-text span { color: #e50914; }
+        .logo-tagline {
+            font-size: 11px;
+            color: #a0a0b0;
+            letter-spacing: 2px;
+            margin-top: 6px;
+            text-transform: uppercase;
+        }
+
+        /* ===== HERO SUCCESS ===== */
+        .hero-success {
+            background: linear-gradient(135deg, #0d1f0d 0%, #0a2a0a 100%);
+            border-bottom: 2px solid #1db954;
+            padding: 32px 30px;
+            text-align: center;
+        }
+        .success-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #1db954, #17a84a);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 16px;
+            line-height: 70px;
+        }
+        .hero-success h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .hero-success p {
+            font-size: 14px;
+            color: #a0c4a0;
+            line-height: 1.5;
+        }
+
+        /* ===== BODY ===== */
+        .body-content {
+            padding: 0 20px 30px;
+        }
+
+        .greeting {
+            padding: 24px 10px 16px;
+            font-size: 15px;
+            color: #c0c0d0;
+            line-height: 1.6;
+        }
+        .greeting strong { color: #ffffff; }
+
+        /* ===== SECTION CARD ===== */
+        .section-card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(229, 9, 20, 0.2);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(90deg, rgba(229,9,20,0.15), rgba(229,9,20,0.05));
+            border-bottom: 1px solid rgba(229,9,20,0.2);
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #e50914;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .section-body { padding: 20px; }
+
+        /* ===== BOOKING CODE ===== */
+        .booking-code-box {
+            background: linear-gradient(135deg, #1a0a0a, #2a0a0a);
+            border: 2px solid #e50914;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .booking-code-label {
+            font-size: 12px;
+            color: #a0a0b0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .booking-code-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #e50914;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .booking-date {
+            font-size: 12px;
+            color: #808090;
+            margin-top: 8px;
+        }
+
+        /* ===== INFO ROW ===== */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 14px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label {
+            color: #808090;
+            font-size: 13px;
+            min-width: 130px;
+            flex-shrink: 0;
+        }
+        .info-value {
+            color: #e0e0f0;
+            font-weight: 600;
+            text-align: right;
+            flex: 1;
+            word-break: break-word;
+        }
+        .info-value.highlight { color: #e50914; }
+        .info-value.success-color { color: #1db954; }
+
+        /* ===== MOVIE CARD ===== */
+        .movie-card {
+            display: table;
+            width: 100%;
+        }
+        .movie-poster-cell {
+            display: table-cell;
+            width: 90px;
+            vertical-align: top;
+            padding-right: 16px;
+        }
+        .movie-poster-cell img {
+            width: 80px;
+            height: 115px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid rgba(229,9,20,0.3);
+        }
+        .movie-poster-placeholder {
+            width: 80px;
+            height: 115px;
+            background: linear-gradient(135deg, #2a1a2e, #1a0a1e);
+            border-radius: 8px;
+            border: 2px solid rgba(229,9,20,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .movie-info-cell {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .movie-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        .age-badge {
+            display: inline-block;
+            background: #e50914;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* ===== SEATS TABLE ===== */
+        .seats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .seats-table th {
+            background: rgba(229,9,20,0.12);
+            color: #e50914;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(229,9,20,0.2);
+        }
+        .seats-table td {
+            padding: 10px 12px;
+            color: #d0d0e0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .seats-table tr:last-child td { border-bottom: none; }
+        .seats-table td.seat-label {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 15px;
+            color: #ffd700;
+        }
+        .seat-type-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .seat-type-vip {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .seat-type-normal {
+            background: rgba(100, 149, 237, 0.15);
+            color: #6495ed;
+            border: 1px solid rgba(100,149,237,0.3);
+        }
+        .seat-type-couple {
+            background: rgba(255, 105, 180, 0.15);
+            color: #ff69b4;
+            border: 1px solid rgba(255,105,180,0.3);
+        }
+
+        /* ===== COMBO TABLE ===== */
+        .combo-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .combo-table th {
+            background: rgba(229,9,20,0.12);
+            color: #e50914;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(229,9,20,0.2);
+        }
+        .combo-table td {
+            padding: 10px 12px;
+            color: #d0d0e0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .combo-table tr:last-child td { border-bottom: none; }
+
+        /* ===== PRICING ===== */
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .pricing-row:last-child { border-bottom: none; }
+        .pricing-label { color: #909090; }
+        .pricing-value { color: #e0e0f0; font-weight: 600; }
+        .pricing-row.discount .pricing-value { color: #1db954; }
+        .pricing-row.total {
+            margin-top: 8px;
+            padding-top: 14px;
+            border-top: 2px solid rgba(229,9,20,0.3);
+            border-bottom: none;
+        }
+        .pricing-row.total .pricing-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .pricing-row.total .pricing-value {
+            font-size: 20px;
+            font-weight: 900;
+            color: #e50914;
+        }
+
+        /* ===== QR CODE SECTION ===== */
+        .qr-section {
+            background: linear-gradient(135deg, #0a0a0f, #121220);
+            border: 2px solid rgba(229,9,20,0.3);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .qr-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #e50914;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .qr-subtitle {
+            font-size: 12px;
+            color: #808090;
+            margin-bottom: 20px;
+        }
+        .qr-image-wrapper {
+            display: inline-block;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(229, 9, 20, 0.25);
+        }
+        .qr-image-wrapper img {
+            display: block;
+            width: 200px;
+            height: 200px;
+        }
+        .qr-code-text {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #606070;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .qr-hint {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #a0b0a0;
+            line-height: 1.6;
+        }
+        .qr-hint strong { color: #1db954; }
+
+        /* ===== NOTICE BOX ===== */
+        .notice-box {
+            background: linear-gradient(135deg, #0f1a0f, #0a150a);
+            border-left: 4px solid #1db954;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #90b090;
+            line-height: 1.7;
+        }
+        .notice-box .notice-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1db954;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .notice-box ul { padding-left: 16px; }
+        .notice-box ul li { margin-bottom: 4px; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: linear-gradient(135deg, #0a0a12, #0d0d1a);
+            border-top: 1px solid rgba(229,9,20,0.2);
+            padding: 28px 20px;
+            text-align: center;
+        }
+        .footer-logo { font-size: 20px; font-weight: 900; color: #ffffff; letter-spacing: 2px; }
+        .footer-logo span { color: #e50914; }
+        .footer-divider {
+            width: 40px;
+            height: 2px;
+            background: #e50914;
+            margin: 14px auto;
+        }
+        .footer-info { font-size: 12px; color: #606070; line-height: 1.8; }
+        .footer-info a { color: #e50914; text-decoration: none; }
+        .footer-copyright {
+            margin-top: 16px;
+            font-size: 11px;
+            color: #404050;
+        }
+
+        /* ===== UTILS ===== */
+        .text-right { text-align: right; }
+        .mt-4 { margin-top: 4px; }
+        .bold { font-weight: 700; }
+        .price-format { font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-text">VIE<span>CINEMA</span></div>
+        <div class="logo-tagline">✦ Trải Nghiệm Điện Ảnh Đỉnh Cao ✦</div>
+    </div>
+
+    <!-- HERO SUCCESS -->
+    <div class="hero-success">
+        <div style="font-size: 56px; margin-bottom: 16px;">🎉</div>
+        <h1>ĐẶT VÉ THÀNH CÔNG!</h1>
+        <p>Cảm ơn bạn đã tin tưởng VieCinema. Vé của bạn đã được xác nhận.</p>
+    </div>
+
+    <!-- BODY -->
+    <div class="body-content">
+
+        <!-- Greeting -->
+        <div class="greeting">
+            Xin chào <strong th:text="${fullName}">Nguyễn Văn A</strong>,<br/>
+            Đơn đặt vé của bạn đã được <strong style="color:#1db954;">thanh toán thành công</strong>.
+            Vui lòng lưu email này và xuất trình mã QR Code bên dưới khi đến rạp.
+        </div>
+
+        <!-- BOOKING CODE -->
+        <div class="booking-code-box">
+            <div class="booking-code-label">Mã Đặt Vé</div>
+            <div class="booking-code-value" th:text="${bookingCode}">BK20260717123456</div>
+            <div class="booking-date" th:text="'Ngày đặt: ' + ${bookingDate}">Ngày đặt: 17/07/2026 20:00:00</div>
+        </div>
+
+        <!-- MOVIE INFO -->
+        <div class="section-card">
+            <div class="section-header">🎬 Thông Tin Phim</div>
+            <div class="section-body">
+                <div class="movie-card">
+                    <div class="movie-poster-cell">
+                        <img th:if="${moviePoster != null and !moviePoster.isEmpty()}"
+                             th:src="${moviePoster}" alt="Poster phim"/>
+                        <div th:if="${moviePoster == null or moviePoster.isEmpty()}"
+                             class="movie-poster-placeholder">🎬</div>
+                    </div>
+                    <div class="movie-info-cell">
+                        <div class="movie-title">
+                            <span th:text="${movieTitle}">Tên Phim</span>
+                            <span class="age-badge" th:if="${ageRating != null}" th:text="${ageRating}">C13</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Suất chiếu</span>
+                            <span class="info-value" th:text="${startTime}">18:00 - 17/07/2026</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Kết thúc</span>
+                            <span class="info-value" th:text="${endTime}">20:00 - 17/07/2026</span>
+                        </div>
+                        <div class="info-row" th:if="${movieDuration != null}">
+                            <span class="info-label">Thời lượng</span>
+                            <span class="info-value" th:text="${movieDuration} + ' phút'">120 phút</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CINEMA INFO -->
+        <div class="section-card">
+            <div class="section-header">📍 Rạp Chiếu Phim</div>
+            <div class="section-body">
+                <div class="info-row">
+                    <span class="info-label">Rạp</span>
+                    <span class="info-value" th:text="${cinemaName}">VieCinema Hoàng Văn Thụ</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phòng chiếu</span>
+                    <span class="info-value" th:text="${roomName}">Phòng 1</span>
+                </div>
+                <div class="info-row" th:if="${cinemaAddress != null}">
+                    <span class="info-label">Địa chỉ</span>
+                    <span class="info-value" th:text="${cinemaAddress}">123 Đường ABC, Quận 1</span>
+                </div>
+                <div class="info-row" th:if="${cinemaCity != null}">
+                    <span class="info-label">Thành phố</span>
+                    <span class="info-value" th:text="${cinemaCity}">TP. Hồ Chí Minh</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEAT INFO -->
+        <div class="section-card" th:if="${bookingSeats != null and !bookingSeats.isEmpty()}">
+            <div class="section-header">🪑 Ghế Ngồi</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="seats-table">
+                    <thead>
+                        <tr>
+                            <th>Ghế</th>
+                            <th>Loại ghế</th>
+                            <th class="text-right">Giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="bs : ${bookingSeats}">
+                            <td class="seat-label" th:text="${bs.seat.seatLabel}">A1</td>
+                            <td>
+                                <span class="seat-type-badge seat-type-normal"
+                                      th:classappend="${bs.seat.seatType.name == 'VIP'} ? 'seat-type-vip' : (${bs.seat.seatType.name == 'COUPLE'} ? 'seat-type-couple' : 'seat-type-normal')"
+                                      th:text="${bs.seat.seatType.name}">Thường</span>
+                            </td>
+                            <td class=" price-format bold"
+                                th:text="${#numbers.formatDecimal(bs.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">90.000 ₫</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COMBO INFO -->
+        <div class="section-card" th:if="${bookingCombos != null and !bookingCombos.isEmpty()}">
+            <div class="section-header">🍿 Combo Bắp Nước</div>
+            <div class="section-body" style="padding: 0;">
+                <table class="combo-table">
+                    <thead>
+                        <tr>
+                            <th>Combo</th>
+                            <th class="text-right">SL</th>
+                            <th class="text-right">Đơn giá</th>
+                            <th class="text-right">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="bc : ${bookingCombos}">
+                            <td th:text="${bc.combo.name}">Combo 1</td>
+                            <td class="" th:text="${bc.quantity}">1</td>
+                            <td class=" price-format" th:text="${#numbers.formatDecimal(bc.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">75.000 ₫</td>
+                            <td class=" price-format bold"
+                                th:text="${#numbers.formatDecimal(bc.price.multiply(new java.math.BigDecimal(bc.quantity)), 0, 'COMMA', 0, 'POINT')} + ' ₫'">75.000 ₫</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PRICING SUMMARY -->
+        <div class="section-card">
+            <div class="section-header">💳 Thanh Toán</div>
+            <div class="section-body">
+                <div class="pricing-row">
+                    <span class="pricing-label">Tổng tiền vé</span>
+                    <span class="pricing-value price-format"
+                          th:text="${#numbers.formatDecimal(ticketTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">180.000 ₫</span>
+                </div>
+                <div class="pricing-row" th:if="${comboTotal.compareTo(new java.math.BigDecimal(0)) > 0}">
+                    <span class="pricing-label">Combo bắp nước</span>
+                    <span class="pricing-value price-format"
+                          th:text="${#numbers.formatDecimal(comboTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">75.000 ₫</span>
+                </div>
+                <div class="pricing-row discount" th:if="${discount.compareTo(new java.math.BigDecimal(0)) > 0}">
+                    <span class="pricing-label">Giảm giá / Ưu đãi</span>
+                    <span class="pricing-value price-format"
+                          th:text="'- ' + ${#numbers.formatDecimal(discount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">- 20.000 ₫</span>
+                </div>
+                <div class="pricing-row discount" th:if="${loyaltyPointsUsed > 0}">
+                    <span class="pricing-label">Điểm tích lũy sử dụng</span>
+                    <span class="pricing-value" th:text="${loyaltyPointsUsed} + ' điểm'">100 điểm</span>
+                </div>
+                <div class="pricing-row total">
+                    <span class="pricing-label">TỔNG THANH TOÁN</span>
+                    <span class="pricing-value price-format"
+                          th:text="${#numbers.formatDecimal(finalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">235.000 ₫</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR CODE -->
+        <div class="qr-section">
+            <div class="qr-title">Mã QR Checkin</div>
+            <div class="qr-subtitle">Xuất trình mã QR này tại quầy hoặc máy checkin tự động</div>
+
+            <div class="qr-image-wrapper">
+                <img src="cid:qrcode" alt="QR Code Checkin" width="200" height="200"/>
+            </div>
+
+            <div class="qr-hint">
+                <strong>Lưu ý:</strong> Mỗi mã QR chỉ sử dụng được <strong>1 lần</strong>.<br/>
+                Vui lòng không chia sẻ mã QR này với người khác.
+            </div>
+        </div>
+
+        <!-- NOTICE -->
+        <div class="notice-box">
+            <div class="notice-title">📋 Lưu ý quan trọng</div>
+            <ul>
+                <li>Vui lòng đến rạp trước <strong>giờ chiếu ít nhất 15 phút</strong></li>
+                <li>Xuất trình mã QR tại <strong>quầy kiểm soát vé</strong> hoặc <strong>cổng tự động</strong></li>
+                <li>Vé đã mua <strong>không hoàn tiền</strong> sau khi thanh toán thành công</li>
+                <li>Liên hệ hotline nếu cần hỗ trợ: <strong>1900 xxxx</strong></li>
+            </ul>
+        </div>
+
+    </div><!-- /body-content -->
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-logo">VIE<span>CINEMA</span></div>
+        <div class="footer-divider"></div>
+        <div class="footer-info">
+            📧 support@viecinema.vn &nbsp;|&nbsp; 📞 1900 xxxx<br/>
+            🌐 <a href="#">www.viecinema.vn</a>
+        </div>
+        <div class="footer-copyright">
+            &copy; 2026 VieCinema. All rights reserved.<br/>
+            Email này được gửi tự động, vui lòng không trả lời.
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

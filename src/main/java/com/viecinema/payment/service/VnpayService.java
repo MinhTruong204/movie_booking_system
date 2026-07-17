@@ -2,6 +2,7 @@ package com.viecinema.payment.service;
 
 import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.repository.BookingRepository;
+import com.viecinema.booking.service.BookingEmailService;
 import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.PaymentStatus;
 import com.viecinema.common.exception.ResourceNotFoundException;
@@ -38,6 +39,7 @@ public class VnpayService {
     private final PaymentRepository paymentRepository;
     private final LoyaltyPointsService loyaltyPointsService;
     private final SeatStatusRepository seatStatusRepository;
+    private final BookingEmailService bookingEmailService;
 
     @Transactional
     public VnpayPaymentResponse createPayment(
@@ -257,6 +259,16 @@ public class VnpayService {
                 loyaltyPointsService.awardTransactionPoints(booking);
             } catch (Exception e) {
                 log.error("[Loyalty] Lỗi cộng điểm EARN cho booking {}: {}",
+                        booking.getBookingCode(), e.getMessage(), e);
+            }
+
+            // Gửi email xác nhận đặt vé kèm QR Code (async, không block)
+            // Truyền bookingId thay vì entity để tránh LazyInitializationException
+            // khi @Async mở session mới và tự load lại booking với EntityGraph đầy đủ.
+            try {
+                bookingEmailService.sendBookingConfirmationEmail(booking.getId());
+            } catch (Exception e) {
+                log.error("[BookingEmail] Lỗi gửi email xác nhận cho booking {}: {}",
                         booking.getBookingCode(), e.getMessage(), e);
             }
 
