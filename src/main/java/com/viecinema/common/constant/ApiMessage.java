@@ -10,6 +10,7 @@ public enum ApiMessage {
 
     // Create operations
     RESOURCE_CREATE("S004", "success", "%s created successfully"),
+    REGISTER_SUCCESS("S016", "success", "Registration successful. Please check your email to verify your account."),
 
     // Update operations
     RESOURCE_UPDATED("S005", "success", "%s updated successfully"),

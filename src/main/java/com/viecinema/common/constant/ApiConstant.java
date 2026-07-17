@@ -41,5 +41,7 @@ public final class ApiConstant {
     public static final String BOOKINGS_USER_PATH = "/my-bookings";
     public static final String PAYMENT_DETAIL_PATH = "/booking/{bookingId}";
     public static final String REFRESH_TOKEN_PATH = "/refresh-token";
+    public static final String VERIFY_EMAIL_PATH = "/verify-email";
+    public static final String RESEND_VERIFICATION_PATH = "/resend-verification";
 
 }

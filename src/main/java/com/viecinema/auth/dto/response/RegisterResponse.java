@@ -1,6 +1,5 @@
 package com.viecinema.auth.dto.response;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,15 +19,9 @@ public class RegisterResponse {
     @JsonProperty("full_name")
     private String fullName;
 
-    @JsonProperty("message")
-    @Builder.Default
-    private String message = "";
-
     @JsonProperty("verification_required")
-    @Builder.Default
-    private Boolean verificationRequired = false;
+    private Boolean verificationRequired;
 
-    @JsonProperty("otp_sent_at")
-    @Builder.Default
-    private LocalDateTime otpSentAt = LocalDateTime.now();
+    @JsonProperty("verification_sent_at")
+    private LocalDateTime verificationSentAt;
 }

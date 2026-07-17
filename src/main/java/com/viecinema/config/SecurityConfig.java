@@ -41,7 +41,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/v3/api-docs.yaml")
+                                "/v3/api-docs.yaml",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-verification")
                         .permitAll()
                         .requestMatchers(ADMIN_PATH + "/**").hasRole("ADMIN")
                         .requestMatchers(BOOKING_PATH + "/public/**").permitAll()
