@@ -10,6 +10,7 @@ import com.viecinema.common.exception.SpecificBusinessException;
 import com.viecinema.common.util.VnpayUtil;
 import com.viecinema.config.VnpayConfig;
 import com.viecinema.loyalty.service.LoyaltyPointsService;
+import com.viecinema.movie.service.MovieStatisticsService;
 import com.viecinema.payment.dto.request.VnpayPaymentRequest;
 import com.viecinema.payment.dto.response.VnpayCallbackResponse;
 import com.viecinema.payment.dto.response.VnpayPaymentResponse;
@@ -40,6 +41,7 @@ public class VnpayService {
     private final LoyaltyPointsService loyaltyPointsService;
     private final SeatStatusRepository seatStatusRepository;
     private final BookingEmailService bookingEmailService;
+    private final MovieStatisticsService movieStatisticsService;
 
     @Transactional
     public VnpayPaymentResponse createPayment(
@@ -143,7 +145,8 @@ public class VnpayService {
                 .build();
     }
 
-    public String buildPaymentUrlForExistingPayment(com.viecinema.payment.entity.Payment payment, jakarta.servlet.http.HttpServletRequest httpRequest) {
+    public String buildPaymentUrlForExistingPayment(com.viecinema.payment.entity.Payment payment,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         log.info("Building VNPay payment URL for existing payment: {}", payment.getPaymentId());
 
         java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
@@ -254,11 +257,23 @@ public class VnpayService {
             bookingRepository.save(booking);
             paymentRepository.save(payment);
 
-            // Cộng điểm EARN sau khi thanh toán thành công
+            // Cong diem EARN sau khi thanh toan thanh cong
             try {
                 loyaltyPointsService.awardTransactionPoints(booking);
             } catch (Exception e) {
-                log.error("[Loyalty] Lỗi cộng điểm EARN cho booking {}: {}",
+                log.error("[Loyalty] Loi cong diem EARN cho booking {}: {}",
+                        booking.getBookingCode(), e.getMessage(), e);
+            }
+
+            // Cap nhat thong ke phim
+            try {
+                movieStatisticsService.onBookingPaid(
+                        booking.getShowtime().getMovie().getMovieId(),
+                        booking.getBookingSeats() != null ? booking.getBookingSeats().size() : 0,
+                        booking.getFinalAmount()
+                );
+            } catch (Exception e) {
+                log.error("[MovieStats] Loi cap nhat thong ke phim cho booking {}: {}",
                         booking.getBookingCode(), e.getMessage(), e);
             }
 
@@ -390,27 +405,30 @@ public class VnpayService {
     // ========== HELPER METHODS ==========
 
     private String generateQRCodeData(Booking booking) {
-        // Format:  BOOKING_CODE|SHOWTIME_ID|USER_ID|TIMESTAMP
+        // Format: BOOKING_CODE|SHOWTIME_ID|USER_ID|TIMESTAMP
         return String.format("%s|%d|%d|%d",
                 booking.getBookingCode(),
                 booking.getShowtime().getId(),
                 booking.getUser().getId(),
-                System.currentTimeMillis()
-        );
+                System.currentTimeMillis());
     }
 
     private String getResponseMessage(String responseCode) {
         Map<String, String> messages = new HashMap<>();
         messages.put("00", "Payment successful");
         messages.put("07", "Deduction successful. Transaction is suspicious (related to fraud, unusual transaction)");
-        messages.put("09", "Payment unsuccessful due to: The customer's card/account has not registered for Internet Banking services at the bank.");
-        messages.put("10", "Payment unsuccessful due to: Customers who provide incorrect card/account information verification more than 3 times.");
+        messages.put("09",
+                "Payment unsuccessful due to: The customer's card/account has not registered for Internet Banking services at the bank.");
+        messages.put("10",
+                "Payment unsuccessful due to: Customers who provide incorrect card/account information verification more than 3 times.");
         messages.put("11", "Payment unsuccessful due to: The payment deadline has expired.");
         messages.put("12", "Payment unsuccessful due to: The customer's card/account has been locked.");
-        messages.put("13", "Payment unsuccessful due to: You have entered the wrong transaction authentication password (OTP).");
+        messages.put("13",
+                "Payment unsuccessful due to: You have entered the wrong transaction authentication password (OTP).");
         messages.put("24", "Payment unsuccessful due to: Customer cancels transaction.");
         messages.put("51", "Payment unsuccessful due to: The customer's card/account has insufficient funds.");
-        messages.put("65", "Payment unsuccessful due to: The customer's card/account has reached the limit of allowed transactions.");
+        messages.put("65",
+                "Payment unsuccessful due to: The customer's card/account has reached the limit of allowed transactions.");
         messages.put("75", "The clearing bank is undergoing maintenance.");
         messages.put("79", "Payment unsuccessful due to: Customer enters incorrect payment password too many times.");
         messages.put("99", "Payment unsuccessful due to: Other errors.");
@@ -426,8 +444,7 @@ public class VnpayService {
             seatStatusRepository.releaseSeats(
                     booking.getShowtime().getId(),
                     seatIds,
-                    com.viecinema.common.enums.SeatStatusType.AVAILABLE
-            );
+                    com.viecinema.common.enums.SeatStatusType.AVAILABLE);
             log.info("Released {} seats for cancelled booking {}", seatIds.size(), booking.getBookingCode());
         }
     }

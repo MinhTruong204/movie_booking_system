@@ -2,8 +2,10 @@ package com.viecinema.movie.service;
 
 import com.viecinema.common.enums.MovieStatus;
 import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.movie.dto.GenreInfo;
 import com.viecinema.movie.dto.MovieDetail;
 import com.viecinema.movie.dto.MovieSummary;
+import com.viecinema.movie.dto.TopMovieDto;
 import com.viecinema.movie.dto.request.MovieFilterRequest;
 import com.viecinema.movie.dto.response.PagedResponse;
 import com.viecinema.movie.entity.Movie;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -82,6 +85,54 @@ public class MovieService {
         return movieMapper.toMovieDetailDto(movie);
     }
 
+    /**
+     * Phim được đánh giá cao nhất.
+     * Lọc những phim có ít nhất {@code minReviews} reviews, sort theo rating giảm dần.
+     *
+     * @param limit      số phim tối đa trả về
+     * @param minReviews số review tối thiểu để đảm bảo rating đáng tin cậy
+     */
+    public List<TopMovieDto> getTopRatedMovies(int limit, int minReviews) {
+        log.info("Fetching top-rated movies: limit={}, minReviews={}", limit, minReviews);
+        return movieStatisticsRepository
+                .findTopRated(minReviews, PageRequest.of(0, limit))
+                .stream()
+                .map(this::toTopMovieDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Phim nhiều người xem nhất, sort theo total_bookings giảm dần.
+     *
+     * @param limit số phim tối đa trả về
+     */
+    public List<TopMovieDto> getMostViewedMovies(int limit) {
+        log.info("Fetching most-viewed movies: limit={}", limit);
+        return movieStatisticsRepository
+                .findMostViewed(PageRequest.of(0, limit))
+                .stream()
+                .map(this::toTopMovieDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Phim xuất sắc: đạt ngưỡng rating VÀ lượt đặt vé cùng lúc.
+     *
+     * @param limit       số phim tối đa trả về
+     * @param minRating   ngưỡng average_rating tối thiểu (ví dụ: 4.0)
+     * @param minBookings ngưỡng total_bookings tối thiểu (ví dụ: 100)
+     */
+    public List<TopMovieDto> getOutstandingMovies(int limit, double minRating, int minBookings) {
+        log.info("Fetching outstanding movies: limit={}, minRating={}, minBookings={}", limit, minRating, minBookings);
+        return movieStatisticsRepository
+                .findOutstanding(minRating, minBookings, PageRequest.of(0, limit))
+                .stream()
+                .map(this::toTopMovieDto)
+                .collect(Collectors.toList());
+    }
+
+    // ========== PRIVATE HELPERS ==========
+
     private Specification<Movie> buildSpecification(MovieFilterRequest request, MovieStatus status) {
         return Specification
                 .where(MovieSpecification.hasStatus(status))
@@ -99,4 +150,32 @@ public class MovieService {
         }
         return dto;
     }
+
+    /** Chuyển MovieStatistic → TopMovieDto (Movie đã được JOIN FETCH sẵn). */
+    private TopMovieDto toTopMovieDto(MovieStatistic stat) {
+        Movie movie = stat.getMovies();
+        List<GenreInfo> genres = movie.getGenres().stream()
+                .map(g -> new GenreInfo(g.getGenreId(), g.getName(), null, null))
+                .collect(Collectors.toList());
+
+        return TopMovieDto.builder()
+                .movieId(movie.getMovieId())
+                .title(movie.getTitle())
+                .description(movie.getDescription())
+                .duration(movie.getDuration())
+                .ageRating(movie.getAgeRating())
+                .language(movie.getLanguage())
+                .posterUrl(movie.getPosterUrl())
+                .trailerUrl(movie.getTrailerUrl())
+                .bannerUrl(movie.getBannerUrl())
+                .releaseDate(movie.getReleaseDate())
+                .status(movie.getStatus() != null ? movie.getStatus().name() : null)
+                .genres(genres)
+                .averageRating(stat.getAverageRating() != null ? stat.getAverageRating().doubleValue() : null)
+                .totalReviews(stat.getTotalReviews())
+                .totalBookings(stat.getTotalBookings())
+                .build();
+    }
 }
+
+

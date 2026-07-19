@@ -27,6 +27,9 @@ public final class ApiConstant {
     public static final String MOVIE_NOW_SHOWING_PATH = "/now-showing";
     public static final String MOVIE_COMING_SOON_PATH = "/coming-soon";
     public static final String MOVIE_DETAIL_PATH = "/{movieId}";
+    public static final String MOVIE_TOP_RATED_PATH = "/top-rated";
+    public static final String MOVIE_MOST_VIEWED_PATH = "/most-viewed";
+    public static final String MOVIE_OUTSTANDING_PATH = "/outstanding";
     public static final String SHOWTIMES_SEATMAP_PATH = "/{showtimeId}/seatmap";
     public static final String SHOWTIMES_BY_MOVIE_PATH = "/by-movie/{movieId}";
     public static final String GENRE_DETAIL_PATH = "/{id}";

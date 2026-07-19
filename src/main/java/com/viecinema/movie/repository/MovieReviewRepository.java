@@ -37,4 +37,30 @@ public interface MovieReviewRepository extends JpaRepository<MovieReview, Intege
             @Param("userId") Integer userId,
             @Param("movieId") Integer movieId
     );
+
+    /**
+     * Tính average rating của phim dựa trên tất cả review đã được approved.
+     * Trả về null nếu chưa có review nào.
+     */
+    @Query("""
+            SELECT AVG(r.rating)
+            FROM MovieReview r
+            WHERE r.movie.movieId = :movieId
+              AND r.isApproved = true
+              AND r.deletedAt IS NULL
+            """)
+    Double calculateAverageRating(@Param("movieId") Integer movieId);
+
+    /**
+     * Đếm tổng số review đã được approved của phim.
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM MovieReview r
+            WHERE r.movie.movieId = :movieId
+              AND r.isApproved = true
+              AND r.deletedAt IS NULL
+            """)
+    Long countApprovedReviews(@Param("movieId") Integer movieId);
 }
+

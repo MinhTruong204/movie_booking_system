@@ -38,6 +38,7 @@ public class MovieReviewService {
     private final UserRepository userRepository;
     private final LoyaltyPointsService loyaltyPointsService;
     private final ReviewMapper reviewMapper;
+    private final MovieStatisticsService movieStatisticsService;
 
     /**
      * Tạo review mới cho phim.
@@ -83,7 +84,15 @@ public class MovieReviewService {
 
         review = reviewRepository.save(review);
 
-        // Cộng điểm BONUS nếu là review đã xác thực
+        // Cap nhat thong ke phim (total_reviews, average_rating)
+        try {
+            movieStatisticsService.onReviewCreated(request.getMovieId());
+        } catch (Exception e) {
+            log.error("[MovieStats] Loi cap nhat thong ke review cho phim {}: {}",
+                    request.getMovieId(), e.getMessage(), e);
+        }
+
+        // Cong diem BONUS neu la review da xac thuc
         Integer bonusPoints = null;
         if (isVerified) {
             try {
