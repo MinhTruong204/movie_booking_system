@@ -1,7 +1,6 @@
 package com.viecinema.booking.dto.request;
 
 import com.viecinema.booking.dto.SelectedCombo;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -33,10 +32,6 @@ public class BookingRequest {
     @Size(max = 50)
     private String voucherCode;
 
-    private Boolean useLoyaltyPoints = false;
-
-    @Min(0)
-    private Integer loyaltyPointsToUse = 0;
 
     /** ID voucher loại TICKET_DISCOUNT để giảm tiền vé. Chỉ được dùng 1 voucher loại này/booking. */
     private Integer ticketVoucherId;

@@ -3,6 +3,8 @@ package com.viecinema.loyalty.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * DTO tổng hợp thông tin điểm của user — dùng cho endpoint GET /my-points.
  */
@@ -32,4 +34,7 @@ public class LoyaltySummaryDto {
 
     /** Tổng điểm đã tiêu */
     private long totalPointsRedeemed;
+
+    /** Tổng số tiền thực tế đã chi tiêu (chỉ tính booking PAID / CONFIRMED) */
+    private BigDecimal totalSpent;
 }

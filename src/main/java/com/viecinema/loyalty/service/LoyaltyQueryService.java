@@ -71,6 +71,7 @@ public class LoyaltyQueryService {
                 .nextTierName(nextTier != null ? nextTier.getName() : null)
                 .totalPointsEarned(totalEarned)
                 .totalPointsRedeemed(totalRedeemed)
+                .totalSpent(user.getTotalSpent())
                 .build();
     }
 

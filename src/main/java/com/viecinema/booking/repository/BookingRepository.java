@@ -56,4 +56,3 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     @Query("SELECT b FROM Booking b WHERE b.id = :id")
     Optional<Booking> findByIdForEmail(@Param("id") Integer id);
 }
-

@@ -4,7 +4,6 @@ import com.viecinema.booking.dto.SelectedCombo;
 import com.viecinema.common.validation.annotation.ValidEmail;
 import com.viecinema.common.validation.annotation.ValidPhone;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -36,11 +35,6 @@ public class GuestBookingRequest {
 
     @Size(max = 50)
     private String voucherCode;
-
-    private Boolean useLoyaltyPoints = false;
-
-    @Min(0)
-    private Integer loyaltyPointsToUse = 0;
 
 
     @NotBlank
