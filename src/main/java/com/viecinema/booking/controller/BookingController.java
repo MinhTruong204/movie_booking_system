@@ -6,6 +6,7 @@ import com.viecinema.auth.security.UserPrincipal;
 import com.viecinema.booking.dto.request.BookingRequest;
 import com.viecinema.booking.dto.request.CalculateBookingRequest;
 import com.viecinema.booking.dto.request.GuestBookingRequest;
+import com.viecinema.booking.dto.response.BookingDetailResponse;
 import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.dto.response.CalculateBookingResponse;
 import com.viecinema.booking.service.BookingCalculationService;
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -147,5 +150,43 @@ public class BookingController {
             throw e;
         }
     }
+
+    @Operation(
+            summary = "Get booking detail",
+            description = "Retrieves full detail of a specific booking by its ID. " +
+                    "Only the booking owner or an ADMIN can access this resource. " +
+                    "Returns 403 if the authenticated user does not own the booking.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Booking detail retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "Authentication required – missing or invalid JWT"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403", description = "Access denied – you do not own this booking"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "Booking not found")
+    })
+    @GetMapping(BOOKING_DETAIL_PATH)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<BookingDetailResponse>> getBookingDetail(
+            @PathVariable Integer bookingId,
+            @CurrentUser UserPrincipal currentUser) {
+
+        log.info("User {} requesting detail of booking {}", currentUser.getId(), bookingId);
+
+        // Kiểm tra xem user có role ADMIN không để truyền xuống service
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        BookingDetailResponse response = bookingService.getBookingDetail(
+                bookingId, currentUser.getId(), isAdmin);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(RESOURCE_RETRIEVED, response, "Booking detail"));
+    }
 }
+
 

@@ -8,6 +8,7 @@ import com.viecinema.booking.dto.PriceBreakdown;
 import com.viecinema.booking.dto.PricingContext;
 import com.viecinema.booking.dto.request.BookingRequest;
 import com.viecinema.booking.dto.request.GuestBookingRequest;
+import com.viecinema.booking.dto.response.BookingDetailResponse;
 import com.viecinema.booking.dto.response.BookingResponse;
 import com.viecinema.booking.entity.Booking;
 import com.viecinema.booking.entity.BookingCombo;
@@ -22,6 +23,7 @@ import com.viecinema.common.enums.BookingStatus;
 import com.viecinema.common.enums.Role;
 import com.viecinema.common.enums.SeatStatusType;
 import com.viecinema.common.exception.ResourceNotFoundException;
+import com.viecinema.common.util.QrCodeUtil;
 import com.viecinema.showtime.dto.SeatInfo;
 import com.viecinema.showtime.dto.ShowtimeInfo;
 import com.viecinema.showtime.entity.Seat;
@@ -34,11 +36,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Base64;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -231,6 +235,43 @@ public class BookingService {
         return response;
     } 
 
+    // ========== PUBLIC READ METHODS ==========
+
+    /**
+     * Lấy chi tiết một vé đặt theo bookingId.
+     *
+     * <p><b>Xác thực quyền sở hữu:</b> Chỉ chủ sở hữu booking hoặc ADMIN mới được phép truy cập.
+     * Nếu booking không tồn tại → {@link com.viecinema.common.exception.ResourceNotFoundException}.
+     * Nếu người dùng không có quyền → {@link AccessDeniedException}.
+     *
+     * @param bookingId  ID của booking cần lấy.
+     * @param requesterId ID của user đang thực hiện request (lấy từ JWT).
+     * @param isAdmin    True nếu caller có role ADMIN.
+     * @return Chi tiết đầy đủ của booking.
+     */
+    @Transactional(readOnly = true)
+    public BookingDetailResponse getBookingDetail(Integer bookingId, Integer requesterId, boolean isAdmin) {
+        log.info("User {} fetching booking detail for bookingId={}", requesterId, bookingId);
+
+        // 1. Load booking với đầy đủ associations (tránh LazyInitializationException)
+        Booking booking = bookingRepository.findByIdWithFullDetails(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking"));
+
+        // 2. Xác thực quyền: chỉ chủ sở hữu hoặc ADMIN được xem
+        boolean isOwner = booking.getUser().getId().equals(requesterId);
+        if (!isOwner && !isAdmin) {
+            log.warn("Access denied: user {} attempted to view booking {} owned by user {}",
+                    requesterId, bookingId, booking.getUser().getId());
+            throw new AccessDeniedException("You do not have permission to view this booking");
+        }
+
+        // 3. Load combos riêng (bookingSeats đã được load qua EntityGraph)
+        List<BookingCombo> bookingCombos = bookingComboRepository.findByBooking(booking);
+
+        // 4. Build và trả về response
+        return buildBookingDetailResponse(booking, bookingCombos);
+    }
+
     // ========== PRIVATE HELPER METHODS ==========
 
     private String generateBookingCode() {
@@ -365,4 +406,80 @@ public class BookingService {
                         combo -> requestQtyMap.get(combo.getId())
                 ));
     }
+
+    /**
+     * Build {@link BookingDetailResponse} từ Booking entity đã được eager-load.
+     * Đọc totalAmount / finalAmount trực tiếp từ DB (không tính lại) để đảm bảo
+     * khớp với giá trị tại thời điểm đặt vé.
+     */
+    private BookingDetailResponse buildBookingDetailResponse(
+            Booking booking,
+            List<BookingCombo> bookingCombos) {
+
+        // ── Showtime info ──
+        Showtime showtime = booking.getShowtime();
+        ShowtimeInfo showtimeInfo = ShowtimeInfo.builder()
+                .showtimeId(showtime.getId())
+                .movieTitle(showtime.getMovie().getTitle())
+                .cinemaName(showtime.getRoom().getCinema().getName())
+                .roomName(showtime.getRoom().getName())
+                .startTime(showtime.getStartTime())
+                .posterUrl(showtime.getMovie().getPosterUrl())
+                .build();
+
+        // ── Seats info ──
+        List<SeatInfo> seatsInfo = booking.getBookingSeats().stream()
+                .map(bs -> SeatInfo.builder()
+                        .seatId(bs.getSeat().getSeatId())
+                        .rowLabel(bs.getSeat().getSeatRow())
+                        .seatNumber(bs.getSeat().getSeatNumber())
+                        .seatTypeName(bs.getSeat().getSeatType().getName())
+                        .price(bs.getPrice())
+                        .build())
+                .collect(Collectors.toList());
+
+        // ── Combos info ──
+        List<BookingComboInfo> combosInfo = bookingCombos.stream()
+                .map(bc -> BookingComboInfo.builder()
+                        .comboId(bc.getCombo().getId())
+                        .comboName(bc.getCombo().getName())
+                        .quantity(bc.getQuantity())
+                        .unitPrice(bc.getPrice())
+                        .totalPrice(bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity())))
+                        .build())
+                .collect(Collectors.toList());
+
+        // ── Sinh QR Code Base64 từ qrCodeData (chỉ khi booking đã PAID/CHECKED_IN) ──
+        String qrCodeBase64 = null;
+        if (booking.getQrCodeData() != null && !booking.getQrCodeData().isBlank()) {
+            try {
+                byte[] qrBytes = QrCodeUtil.generateQrCode(booking.getQrCodeData());
+                qrCodeBase64 = Base64.getEncoder().encodeToString(qrBytes);
+            } catch (Exception e) {
+                log.warn("Could not generate QR code image for booking {}: {}",
+                        booking.getBookingCode(), e.getMessage());
+            }
+        }
+
+        // ── Build response ──
+        return BookingDetailResponse.builder()
+                .bookingId(booking.getId())
+                .bookingCode(booking.getBookingCode())
+                .status(booking.getStatus())
+                .showtime(showtimeInfo)
+                .seats(seatsInfo)
+                .combos(combosInfo)
+                .totalAmount(booking.getTotalAmount())
+                .finalAmount(booking.getFinalAmount())
+                .qrCodeData(booking.getQrCodeData())
+                .qrCodeImageUrl(booking.getQrCodeImageUrl())
+                .qrCodeBase64(qrCodeBase64)
+                .checkedInAt(booking.getCheckedInAt())
+                .checkedInLocation(booking.getCheckedInLocation())
+                .loyaltyPointsUsed(booking.getLoyaltyPointsUsed())
+                .bookedAt(booking.getCreatedAt())
+                .expiresAt(booking.getCreatedAt().plusMinutes(PAYMENT_TIMEOUT_MINUTES))
+                .build();
+    }
 }
+

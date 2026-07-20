@@ -55,4 +55,18 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     })
     @Query("SELECT b FROM Booking b WHERE b.id = :id")
     Optional<Booking> findByIdForEmail(@Param("id") Integer id);
+
+    /**
+     * Load một booking với đầy đủ thông tin để trả về chi tiết vé.
+     * EntityGraph đảm bảo tất cả associations được eager-load trong một query,
+     * tránh LazyInitializationException và N+1 problem.
+     */
+    @EntityGraph(attributePaths = {
+            "user",
+            "showtime.movie",
+            "showtime.room.cinema",
+            "bookingSeats.seat.seatType"
+    })
+    @Query("SELECT b FROM Booking b WHERE b.id = :bookingId AND b.deletedAt IS NULL")
+    Optional<Booking> findByIdWithFullDetails(@Param("bookingId") Integer bookingId);
 }

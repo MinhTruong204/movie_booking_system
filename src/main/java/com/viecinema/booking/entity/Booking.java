@@ -82,6 +82,7 @@ public class Booking extends DeletableEntity {
     private String checkedInLocation;
 
     /** Số điểm loyalty đã dùng để giảm giá cho đơn hàng này. Dùng để hoàn điểm khi hủy. */
+    @Builder.Default
     @Column(name = "loyalty_points_used", nullable = false)
     private Integer loyaltyPointsUsed = 0;
 

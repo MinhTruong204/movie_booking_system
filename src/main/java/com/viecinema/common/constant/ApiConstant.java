@@ -38,6 +38,7 @@ public final class ApiConstant {
     public static final String RELEASE_SEAT_PATH = "/release-seat";
     public static final String CAlCULATE_PATH = "/calculate";
     public static final String CREATE_BOOKING_PATH = "/create";
+    public static final String BOOKING_DETAIL_PATH = "/{bookingId}";
     public static final String VNPAY_CREATE_PATH = "/vnpay/create";
     public static final String VNPAY_CALLBACK_PATH = "/vnpay/callback";
     public static final String USER_PROFILE_PATH = "/profile";
