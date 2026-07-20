@@ -47,5 +47,7 @@ public final class ApiConstant {
     public static final String REFRESH_TOKEN_PATH = "/refresh-token";
     public static final String VERIFY_EMAIL_PATH = "/verify-email";
     public static final String RESEND_VERIFICATION_PATH = "/resend-verification";
+    public static final String CHANGE_PASSWORD_PATH = "/change-password";
+    public static final String FORGOT_PASSWORD_PATH = "/forgot-password";
 
 }

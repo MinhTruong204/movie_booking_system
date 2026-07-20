@@ -1,5 +1,6 @@
 package com.viecinema.auth.controller;
 
+import com.viecinema.auth.dto.request.ForgotPasswordRequest;
 import com.viecinema.auth.dto.request.LoginRequest;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.request.ResendVerificationRequest;
@@ -152,6 +153,26 @@ public class AuthController {
         RefreshTokenResponse response = refreshTokenService.refreshToken(refreshToken, ipAddress, userAgent);
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.success(ApiMessage.RESOURCE_CREATE, response, "Refresh and Access Token"));
+    }
+
+    @Operation(
+            summary = "Forgot password",
+            description = "Generates a temporary password and sends it to the specified registered email address."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Temporary password email sent successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404", description = "User not found")
+    })
+    @SecurityRequirements
+    @PostMapping(ApiConstant.FORGOT_PASSWORD_PATH)
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(
+                ApiResponse.success(ApiMessage.RESOURCE_RETRIEVED, null,
+                        "A temporary password has been sent to " + request.getEmail()));
     }
 
 }

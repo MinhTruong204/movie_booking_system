@@ -57,4 +57,31 @@ public class EmailService {
             // Không throw exception để không làm fail transaction đăng ký
         }
     }
+
+    /**
+     * Gửi email thông báo mật khẩu tạm thời bất đồng bộ
+     */
+    @Async
+    public void sendForgotPasswordEmail(User user, String tempPassword) {
+        try {
+            Context context = new Context();
+            context.setVariable("fullName", user.getFullName());
+            context.setVariable("tempPassword", tempPassword);
+
+            String htmlContent = templateEngine.process("email/forgot_password", context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail, "VieCinema");
+            helper.setTo(user.getEmail());
+            helper.setSubject("🔑 VieCinema - Mật khẩu tạm thời cho tài khoản của bạn");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Forgot password email sent to: {}", user.getEmail());
+
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.error("Failed to send forgot password email to {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
 }

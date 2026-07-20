@@ -1,5 +1,6 @@
 package com.viecinema.auth.service;
 
+import com.viecinema.auth.dto.request.ForgotPasswordRequest;
 import com.viecinema.auth.dto.request.LoginRequest;
 import com.viecinema.auth.dto.request.RegisterRequest;
 import com.viecinema.auth.dto.response.LoginResponse;
@@ -183,7 +184,28 @@ public class AuthService {
         }
     }
 
+    // ============ Forgot Password ============
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        String email = normalizeEmail(request.getEmail());
+        User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
+
+        String tempPassword = generateTemporaryPassword();
+
+        user.setPasswordHash(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+
+        emailService.sendForgotPasswordEmail(user, tempPassword);
+    }
+
     // ============ Private Helper Methods ============
+
+    private String generateTemporaryPassword() {
+        String randomChars = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        return "VieCinema@" + randomChars;
+    }
 
     private String createVerificationToken(Integer userId) {
         String token = UUID.randomUUID().toString().replace("-", "");

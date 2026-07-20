@@ -43,7 +43,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/api/auth/verify-email",
-                                "/api/auth/resend-verification")
+                                "/api/auth/resend-verification",
+                                "/api/auth/forgot-password")
                         .permitAll()
                         .requestMatchers(ADMIN_PATH + "/**").hasRole("ADMIN")
                         .requestMatchers(BOOKING_PATH + "/public/**").permitAll()

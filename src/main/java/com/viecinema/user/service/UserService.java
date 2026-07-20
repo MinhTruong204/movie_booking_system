@@ -4,12 +4,15 @@ import com.viecinema.auth.entity.MembershipTier;
 import com.viecinema.auth.entity.User;
 import com.viecinema.auth.repository.MembershipTierRepository;
 import com.viecinema.auth.repository.UserRepository;
+import com.viecinema.common.exception.BadRequestException;
 import com.viecinema.common.exception.ResourceNotFoundException;
 import com.viecinema.user.dto.MembershipInfo;
 import com.viecinema.user.dto.UserProfileDto;
+import com.viecinema.user.dto.request.ChangePasswordRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final MembershipTierRepository membershipTierRepository;
     private final UserStatisticsService userStatisticsService;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Lấy thông tin profile của user hiện tại
@@ -135,5 +139,32 @@ public class UserService {
 
         // Tạm thời return full
         return totalFreeTickets;
+    }
+
+    /**
+     * Cập nhật mật khẩu cho user đang đăng nhập
+     */
+    @Transactional
+    public void changePassword(Integer userId, ChangePasswordRequest request) {
+        log.info("Changing password for user ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("New password and confirmation password do not match");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("New password cannot be the same as current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        log.info("Password changed successfully for user ID: {}", userId);
     }
 }

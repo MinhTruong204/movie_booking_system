@@ -16,13 +16,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.viecinema.user.dto.request.ChangePasswordRequest;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.viecinema.common.constant.ApiConstant.CHANGE_PASSWORD_PATH;
 import static com.viecinema.common.constant.ApiConstant.USER_PATH;
 import static com.viecinema.common.constant.ApiConstant.USER_PROFILE_PATH;
 import static com.viecinema.common.constant.ApiMessage.RESOURCE_RETRIEVED;
+import static com.viecinema.common.constant.ApiMessage.RESOURCE_UPDATED;
 
 @Slf4j
 @RestController
@@ -53,6 +59,30 @@ public class UserController {
         UserProfileDto profile = userService.getUserProfile(userId);
 
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(RESOURCE_RETRIEVED, profile, "User profile"));
+    }
+
+    @Operation(
+            summary = "Change user password",
+            description = "Allows an authenticated user to change their account password.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200", description = "Password updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Incorrect old password or password mismatch"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "Authentication required")
+    })
+    @PostMapping(CHANGE_PASSWORD_PATH)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @CurrentUser UserPrincipal currentUser) {
+
+        log.info("POST /api/users/change-password - User: {}", currentUser.getUsername());
+        userService.changePassword(currentUser.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(RESOURCE_UPDATED, null, "Password"));
     }
 }
 
