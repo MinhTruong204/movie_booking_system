@@ -28,4 +28,16 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer>,
             """, nativeQuery = true)
     List<PricingSummary> findPricingInfoByShowtime(@Param("showtimeId") Integer showtimeId);
 
+    @Query("""
+            SELECT COUNT(s) > 0 FROM Showtime s
+            WHERE s.room.id = :roomId
+            AND s.deletedAt IS NULL
+            AND (:excludeShowtimeId IS NULL OR s.id != :excludeShowtimeId)
+            AND s.startTime < :endTime
+            AND s.endTime > :startTime
+            """)
+    boolean existsOverlappingShowtime(@Param("roomId") Integer roomId,
+                                      @Param("startTime") java.time.LocalDateTime startTime,
+                                      @Param("endTime") java.time.LocalDateTime endTime,
+                                      @Param("excludeShowtimeId") Integer excludeShowtimeId);
 }

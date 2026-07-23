@@ -14,7 +14,7 @@ public class ShowtimeSpecifications {
 
     public static Specification<Showtime> hasCinemaId(Integer cinemaId) {
         return (root, query, cb)
-                -> cinemaId == null ? null : cb.equal(root.get("cinema").get("id"), cinemaId);
+                -> cinemaId == null ? null : cb.equal(root.get("room").get("cinema").get("id"), cinemaId);
     }
 
     public static Specification<Showtime> hasRoomId(Integer roomId) {
@@ -33,12 +33,12 @@ public class ShowtimeSpecifications {
 
     public static Specification<Showtime> hasCity(String city) {
         return (root, query, cb)
-                -> (city == null || city.isEmpty()) ? null : cb.equal(root.get("cinema").get("city"), city);
+                -> (city == null || city.isEmpty()) ? null : cb.equal(root.get("room").get("cinema").get("city"), city);
     }
 
-    public static Specification<Showtime> hasActiveOnly(boolean activeOnly) {
+    public static Specification<Showtime> hasActiveOnly(Boolean activeOnly) {
         return (root, query, cb)
-                -> activeOnly ? cb.isTrue(root.get("isActive")) : null;
+                -> (activeOnly != null && activeOnly) ? cb.isTrue(root.get("isActive")) : null;
     }
 
     public static Specification<Showtime> hasFutureOnly(boolean futureOnly) {

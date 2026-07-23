@@ -79,4 +79,10 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
     int releaseSeats(@Param("showtimeId") Integer showtimeId,
                      @Param("seatIds") List<Integer> seatIds,
                      @Param("newStatus") SeatStatusType newStatus);
+
+    boolean existsByShowtimeIdAndStatus(Integer showtimeId, SeatStatusType status);
+
+    @Modifying
+    @Query("DELETE FROM SeatStatus ss WHERE ss.showtime.id = :showtimeId")
+    void deleteByShowtimeId(@Param("showtimeId") Integer showtimeId);
 }

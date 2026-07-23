@@ -14,6 +14,7 @@ public final class ApiConstant {
     public static final String USER_PATH = "/api/users";
     public static final String ADMIN_PATH = "/api/admin";
     public static final String ADMIN_USERS_PATH = ADMIN_PATH + "/users";
+    public static final String ADMIN_SHOWTIMES_PATH = ADMIN_PATH + "/showtimes";
     public static final String ADMIN_DASHBOARD_PATH = ADMIN_PATH + "/dashboard";
     public static final String LOYALTY_PATH = "/api/loyalty";
     public static final String LOYALTY_MY_POINTS_PATH = "/my-points";
