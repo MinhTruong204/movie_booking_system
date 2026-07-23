@@ -15,6 +15,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -66,8 +67,16 @@ public class BookingEmailService {
             Booking booking = bookingRepository.findByIdForEmail(bookingId)
                     .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
 
-            // 2. Sinh anh QR Code tu du lieu booking
-            byte[] qrImageBytes = QrCodeUtil.generateQrCode(booking.getQrCodeData());
+            // 2. Sinh anh QR Code tu du lieu booking (co fallback neu qrCodeData rong)
+            String qrData = booking.getQrCodeData();
+            if (!StringUtils.hasText(qrData)) {
+                qrData = String.format("%s|%d|%d|%d",
+                        booking.getBookingCode(),
+                        booking.getShowtime().getId(),
+                        booking.getUser().getId(),
+                        System.currentTimeMillis());
+            }
+            byte[] qrImageBytes = QrCodeUtil.generateQrCode(qrData);
 
             // 3. Lay danh sach combo
             List<BookingCombo> combos = bookingComboRepository.findByBooking(booking);
@@ -95,7 +104,10 @@ public class BookingEmailService {
 
             // 4. Build Thymeleaf context
             Context context = new Context();
-            context.setVariable("fullName", booking.getUser().getFullName());
+            String fullName = booking.getUser() != null && StringUtils.hasText(booking.getUser().getFullName())
+                    ? booking.getUser().getFullName()
+                    : "Quý khách";
+            context.setVariable("fullName", fullName);
             context.setVariable("bookingCode", booking.getBookingCode());
             context.setVariable("bookingDate", booking.getCreatedAt().format(DATE_FORMATTER));
 

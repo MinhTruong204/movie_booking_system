@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Calendar;
@@ -277,14 +280,29 @@ public class VnpayService {
                         booking.getBookingCode(), e.getMessage(), e);
             }
 
-            // Gửi email xác nhận đặt vé kèm QR Code (async, không block)
-            // Truyền bookingId thay vì entity để tránh LazyInitializationException
-            // khi @Async mở session mới và tự load lại booking với EntityGraph đầy đủ.
-            try {
-                bookingEmailService.sendBookingConfirmationEmail(booking.getId());
-            } catch (Exception e) {
-                log.error("[BookingEmail] Lỗi gửi email xác nhận cho booking {}: {}",
-                        booking.getBookingCode(), e.getMessage(), e);
+            // Gửi email xác nhận đặt vé kèm QR Code sau khi Transaction đã commit thành công
+            // (tránh race condition giữa @Async thread mới và uncommitted transaction hiện tại)
+            Integer bookingId = booking.getId();
+            String bookingCode = booking.getBookingCode();
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            bookingEmailService.sendBookingConfirmationEmail(bookingId);
+                        } catch (Exception e) {
+                            log.error("[BookingEmail] Lỗi gửi email xác nhận cho booking {}: {}",
+                                    bookingCode, e.getMessage(), e);
+                        }
+                    }
+                });
+            } else {
+                try {
+                    bookingEmailService.sendBookingConfirmationEmail(bookingId);
+                } catch (Exception e) {
+                    log.error("[BookingEmail] Lỗi gửi email xác nhận cho booking {}: {}",
+                            bookingCode, e.getMessage(), e);
+                }
             }
 
             log.info("Payment success for booking {}", booking.getBookingCode());
