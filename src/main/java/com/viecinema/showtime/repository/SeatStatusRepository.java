@@ -41,22 +41,22 @@ public interface SeatStatusRepository extends JpaRepository<SeatStatus, Integer>
 
     @Modifying
     @Query("UPDATE SeatStatus ss " +
-            "SET ss.status = 'available', " +
+            "SET ss.status = com.viecinema.common.enums.SeatStatusType.AVAILABLE, " +
             "ss.heldByUser.id = NULL, " +
             "ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
-            "WHERE ss.heldByUser.id = :userId AND ss.status = 'held'")
+            "WHERE ss.heldByUser.id = :userId AND ss.status = com.viecinema.common.enums.SeatStatusType.HELD")
     int releaseUserSeats(@Param("userId") Integer userId);
 
     @Modifying
-    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
-            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = 'held' AND ss.heldByUser.id = :userId")
+    @Query("UPDATE SeatStatus ss SET ss.status = com.viecinema.common.enums.SeatStatusType.AVAILABLE, ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = com.viecinema.common.enums.SeatStatusType.HELD AND ss.heldByUser.id = :userId")
     int releaseSeatByUser(@Param("showtimeId") Integer showtimeId,
                           @Param("seatId") Integer seatId,
                           @Param("userId") Integer userId);
 
     @Modifying
-    @Query("UPDATE SeatStatus ss SET ss.status = 'available', ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
-            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = 'held'")
+    @Query("UPDATE SeatStatus ss SET ss.status = com.viecinema.common.enums.SeatStatusType.AVAILABLE, ss.heldByUser.id = NULL, ss.heldUntil = NULL, ss.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE ss.showtime.id = :showtimeId AND ss.seat.seatId = :seatId AND ss.status = com.viecinema.common.enums.SeatStatusType.HELD")
     int forceReleaseSeat(@Param("showtimeId") Integer showtimeId,
                          @Param("seatId") Integer seatId);
 

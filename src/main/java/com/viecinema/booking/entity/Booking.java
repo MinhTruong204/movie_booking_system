@@ -13,6 +13,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -87,5 +88,5 @@ public class Booking extends DeletableEntity {
     private Integer loyaltyPointsUsed = 0;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<BookingSeat> bookingSeats;
+    private List<BookingSeat> bookingSeats;
 }

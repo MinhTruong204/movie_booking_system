@@ -17,7 +17,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Integer>,
             SELECT 
                 st.name AS seat_type_name,
                 (sh.base_price * st.price_multiplier) AS final_price,
-                COUNT(CASE WHEN ss.status = 'available' THEN 1 END) AS available_count
+                COUNT(CASE WHEN ss.status = 'AVAILABLE' THEN 1 END) AS available_count
             FROM showtimes sh
             INNER JOIN seat_status ss ON sh.showtime_id = ss.showtime_id
             INNER JOIN seats se ON ss.seat_id = se.seat_id

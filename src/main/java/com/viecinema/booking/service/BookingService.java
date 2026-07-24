@@ -108,6 +108,7 @@ public class BookingService {
         // Save booking seats and combos
         List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
         List<BookingCombo> bookingCombos = saveBookingCombos(booking, selectedCombos);
+        booking.setBookingSeats(bookingSeats);
         updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), booking);
 
         // Bước 4: Commit promotion nếu có mã KM
@@ -210,6 +211,7 @@ public class BookingService {
         // Save booking seats and combos
         List<BookingSeat> bookingSeats = saveBookingSeats(booking, seats, showtime);
         List<BookingCombo> bookingCombos = saveBookingCombos(booking, selectedCombos);
+        booking.setBookingSeats(bookingSeats);
         updateSeatStatus(request.getShowtimeId(), request.getSeatIds(), booking);
 
         // Bước 4: Commit promotion nếu có mã KM
@@ -334,7 +336,6 @@ public class BookingService {
             seatStatus.setStatus(SeatStatusType.BOOKED);
             seatStatus.setHeldByUser(null);
             seatStatus.setHeldUntil(null);
-            seatStatus.setVersion(seatStatus.getVersion() + 1);
         }
     }
 

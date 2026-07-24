@@ -16,10 +16,12 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class BookingCombo extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_combo_id", nullable = false)
+    @EqualsAndHashCode.Include
     private Integer id;
 
     @NotNull

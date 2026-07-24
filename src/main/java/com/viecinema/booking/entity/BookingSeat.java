@@ -14,11 +14,13 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class BookingSeat extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_seat_id")
+    @EqualsAndHashCode.Include
     private Integer bookingSeatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
