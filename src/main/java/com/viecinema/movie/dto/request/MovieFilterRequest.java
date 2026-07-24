@@ -46,6 +46,7 @@ public class MovieFilterRequest {
     private MovieLanguage language;
     private String ageRating;
     private String city;
+    private MovieStatus status; // Admin filter: lọc theo trạng thái phim
 
     // ============== HELPER METHODS ==============
 

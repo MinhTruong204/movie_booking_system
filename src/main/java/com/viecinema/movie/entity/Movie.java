@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +21,8 @@ import java.util.Set;
 @Builder
 @Entity
 @Table(name = "movies")
+@SQLDelete(sql = "UPDATE movies SET deleted_at = NOW() WHERE movie_id = ?")
+@Where(clause = "deleted_at IS NULL")
 public class Movie extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
